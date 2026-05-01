@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    @apply bg-ink-950 text-ink-100;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+
+  body {
+    @apply font-sans antialiased;
+    min-height: 100vh;
+  }
+
+  /* Tabular numerals para datos numéricos */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Scrollbar refinada */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-ink-900;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-ink-700 rounded-md;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-ink-600;
+  }
+
+  /* Selección de texto */
+  ::selection {
+    @apply bg-accent-500/25 text-accent-100;
+  }
+
+  /* Foco accesible coherente */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-500/50 ring-offset-2 ring-offset-ink-950;
+  }
+
+  /* Inputs nativos del browser para date */
+  input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Card base reutilizable */
+  .card {
+    @apply rounded-xl border border-ink-800 bg-ink-900/60 backdrop-blur-sm;
+  }
+
+  /* Botón primario (cyan) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-ink-950 transition-all duration-200 ease-out-expo hover:bg-accent-400 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botón secundario (ghost/outlined) */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-ink-700 bg-ink-800/50 px-4 py-2 text-sm font-medium text-ink-100 transition-all duration-200 ease-out-expo hover:bg-ink-800 hover:border-ink-600 active:scale-[0.98] disabled:opacity-50;
+  }
+
+  /* Botón fantasma (sin bordes) */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-ink-300 transition-colors hover:bg-ink-800 hover:text-ink-100;
+  }
+
+  /* Input base */
+  .input-base {
+    @apply w-full rounded-lg border border-ink-700 bg-ink-900 px-3 py-2 text-sm text-ink-100 placeholder:text-ink-500 transition-colors focus:border-accent-600 focus:bg-ink-800/50 disabled:opacity-50;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-success {
+    @apply bg-success/15 text-success;
+  }
+  .badge-warning {
+    @apply bg-warning/15 text-warning;
+  }
+  .badge-danger {
+    @apply bg-danger/15 text-danger;
+  }
+  .badge-muted {
+    @apply bg-ink-800 text-ink-300;
+  }
+}
