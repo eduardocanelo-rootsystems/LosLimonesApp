@@ -1,4 +1,4 @@
-export type Periodo = 'mes_actual' | 'mes_anterior' | 'ultimos_3' | 'ultimos_6' | 'anio_actual'
+export type Periodo = 'mes_actual' | 'mes_anterior' | 'ultimos_3' | 'ultimos_6' | 'anio_actual' | 'todo'
 
 export interface RangoFechas {
   desde: string
@@ -25,6 +25,8 @@ export function getRangoFechas(periodo: Periodo): RangoFechas {
       return { desde: toISO(new Date(y, m - 5, 1)), hasta: toISO(new Date(y, m + 1, 0)) }
     case 'anio_actual':
       return { desde: `${y}-01-01`, hasta: `${y}-12-31` }
+    case 'todo':
+      return { desde: '2000-01-01', hasta: '2099-12-31' }
   }
 }
 
@@ -34,6 +36,7 @@ const OPCIONES: { value: Periodo; label: string }[] = [
   { value: 'ultimos_3',    label: 'Últ. 3 meses' },
   { value: 'ultimos_6',    label: 'Últ. 6 meses' },
   { value: 'anio_actual',  label: 'Este año'     },
+  { value: 'todo',         label: 'Todo'         },
 ]
 
 interface Props {

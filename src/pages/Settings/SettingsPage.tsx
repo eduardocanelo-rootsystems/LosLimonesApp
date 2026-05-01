@@ -396,7 +396,8 @@ function SeccionInvitaciones({ esSuperadmin }: { esSuperadmin: boolean }) {
       {invitaciones.length > 0 && (
         <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
           <p className="px-4 py-2 text-xs text-ink-500 border-b border-ink-700">Invitaciones pendientes</p>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[380px]">
             <tbody className="divide-y divide-ink-800">
               {invitaciones.map((inv) => (
                 <tr key={inv.id} className="text-ink-300">
@@ -419,6 +420,7 @@ function SeccionInvitaciones({ esSuperadmin }: { esSuperadmin: boolean }) {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
     </div>
@@ -473,7 +475,8 @@ export default function SettingsPage() {
               No hay cuentas configuradas. Agregá la primera para empezar a importar comprobantes.
             </p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[400px]">
               <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3 text-left">Nombre</th>
@@ -486,6 +489,7 @@ export default function SettingsPage() {
                 {cuentas.map((c) => <CuentaFila key={c.id} cuenta={c} />)}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </section>
@@ -501,7 +505,8 @@ export default function SettingsPage() {
           {usuarios.length === 0 ? (
             <p className="px-6 py-8 text-center text-sm text-ink-400">No hay usuarios registrados.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[440px]">
               <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3 text-left">Usuario</th>
@@ -516,6 +521,7 @@ export default function SettingsPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
@@ -552,7 +558,8 @@ export default function SettingsPage() {
           {socios.length === 0 ? (
             <p className="px-6 py-8 text-center text-sm text-ink-400">No hay socios configurados.</p>
           ) : (
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[360px]">
               <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3 text-left">Nombre</th>
@@ -573,6 +580,7 @@ export default function SettingsPage() {
                 )}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </section>}

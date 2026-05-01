@@ -48,18 +48,17 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md animate-slide-up">
         {/* Brand top */}
         <div className="mb-12 text-center">
-          <div className="mb-4 inline-block">
-            <span className="font-mono text-4xl">
+          <div className="mb-4 flex items-center justify-center gap-3">
+            <span className="font-mono text-4xl select-none">
               <span className="font-light text-accent-500">/</span>
-              <span className="font-medium tracking-tight text-ink-100">L</span>
+              <span className="font-medium tracking-tight text-ink-100">root</span>
             </span>
+            <div className="h-8 w-px bg-ink-700" />
+            <div className="text-left">
+              <div className="text-base font-medium leading-tight text-ink-100">Los Limones Creativos</div>
+              <div className="text-[10px] uppercase tracking-widest text-ink-500">Sistema de gestión</div>
+            </div>
           </div>
-          <h1 className="text-2xl font-medium tracking-tight text-ink-100">
-            Los Limones Creativos
-          </h1>
-          <p className="mt-1 text-xs uppercase tracking-[0.2em] text-ink-500">
-            Sistema de gestión
-          </p>
         </div>
 
         {/* Form card */}

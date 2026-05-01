@@ -180,7 +180,8 @@ export default function DashboardPage() {
         <>
           <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Rentabilidad por socio</p>
           <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[480px]">
               <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3 text-left">Socio</th>
@@ -218,6 +219,7 @@ export default function DashboardPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         </>
       )}

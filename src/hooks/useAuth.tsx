@@ -18,6 +18,8 @@ interface RolData {
   nombre: string
 }
 
+const ROL_VACIO: RolData = { rol: null, activo: false, nombre: '' }
+
 interface AuthContextValue {
   session: Session | null
   user:    User | null
@@ -32,41 +34,48 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 async function fetchRol(userId: string): Promise<RolData> {
-  const { data } = await db
-    .from('user_roles')
-    .select('rol, activo, nombre')
-    .eq('user_id', userId)
-    .maybeSingle()
-  return {
-    rol:    data?.rol    ?? null,
-    activo: data?.activo ?? false,
-    nombre: data?.nombre ?? '',
+  try {
+    const res = await db
+      .from('user_roles')
+      .select('rol, activo, nombre')
+      .eq('user_id', userId)
+      .maybeSingle()
+    const data = res?.data
+    return {
+      rol:    data?.rol    ?? null,
+      activo: data?.activo ?? false,
+      nombre: data?.nombre ?? '',
+    }
+  } catch (err) {
+    console.error('[fetchRol] error:', err)
+    return ROL_VACIO
   }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession]   = useState<Session | null>(null)
-  const [rolData, setRolData]   = useState<RolData>({ rol: null, activo: false, nombre: '' })
-  const [loading, setLoading]   = useState(true)
+  const [session, setSession] = useState<Session | null>(null)
+  const [rolData, setRolData] = useState<RolData>(ROL_VACIO)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      if (session?.user) setRolData(await fetchRol(session.user.id))
-      setLoading(false)
-    })
+    // Safety net: si algo falla en la red, no dejamos el spinner trabado para siempre
+    const fallback = setTimeout(() => setLoading(false), 8000)
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      if (session?.user) {
-        setRolData(await fetchRol(session.user.id))
-      } else {
-        setRolData({ rol: null, activo: false, nombre: '' })
+    // onAuthStateChange dispara INITIAL_SESSION en el primer render con la sesión actual
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, newSession) => {
+        setSession(newSession)
+        if (newSession?.user) {
+          setRolData(await fetchRol(newSession.user.id))
+        } else {
+          setRolData(ROL_VACIO)
+        }
+        clearTimeout(fallback)
+        setLoading(false)
       }
-      setLoading(false)
-    })
+    )
 
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); clearTimeout(fallback) }
   }, [])
 
   const signIn = async (email: string, password: string) => {

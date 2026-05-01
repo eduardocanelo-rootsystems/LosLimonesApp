@@ -289,8 +289,8 @@ export default function PresupuestoFormPage() {
     <div className="space-y-6 pb-16">
       {/* Header */}
       <div className="sticky top-16 z-30 -mx-6 border-b border-ink-800 bg-ink-950/90 px-6 py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               onClick={() => navigate('/presupuestos')}
@@ -313,7 +313,7 @@ export default function PresupuestoFormPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={estado}
               onChange={(e) => setEstado(e.target.value as EstadoPresupuesto)}
@@ -325,7 +325,7 @@ export default function PresupuestoFormPage() {
             </select>
             {esAprobado && (
               <div className="flex items-center gap-1.5">
-                <label className="text-xs text-ink-400 whitespace-nowrap">Fecha aprobación</label>
+                <label className="hidden text-xs text-ink-400 whitespace-nowrap sm:block">Fecha aprobación</label>
                 <input
                   type="date"
                   value={fechaAprobacion}
