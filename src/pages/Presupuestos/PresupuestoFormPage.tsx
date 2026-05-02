@@ -419,6 +419,7 @@ export default function PresupuestoFormPage() {
                       form={contratoToFormValues(contrato ?? null, presupuesto)}
                       firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
                       firmaCliente={contrato?.firma_cliente_base64 ?? null}
+                      firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
                     />
                   }
                   fileName={`${presupuesto.numero ?? 'presupuesto'}-contrato.pdf`}

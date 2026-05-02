@@ -9,18 +9,20 @@ export function PresupuestoContratoPDFDocument({
   form,
   firmaContratista,
   firmaCliente,
+  firmaUrl,
 }: {
   presupuesto: PresupuestoCompleto
   form: ContratoFormValues
   firmaContratista?: string | null
   firmaCliente?: string | null
+  firmaUrl?: string
 }) {
   return (
     <Document
       title={`${presupuesto.numero ?? 'Presupuesto'} · Contrato`}
       author="Los Limones Creativos"
     >
-      <PresupuestoPDFPage presupuesto={presupuesto} />
+      <PresupuestoPDFPage presupuesto={presupuesto} firmaUrl={firmaUrl} />
       {presupuesto.fotos?.length > 0 && (
         <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
       )}
