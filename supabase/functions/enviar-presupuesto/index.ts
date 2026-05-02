@@ -66,8 +66,9 @@ serve(async (req) => {
     const data = await res.json()
 
     if (!res.ok) {
-      return new Response(JSON.stringify({ error: data }), {
-        status: res.status,
+      const mensaje = data?.message ?? data?.name ?? JSON.stringify(data)
+      return new Response(JSON.stringify({ ok: false, error: mensaje }), {
+        status: 200,
         headers: { ...CORS, 'Content-Type': 'application/json' },
       })
     }

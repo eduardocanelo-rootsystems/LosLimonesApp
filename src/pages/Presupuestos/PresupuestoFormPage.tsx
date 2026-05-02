@@ -247,7 +247,7 @@ export default function PresupuestoFormPage() {
       bytes.forEach((b) => { binary += String.fromCharCode(b) })
       const pdfBase64 = btoa(binary)
 
-      const { error } = await supabase.functions.invoke('enviar-presupuesto', {
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('enviar-presupuesto', {
         body: {
           email:         emailDest.trim(),
           pdfBase64,
@@ -255,7 +255,8 @@ export default function PresupuestoFormPage() {
           nombreCliente: presupuesto.cliente_razon_social ?? '',
         },
       })
-      if (error) throw new Error(error.message ?? JSON.stringify(error))
+      if (fnError) throw new Error(fnError.message ?? JSON.stringify(fnError))
+      if (fnData?.ok === false) throw new Error(fnData.error ?? 'Error desconocido de Resend')
       toast.success(`Presupuesto enviado a ${emailDest.trim()}`)
       setEmailModal(false)
     } catch (err) {
