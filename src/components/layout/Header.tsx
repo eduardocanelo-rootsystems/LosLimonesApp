@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Package, Receipt,
   ChevronDown, Settings as SettingsIcon, LogOut, Menu, X,
-  Wrench, Users, ShoppingCart, ArrowLeftRight, TrendingUp,
+  Wrench, Users, ShoppingCart, ArrowLeftRight, TrendingUp, ClipboardList,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
@@ -45,6 +45,12 @@ const NAV: NavEntry[] = [
     label: 'Presupuestos',
     icon:  FileText,
     roles: ['superadmin', 'admin', 'socio', 'empleado'],
+  },
+  {
+    path:  '/relevamientos',
+    label: 'Relevamientos',
+    icon:  ClipboardList,
+    roles: ['superadmin', 'admin', 'empleado'],
   },
   {
     label: 'Catálogo',

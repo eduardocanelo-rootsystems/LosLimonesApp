@@ -18,6 +18,8 @@ import DashboardPage from '@/pages/Dashboard/DashboardPage'
 import MovimientosPage from '@/pages/Movimientos/MovimientosPage'
 import RendimientosPage from '@/pages/Materiales/RendimientosPage'
 import RendimientosManoObraPage from '@/pages/ManoDeObra/RendimientosManoObraPage'
+import RelevamientosPage from '@/pages/Relevamientos/RelevamientosPage'
+import RelevamientoFormPage from '@/pages/Relevamientos/RelevamientoFormPage'
 
 const FINANCIERO  = ['superadmin', 'admin', 'socio']  as const
 const OPERATIVO   = ['superadmin', 'admin', 'empleado'] as const
@@ -96,6 +98,18 @@ export const router = createBrowserRouter([
       {
         path: 'movimientos',
         element: <RequiereRol roles={[...FINANCIERO]}><MovimientosPage /></RequiereRol>,
+      },
+      {
+        path: 'relevamientos',
+        element: <RequiereRol roles={[...TODOS]}><RelevamientosPage /></RequiereRol>,
+      },
+      {
+        path: 'relevamientos/nuevo',
+        element: <RequiereRol roles={[...TODOS]}><RelevamientoFormPage /></RequiereRol>,
+      },
+      {
+        path: 'relevamientos/:id',
+        element: <RequiereRol roles={[...TODOS]}><RelevamientoFormPage /></RequiereRol>,
       },
       {
         path: 'settings',

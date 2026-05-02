@@ -20,6 +20,7 @@ export function usePresupuestos() {
       const { data, error } = await supabase
         .from('presupuestos')
         .select('*')
+        .neq('estado', 'relevamiento')
         .order('fecha_creacion', { ascending: false })
 
       if (error) throw error
