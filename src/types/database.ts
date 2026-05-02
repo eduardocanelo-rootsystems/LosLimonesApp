@@ -211,7 +211,7 @@ export type Database = {
         Row: {
           id: string
           numero: string | null
-          estado: 'emitido' | 'aprobado' | 'finalizado'
+          estado: 'emitido' | 'aprobado' | 'finalizado' | 'rechazado' | 'relevamiento'
           cliente_razon_social: string | null
           cliente_cuit: string | null
           cliente_telefono: string | null
@@ -245,7 +245,7 @@ export type Database = {
         Insert: {
           id?: string
           numero?: string | null
-          estado?: 'emitido' | 'aprobado' | 'finalizado'
+          estado?: 'emitido' | 'aprobado' | 'finalizado' | 'rechazado' | 'relevamiento'
           cliente_razon_social?: string | null
           cliente_cuit?: string | null
           cliente_telefono?: string | null
@@ -279,7 +279,7 @@ export type Database = {
         Update: {
           id?: string
           numero?: string | null
-          estado?: 'emitido' | 'aprobado' | 'finalizado'
+          estado?: 'emitido' | 'aprobado' | 'finalizado' | 'rechazado' | 'relevamiento'
           cliente_razon_social?: string | null
           cliente_cuit?: string | null
           cliente_telefono?: string | null
@@ -447,6 +447,41 @@ export type Database = {
           },
         ]
       }
+      presupuesto_fotos: {
+        Row: {
+          id: string
+          presupuesto_id: string
+          orden: number
+          imagen_base64: string
+          nombre: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          presupuesto_id: string
+          orden?: number
+          imagen_base64: string
+          nombre?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          presupuesto_id?: string
+          orden?: number
+          imagen_base64?: string
+          nombre?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'presupuesto_fotos_presupuesto_id_fkey'
+            columns: ['presupuesto_id']
+            isOneToOne: false
+            referencedRelation: 'presupuestos'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       contratos: {
         Row: {
           id: string
@@ -578,14 +613,7 @@ export type PresupuestoServicioItem = Database['public']['Tables']['presupuesto_
 export type PresupuestoMaterialItem = Database['public']['Tables']['presupuesto_materiales']['Row']
 export type PresupuestoManoObraItem = Database['public']['Tables']['presupuesto_mano_obra']['Row']
 
-export interface PresupuestoFoto {
-  id: string
-  presupuesto_id: string
-  orden: number
-  imagen_base64: string
-  nombre: string | null
-  created_at: string
-}
+export type PresupuestoFoto = Database['public']['Tables']['presupuesto_fotos']['Row']
 
 export interface PresupuestoCompleto extends Presupuesto {
   servicios: PresupuestoServicioItem[]
