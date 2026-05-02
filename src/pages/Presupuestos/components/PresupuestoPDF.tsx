@@ -177,10 +177,10 @@ const s = StyleSheet.create({
   colPrecioM2: { flex: 2, textAlign: 'right' },
   colM2: { flex: 1.5, textAlign: 'right' },
   colSubtotal: { flex: 2, textAlign: 'right' },
-  colMatNombre: { flex: 3 },
-  colUnidad: { flex: 1.5, textAlign: 'right' },
+  colMatNombre: { flex: 5 },
+  colUnidad: { flex: 2, textAlign: 'right' },
   colPrecio: { flex: 2, textAlign: 'right' },
-  colCantidad: { flex: 1.5, textAlign: 'right' },
+  colCantidad: { flex: 2, textAlign: 'right' },
   colMatSubtotal: { flex: 2, textAlign: 'right' },
 
   totalesBox: {
@@ -358,17 +358,13 @@ function TablaMateriales({ items, esExtra }: { items: PresupuestoCompleto['mater
       <View style={header}>
         <Text style={[th, s.colMatNombre]}>MATERIAL</Text>
         <Text style={[th, s.colUnidad]}>UNIDAD</Text>
-        <Text style={[th, s.colPrecio]}>PRECIO</Text>
         <Text style={[th, s.colCantidad]}>CANT.</Text>
-        <Text style={[th, s.colMatSubtotal]}>SUBTOTAL</Text>
       </View>
       {items.map((mat, i) => (
         <View key={mat.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
           <Text style={[s.tdText, s.colMatNombre]}>{mat.nombre_snapshot}</Text>
           <Text style={[s.tdMono, s.colUnidad, s.tdRight]}>{mat.unidad_snapshot}</Text>
-          <Text style={[s.tdMono, s.colPrecio, s.tdRight]}>{fmt(mat.precio_snapshot)}</Text>
           <Text style={[s.tdMono, s.colCantidad, s.tdRight]}>{mat.cantidad}</Text>
-          <Text style={[s.tdMono, s.colMatSubtotal, s.tdRight, s.tdBold]}>{fmt(mat.subtotal)}</Text>
         </View>
       ))}
     </View>
