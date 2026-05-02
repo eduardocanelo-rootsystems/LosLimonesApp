@@ -1,4 +1,4 @@
-import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { PresupuestoCompleto, PresupuestoFoto } from '@/types/database'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -271,6 +271,21 @@ const s = StyleSheet.create({
   },
   obsText: { fontSize: 8.5, color: C.gray700, lineHeight: 1.5 },
 
+  firmaBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 0.5,
+    borderColor: C.accent,
+    borderRadius: 4,
+  },
+  firmaLabel: { fontSize: 8.5, color: C.gray700 },
+  firmaLink:  { fontSize: 8.5, color: C.accent, textDecoration: 'underline' },
+
   footer: {
     position: 'absolute',
     bottom: 20,
@@ -413,7 +428,7 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
 
 // ─── Página del presupuesto (exportada para uso en documento combinado) ───────
 
-export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
+export function PresupuestoPDFPage({ presupuesto, firmaUrl }: { presupuesto: PresupuestoCompleto; firmaUrl?: string }) {
   const serviciosOrig = presupuesto.servicios.filter((s) => !s.es_adicional)
   const serviciosExtra = presupuesto.servicios.filter((s) => s.es_adicional)
   const materialesOrig = presupuesto.materiales.filter((m) => !m.es_adicional)
@@ -615,6 +630,13 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
         </View>
       )}
 
+      {firmaUrl && presupuesto.estado === 'aprobado' && (
+        <View style={s.firmaBox} wrap={false}>
+          <Text style={s.firmaLabel}>Firmá el contrato en línea:</Text>
+          <Link src={firmaUrl} style={s.firmaLink}>{firmaUrl}</Link>
+        </View>
+      )}
+
       <View style={s.footer} fixed>
         <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura y fachadas</Text>
         <Text
@@ -672,10 +694,10 @@ export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCo
 
 // ─── Documento standalone ────────────────────────────────────────────────────
 
-export function PresupuestoPDFDocument({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
+export function PresupuestoPDFDocument({ presupuesto, firmaUrl }: { presupuesto: PresupuestoCompleto; firmaUrl?: string }) {
   return (
     <Document title={`Presupuesto ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
-      <PresupuestoPDFPage presupuesto={presupuesto} />
+      <PresupuestoPDFPage presupuesto={presupuesto} firmaUrl={firmaUrl} />
       {presupuesto.fotos?.length > 0 && (
         <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
       )}
