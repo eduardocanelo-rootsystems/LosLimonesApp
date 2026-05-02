@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, CheckCircle, Copy, FileDown, Loader2, PenLine, Save } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Copy, FileDown, Loader2, PenLine, Save, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { cn } from '@/lib/utils'
 import { usePresupuesto } from '@/pages/Presupuestos/usePresupuestos'
-import { useContrato, useGuardarContrato } from './useContrato'
+import { useContrato, useGuardarContrato, useAnularFirmaCliente } from './useContrato'
 import { useFirmaContratista, useGuardarFirmaContratista } from '@/hooks/useConfiguracion'
 import { SignatureCanvas } from '@/components/SignatureCanvas'
 import {
@@ -72,11 +72,13 @@ export default function ContratoFormPage() {
 
   const { data: presupuesto, isLoading: loadingPres } = usePresupuesto(id)
   const { data: contrato, isLoading: loadingContrato } = useContrato(id)
-  const guardar = useGuardarContrato()
+  const guardar      = useGuardarContrato()
+  const anularFirma  = useAnularFirmaCliente()
   const { data: firmaGuardada } = useFirmaContratista()
   const guardarFirma = useGuardarFirmaContratista()
 
   const [mostrarCanvasFirma, setMostrarCanvasFirma] = useState(false)
+  const fileInputFirmaRef = useRef<HTMLInputElement>(null)
 
   const initialized = useRef(false)
 
@@ -219,6 +221,32 @@ export default function ContratoFormPage() {
     } catch {
       toast.error('Error al guardar la firma.')
     }
+  }
+
+  const handleSubirImagenFirma = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width  = 420
+        canvas.height = 150
+        const ctx = canvas.getContext('2d')!
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(0, 0, 420, 150)
+        const scale = Math.min(420 / img.width, 150 / img.height)
+        const x = (420 - img.width  * scale) / 2
+        const y = (150 - img.height * scale) / 2
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
+        handleGuardarFirma(canvas.toDataURL('image/png'))
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
+    if (fileInputFirmaRef.current) fileInputFirmaRef.current.value = ''
   }
 
   const copiarLinkFirma = () => {
@@ -644,8 +672,22 @@ export default function ContratoFormPage() {
                   className="flex items-center gap-1.5 text-xs text-ink-400 hover:text-ink-200 transition-colors"
                 >
                   <PenLine className="h-3.5 w-3.5" />
-                  Cambiar firma
+                  Dibujar nueva firma
                 </button>
+                <label className="flex cursor-pointer items-center gap-1.5 text-xs text-ink-400 hover:text-ink-200 transition-colors">
+                  {guardarFirma.isPending
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Upload className="h-3.5 w-3.5" />
+                  }
+                  Subir imagen de firma
+                  <input
+                    ref={fileInputFirmaRef}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleSubirImagenFirma}
+                  />
+                </label>
               </div>
             </div>
           ) : (
@@ -697,6 +739,14 @@ export default function ContratoFormPage() {
                   </div>
                 </div>
               )}
+              <button
+                type="button"
+                onClick={() => { if (id) anularFirma.mutate(id) }}
+                disabled={anularFirma.isPending}
+                className="flex items-center gap-1.5 text-xs text-ink-500 hover:text-danger transition-colors disabled:opacity-50"
+              >
+                {anularFirma.isPending ? '…' : '× Anular firma del cliente'}
+              </button>
             </div>
           ) : (
             <div className="space-y-3">

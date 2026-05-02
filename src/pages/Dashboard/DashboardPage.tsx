@@ -1,19 +1,136 @@
-import { useState, useMemo } from 'react'
-import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown } from 'lucide-react'
+import { useState, useMemo, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark } from 'lucide-react'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PeriodoSelector, getRangoFechas, type Periodo } from '@/components/shared/PeriodoSelector'
 import { useFacturasEmitidas } from '@/hooks/useVentas'
 import { useComprasRecibidas } from '@/hooks/useCompras'
 import { usePresupuestos } from '@/pages/Presupuestos/usePresupuestos'
-import { useMovimientos, usePresupuestosRentabilidad } from '@/hooks/useMovimientos'
+import { useContratosResumen } from '@/pages/Contratos/useContrato'
+import { diasHastaVencimiento } from '@/lib/utils'
+import { useMovimientos, usePresupuestosRentabilidad, useManoObraStats } from '@/hooks/useMovimientos'
+import { useCobrosPeriodo } from '@/hooks/useCobros'
 import { useSocios } from '@/hooks/useSocios'
 import { esNotaCredito } from '@/lib/arcaParser'
 import { ResumenContadorPDF } from './ResumenContadorPDF'
 import type { ResumenContadorData } from './ResumenContadorPDF'
+import type { Presupuesto } from '@/types/database'
 
 function fmtImporte(n: number) {
   return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function ContratosPendientesFirma({
+  contratos,
+  presupuestos,
+}: {
+  contratos:    import('@/pages/Contratos/useContrato').ContratoResumen[]
+  presupuestos: Presupuesto[]
+}) {
+  const pendientes = contratos.filter((c) => !c.firmado_cliente && c.token_firma)
+
+  if (pendientes.length === 0) return null
+
+  const presupuestoMap = new Map(presupuestos.map((p) => [p.id, p]))
+
+  return (
+    <>
+      <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">
+        Contratos pendientes de firma del cliente
+      </p>
+      <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden mb-6">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[400px]">
+            <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
+              <tr>
+                <th className="px-4 py-3 text-left">Número</th>
+                <th className="px-4 py-3 text-left">Cliente</th>
+                <th className="px-4 py-3 text-right">Estado</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-800">
+              {pendientes.map((c) => {
+                const p = presupuestoMap.get(c.presupuesto_id)
+                return (
+                  <tr key={c.presupuesto_id} className="text-ink-300 hover:bg-ink-800/40 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-accent-400">
+                      <Link to={`/presupuestos/${c.presupuesto_id}/contrato`} className="hover:underline">
+                        {p?.numero ?? '—'}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-ink-200">
+                      {c.nombre_comitente || p?.cliente_razon_social || <span className="text-ink-500">Sin cliente</span>}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-xs font-medium text-amber-400">Pendiente de firma</span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  )
+}
+
+function PresupuestosPorVencer({ presupuestos }: { presupuestos: Presupuesto[] }) {
+  const emitidos = presupuestos
+    .filter((p) => p.estado === 'emitido')
+    .map((p) => ({ ...p, dias: diasHastaVencimiento(p.fecha_creacion) }))
+    .sort((a, b) => a.dias - b.dias)
+
+  if (emitidos.length === 0) return null
+
+  return (
+    <>
+      <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">
+        Seguimiento de presupuestos emitidos
+      </p>
+      <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden mb-6">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[400px]">
+            <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
+              <tr>
+                <th className="px-4 py-3 text-left">Número</th>
+                <th className="px-4 py-3 text-left">Cliente</th>
+                <th className="px-4 py-3 text-right">Vencimiento</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-ink-800">
+              {emitidos.map((p) => {
+                const vencido   = p.dias <= 0
+                const urgente   = p.dias > 0 && p.dias <= 3
+                const proximo   = p.dias > 3 && p.dias <= 7
+                const etiqueta  = vencido ? 'Vencido' : `${p.dias}d`
+                const colorText = vencido || urgente ? 'text-red-400' : proximo ? 'text-amber-400' : 'text-ink-400'
+                return (
+                  <tr key={p.id} className="text-ink-300 hover:bg-ink-800/40 transition-colors">
+                    <td className="px-4 py-3 font-mono text-xs text-accent-400">
+                      <Link to={`/presupuestos/${p.id}`} className="hover:underline">
+                        {p.numero ?? '—'}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-ink-200">
+                      {p.cliente_razon_social || <span className="text-ink-500">Sin cliente</span>}
+                    </td>
+                    <td className={`px-4 py-3 text-right font-mono text-xs font-semibold ${colorText}`}>
+                      <span className="flex items-center justify-end gap-1">
+                        {(vencido || urgente) && <AlertTriangle className="h-3 w-3" />}
+                        {etiqueta}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
+  )
 }
 
 function KpiCard({ label, value, sub, icon: Icon, color }: {
@@ -31,32 +148,110 @@ function KpiCard({ label, value, sub, icon: Icon, color }: {
   )
 }
 
+function CapitalCard({ pct, capital, onChangePct }: {
+  pct:         number
+  capital:     number
+  onChangePct: (v: number) => void
+}) {
+  const [editando,  setEditando]  = useState(false)
+  const [valorEdit, setValorEdit] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const iniciarEdicion = () => {
+    setValorEdit(String(pct))
+    setEditando(true)
+    setTimeout(() => inputRef.current?.select(), 0)
+  }
+
+  const guardar = (valor: string) => {
+    const v = parseFloat(valor.replace(',', '.'))
+    if (!isNaN(v) && v >= 0 && v <= 100) onChangePct(v)
+    setEditando(false)
+  }
+
+  return (
+    <div className="rounded-xl border border-violet-500/30 bg-ink-900 p-4">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-ink-400 uppercase tracking-wider">Capital</span>
+        <Landmark className="h-4 w-4 text-violet-400" />
+      </div>
+      <p className="mt-2 text-2xl font-semibold text-ink-100">${fmtImporte(capital)}</p>
+      <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-500">
+        {editando ? (
+          <>
+            <input
+              ref={inputRef}
+              type="text"
+              value={valorEdit}
+              onChange={(e) => setValorEdit(e.target.value)}
+              onBlur={() => guardar(valorEdit)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') guardar(valorEdit)
+                if (e.key === 'Escape') setEditando(false)
+              }}
+              className="w-12 rounded border border-violet-500 bg-ink-900 px-1 py-0.5 text-center font-mono text-xs text-ink-100 focus:outline-none"
+            />
+            <span>% del resultado</span>
+          </>
+        ) : (
+          <button
+            onClick={iniciarEdicion}
+            className="flex items-center gap-1 transition-colors hover:text-ink-300"
+            title="Clic para editar el porcentaje"
+          >
+            <span className="font-mono text-violet-400">{pct}%</span>
+            <span>del resultado bruto</span>
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
   const [periodo, setPeriodo] = useState<Periodo>('mes_actual')
   const rango                 = getRangoFechas(periodo)
 
+  const [capitalPct, setCapitalPctState] = useState<number>(() => {
+    const stored = localStorage.getItem('capital_pct')
+    return stored !== null ? Number(stored) : 10
+  })
+  const setCapitalPct = (v: number) => {
+    setCapitalPctState(v)
+    localStorage.setItem('capital_pct', String(v))
+  }
+
   const { data: facturas       = [] } = useFacturasEmitidas({ desde: rango.desde, hasta: rango.hasta })
   const { data: compras        = [] } = useComprasRecibidas({ desde: rango.desde, hasta: rango.hasta })
-  const { data: presupuestos   = [] } = usePresupuestos()
+  const { data: presupuestos       = [] } = usePresupuestos()
+  const { data: contratosResumen   = [] } = useContratosResumen()
   const { data: movimientos    = [] } = useMovimientos(rango)
   const { data: presupRent     = [] } = usePresupuestosRentabilidad(rango)
+  const { data: cobros         = [] } = useCobrosPeriodo(rango)
+  const { data: moStats            } = useManoObraStats(rango)
   const { data: socios         = [] } = useSocios()
 
-  // Ventas
-  const facturasSolo   = facturas.filter((f) => !esNotaCredito(f.tipo_comprobante) && !f.anulada)
+  // Ventas — todasFacturas incluye las anuladas por NC para evitar doble deducción
+  const todasFacturas  = facturas.filter((f) => !esNotaCredito(f.tipo_comprobante))
+  const facturasSolo   = todasFacturas.filter((f) => !f.anulada)  // solo activas: cobrado/pendiente/conteos
   const ncsEmitidas    = facturas.filter((f) =>  esNotaCredito(f.tipo_comprobante))
-  const totalFacturado = facturasSolo.reduce((s, f) => s + f.imp_total, 0)
+  const totalFacturado = todasFacturas.reduce((s, f) => s + f.imp_total, 0)  // bruto incl. anuladas por NC
   const totalNcEmitido = ncsEmitidas.reduce((s, f) => s + f.imp_total, 0)
   const totalCobrado   = facturasSolo.filter((f) => f.fecha_cobro).reduce((s, f) => s + f.imp_total, 0)
   const pendienteCobro = facturasSolo.filter((f) => !f.fecha_cobro).reduce((s, f) => s + f.imp_total, 0)
 
-  // Compras
-  const comprasSolo   = compras.filter((c) => !esNotaCredito(c.tipo_comprobante) && !c.anulada && c.es_negocio)
-  const totalCompras  = comprasSolo.reduce((s, c) => s + c.imp_total, 0)
+  // Compras — todasCompras incluye anuladas; ncsCompras se resta para dar neto correcto
+  const todasCompras   = compras.filter((c) => !esNotaCredito(c.tipo_comprobante) && c.es_negocio)
+  const comprasSolo    = todasCompras.filter((c) => !c.anulada)  // solo activas: conteos
+  const ncsCompras     = compras.filter((c) =>  esNotaCredito(c.tipo_comprobante) && c.es_negocio)
+  const totalNcCompras = ncsCompras.reduce((s, c) => s + c.imp_total, 0)
+  const totalCompras   = todasCompras.reduce((s, c) => s + c.imp_total, 0) - totalNcCompras
 
   // Resultado bruto: facturado neto (- NC) - compras del negocio
   const facturadoNeto = totalFacturado - totalNcEmitido
   const resultado     = facturadoNeto - totalCompras
+  const capital       = resultado > 0 ? resultado * capitalPct / 100 : 0
+  const utilidadNeta  = resultado - capital
 
   // Presupuestos del período (client-side)
   const presupPeriodo = presupuestos.filter((p) => {
@@ -69,11 +264,20 @@ export default function DashboardPage() {
   const sinFactura       = presupPeriodo.filter((p) => !p.factura_asociada_id && p.estado !== 'emitido').length
 
   // Rentabilidad
-  const totalServicios   = presupRent.reduce((s, p) => s + p.total_servicios, 0)
-  const ingresosExtra    = movimientos.filter((m) => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
-  const egresosGenerales = movimientos.filter((m) => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0)
-  const poolNeto         = totalServicios + ingresosExtra - egresosGenerales
-  const sociosActivos    = socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+  // Pool = sum of (cobro.monto × services_ratio) — only services portion counts as profit
+  const poolCobros = cobros.reduce((s, c) => {
+    const p = c.presupuesto
+    if (!p.importe_servicios || !p.importe_total || p.importe_total === 0) return s
+    return s + c.monto * (p.importe_servicios / p.importe_total)
+  }, 0)
+  const ingresosExtra      = movimientos.filter((m) => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
+  const egresosGenerales   = movimientos.filter((m) => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0)
+  const poolNeto           = poolCobros + ingresosExtra - egresosGenerales
+  // Presupuestado = sum of importe_servicios of aprobados/finalizados in period
+  const totalPresupuestado = presupRent.reduce((s, p) => s + (p.importe_servicios ?? 0), 0)
+  // Cobrado bruto (monto total cobrado, all cuotas in period)
+  const totalCobrosBruto   = cobros.reduce((s, c) => s + c.monto, 0)
+  const sociosActivos      = socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
 
   const pdfData = useMemo<ResumenContadorData>(() => ({
     periodo,
@@ -91,12 +295,12 @@ export default function DashboardPage() {
     poolNeto,
     socios: sociosActivos.map((soc) => {
       const ventaNeta  = soc.cuit
-        ? facturasSolo.filter((f) => f.cuit_emisor === soc.cuit).reduce((a, f) => a + f.imp_total, 0)
+        ? todasFacturas.filter((f) => f.cuit_emisor === soc.cuit).reduce((a, f) => a + f.imp_total, 0)
           - ncsEmitidas.filter((f) => f.cuit_emisor === soc.cuit).reduce((a, f) => a + f.imp_total, 0)
         : 0
       const compraNeta = soc.cuit
-        ? comprasSolo.filter((c) => c.cuit_receptor === soc.cuit).reduce((a, c) => a + c.imp_total, 0)
-          - compras.filter((c) => esNotaCredito(c.tipo_comprobante) && c.cuit_receptor === soc.cuit).reduce((a, c) => a + c.imp_total, 0)
+        ? todasCompras.filter((c) => c.cuit_receptor === soc.cuit).reduce((a, c) => a + c.imp_total, 0)
+          - ncsCompras.filter((c) => c.cuit_receptor === soc.cuit).reduce((a, c) => a + c.imp_total, 0)
         : 0
       const poolBruto = poolNeto * (soc.porcentaje / 100)
       const retiros   = movimientos.filter((m) => m.tipo === 'retiro' && m.socio_id === soc.id).reduce((a, m) => a + m.monto, 0)
@@ -166,7 +370,7 @@ export default function DashboardPage() {
 
       {/* Compras y resultado */}
       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-500">Compras y resultado</p>
-      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard
           label="Compras del negocio"
           value={`$${fmtImporte(totalCompras)}`}
@@ -181,12 +385,17 @@ export default function DashboardPage() {
           icon={DollarSign}
           color="text-accent-400"
         />
+        <CapitalCard
+          pct={capitalPct}
+          capital={capital}
+          onChangePct={setCapitalPct}
+        />
         <KpiCard
-          label="Resultado bruto"
-          value={`$${fmtImporte(resultado)}`}
-          sub="Neto − compras negocio"
+          label="Utilidad neta"
+          value={`$${fmtImporte(utilidadNeta)}`}
+          sub={`Resultado − capital ${capitalPct}%`}
           icon={DollarSign}
-          color={resultado >= 0 ? 'text-green-400' : 'text-red-400'}
+          color={utilidadNeta >= 0 ? 'text-green-400' : 'text-red-400'}
         />
       </div>
 
@@ -223,18 +432,120 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Contratos pendientes de firma */}
+      <ContratosPendientesFirma contratos={contratosResumen} presupuestos={presupuestos} />
+
+      {/* Presupuestos por vencer */}
+      <PresupuestosPorVencer presupuestos={presupuestos} />
+
+      {/* Rentabilidad */}
+      <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Rentabilidad (presupuestos cobrados)</p>
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <KpiCard
+          label="Presupuestado en servicios"
+          value={`$${fmtImporte(totalPresupuestado)}`}
+          sub={`${presupRent.length} presupuestos`}
+          icon={FileText}
+          color="text-accent-400"
+        />
+        <KpiCard
+          label="Cobrado (total cuotas)"
+          value={`$${fmtImporte(totalCobrosBruto)}`}
+          sub={`${cobros.length} cobros registrados`}
+          icon={CheckCircle}
+          color="text-green-400"
+        />
+        <KpiCard
+          label="Pool neto servicios"
+          value={`$${fmtImporte(poolNeto)}`}
+          sub="cobros servicios + ingresos − egresos"
+          icon={DollarSign}
+          color={poolNeto >= 0 ? 'text-violet-400' : 'text-red-400'}
+        />
+      </div>
+
+      {/* Mano de obra por tipo */}
+      {moStats && moStats.byTipo.length > 0 && (
+        <>
+          <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">
+            Mano de obra — distribución por tipo
+          </p>
+          <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
+            {/* KPIs de cabecera */}
+            <div className="flex flex-wrap gap-6 border-b border-ink-800 px-5 py-4">
+              <div>
+                <p className="text-xs text-ink-500">Costo total MO</p>
+                <p className="mt-0.5 font-mono text-lg font-semibold text-ink-100">
+                  ${fmtImporte(moStats.totalMO)}
+                </p>
+              </div>
+              {moStats.totalImporte > 0 && (
+                <div>
+                  <p className="text-xs text-ink-500">% sobre total presupuestado</p>
+                  <p className="mt-0.5 font-mono text-lg font-semibold text-amber-400">
+                    {((moStats.totalMO / moStats.totalImporte) * 100).toFixed(1)}%
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-ink-500">Presupuestos incluidos</p>
+                <p className="mt-0.5 font-mono text-lg font-semibold text-ink-300">
+                  {moStats.cantPresupuestos}
+                </p>
+              </div>
+            </div>
+
+            {/* Barras por tipo */}
+            <div className="divide-y divide-ink-800">
+              {moStats.byTipo.map((t) => {
+                const pct = moStats.totalMO > 0 ? (t.totalCosto / moStats.totalMO) * 100 : 0
+                return (
+                  <div key={t.tipo} className="px-5 py-3">
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <span className="text-sm text-ink-200">{t.tipo}</span>
+                      <div className="flex items-baseline gap-3">
+                        <span className="font-mono text-xs text-ink-500">
+                          {t.cantPresupuestos} presup.
+                        </span>
+                        <span className="font-mono text-sm font-semibold text-ink-100">
+                          ${fmtImporte(t.totalCosto)}
+                        </span>
+                        <span className="w-10 text-right font-mono text-xs text-ink-500">
+                          {pct.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-ink-800">
+                      <div
+                        className="h-full rounded-full bg-amber-500/70 transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Rentabilidad por socio */}
       {sociosActivos.length > 0 && (
         <>
-          <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Rentabilidad por socio</p>
+          <div className="mb-3 flex items-baseline justify-between">
+            <p className="text-xs font-medium uppercase tracking-wider text-ink-500">Distribución por socio</p>
+            <span className="text-xs text-ink-500">
+              Pool neto:&nbsp;
+              <span className="font-mono font-semibold text-ink-300">${fmtImporte(poolNeto)}</span>
+            </span>
+          </div>
           <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
             <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[480px]">
+            <table className="w-full text-sm min-w-[420px]">
               <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3 text-left">Socio</th>
                   <th className="px-4 py-3 text-right">%</th>
-                  <th className="px-4 py-3 text-right">Pool neto</th>
                   <th className="px-4 py-3 text-right">Bruto</th>
                   <th className="px-4 py-3 text-right">Retiros</th>
                   <th className="px-4 py-3 text-right">Neto</th>
@@ -254,7 +565,6 @@ export default function DashboardPage() {
                         {socio.nombre}
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-ink-400">{socio.porcentaje}%</td>
-                      <td className="px-4 py-3 text-right font-mono text-ink-400">${fmtImporte(poolNeto)}</td>
                       <td className="px-4 py-3 text-right font-mono text-accent-400">${fmtImporte(bruto)}</td>
                       <td className="px-4 py-3 text-right font-mono text-red-400">
                         {retiros > 0 ? `−$${fmtImporte(retiros)}` : '—'}
@@ -265,6 +575,26 @@ export default function DashboardPage() {
                     </tr>
                   )
                 })}
+                {/* Fila de totales */}
+                <tr className="border-t border-ink-700 bg-ink-800/40 text-ink-400">
+                  <td className="px-4 py-2.5 text-xs font-medium uppercase tracking-wider" colSpan={2}>Total</td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-accent-400/80">
+                    ${fmtImporte(sociosActivos.reduce((s, soc) => s + poolNeto * (soc.porcentaje / 100), 0))}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs text-red-400/80">
+                    {(() => {
+                      const t = movimientos.filter((m) => m.tipo === 'retiro').reduce((s, m) => s + m.monto, 0)
+                      return t > 0 ? `−$${fmtImporte(t)}` : '—'
+                    })()}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-xs font-semibold text-ink-300">
+                    {(() => {
+                      const totalBruto   = sociosActivos.reduce((s, soc) => s + poolNeto * (soc.porcentaje / 100), 0)
+                      const totalRetiros = movimientos.filter((m) => m.tipo === 'retiro').reduce((s, m) => s + m.monto, 0)
+                      return `$${fmtImporte(totalBruto - totalRetiros)}`
+                    })()}
+                  </td>
+                </tr>
               </tbody>
             </table>
             </div>

@@ -16,6 +16,8 @@ import ComprasPage from '@/pages/Compras/ComprasPage'
 import SettingsPage from '@/pages/Settings/SettingsPage'
 import DashboardPage from '@/pages/Dashboard/DashboardPage'
 import MovimientosPage from '@/pages/Movimientos/MovimientosPage'
+import RendimientosPage from '@/pages/Materiales/RendimientosPage'
+import RendimientosManoObraPage from '@/pages/ManoDeObra/RendimientosManoObraPage'
 
 const FINANCIERO  = ['superadmin', 'admin', 'socio']  as const
 const OPERATIVO   = ['superadmin', 'admin', 'empleado'] as const
@@ -72,8 +74,16 @@ export const router = createBrowserRouter([
         element: <RequiereRol roles={[...OPERATIVO]}><MaterialesPage /></RequiereRol>,
       },
       {
+        path: 'materiales/rendimientos',
+        element: <RequiereRol roles={[...OPERATIVO]}><RendimientosPage /></RequiereRol>,
+      },
+      {
         path: 'mano-de-obra',
         element: <RequiereRol roles={[...OPERATIVO]}><ManoDeObraPage /></RequiereRol>,
+      },
+      {
+        path: 'mano-de-obra/rendimientos',
+        element: <RequiereRol roles={[...OPERATIVO]}><RendimientosManoObraPage /></RequiereRol>,
       },
       {
         path: 'ventas',

@@ -29,7 +29,7 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
 }) {
   const { data: presupuestos = [] } = usePresupuestosRentabilidad(rango)
 
-  const totalServicios   = presupuestos.reduce((s, p) => s + p.total_servicios, 0)
+  const totalServicios   = presupuestos.reduce((s, p) => s + (p.importe_servicios ?? 0), 0)
   const ingresosExtra    = movimientos.filter((m) => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
   const egresosGenerales = movimientos.filter((m) => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0)
   const poolNeto         = totalServicios + ingresosExtra - egresosGenerales
@@ -114,7 +114,7 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
                   <td className="px-4 py-2 font-mono text-accent-400/70">{p.numero}</td>
                   <td className="px-4 py-2 truncate max-w-[200px]">{p.cliente_razon_social}</td>
                   <td className="px-4 py-2 capitalize">{p.estado}</td>
-                  <td className="px-4 py-2 text-right font-mono">${fmtImporte(p.total_servicios)}</td>
+                  <td className="px-4 py-2 text-right font-mono">${fmtImporte(p.importe_servicios ?? 0)}</td>
                 </tr>
               ))}
             </tbody>

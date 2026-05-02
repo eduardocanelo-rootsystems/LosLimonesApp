@@ -95,8 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signOut = useCallback(() => {
-    supabase.auth.signOut().catch(() => {})
-    window.location.replace('/login')
+    supabase.auth.signOut()
+      .catch(() => {})
+      .finally(() => { window.location.replace('/login') })
   }, [])
 
   const value = useMemo(() => ({

@@ -1,23 +1,73 @@
-import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { useRef, useState } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import {
-  LayoutDashboard, FileText, Wrench, Package, Users,
-  Receipt, ShoppingCart, ArrowLeftRight,
-  Settings as SettingsIcon, LogOut, Menu, X,
+  LayoutDashboard, FileText, Package, Receipt,
+  ChevronDown, Settings as SettingsIcon, LogOut, Menu, X,
+  Wrench, Users, ShoppingCart, ArrowLeftRight, TrendingUp,
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
 import type { Rol } from '@/hooks/useUsuarios'
 
-const navItems = [
-  { path: '/',             label: 'Dashboard',    icon: LayoutDashboard, roles: ['superadmin', 'admin', 'socio'] as Rol[] },
-  { path: '/presupuestos', label: 'Presupuestos', icon: FileText,         roles: ['superadmin', 'admin', 'socio', 'empleado'] as Rol[] },
-  { path: '/servicios',    label: 'Servicios',    icon: Wrench,           roles: ['superadmin', 'admin', 'empleado'] as Rol[] },
-  { path: '/materiales',   label: 'Materiales',   icon: Package,          roles: ['superadmin', 'admin', 'empleado'] as Rol[] },
-  { path: '/mano-de-obra', label: 'Mano de Obra', icon: Users,            roles: ['superadmin', 'admin', 'empleado'] as Rol[] },
-  { path: '/ventas',       label: 'Ventas',        icon: Receipt,          roles: ['superadmin', 'admin', 'socio'] as Rol[] },
-  { path: '/compras',      label: 'Compras',       icon: ShoppingCart,     roles: ['superadmin', 'admin', 'socio'] as Rol[] },
-  { path: '/movimientos',  label: 'Movimientos',   icon: ArrowLeftRight,   roles: ['superadmin', 'admin', 'socio'] as Rol[] },
+// ─── Tipos ────────────────────────────────────────────────────────────────────
+
+interface NavItem {
+  path:  string
+  label: string
+  icon:  React.ElementType
+  roles: Rol[]
+}
+
+interface NavGroup {
+  label:  string
+  icon:   React.ElementType
+  roles:  Rol[]
+  items:  NavItem[]
+}
+
+type NavEntry = NavItem | NavGroup
+
+function isGroup(e: NavEntry): e is NavGroup {
+  return 'items' in e
+}
+
+// ─── Configuración de navegación ──────────────────────────────────────────────
+
+const NAV: NavEntry[] = [
+  {
+    path:  '/',
+    label: 'Dashboard',
+    icon:  LayoutDashboard,
+    roles: ['superadmin', 'admin', 'socio'],
+  },
+  {
+    path:  '/presupuestos',
+    label: 'Presupuestos',
+    icon:  FileText,
+    roles: ['superadmin', 'admin', 'socio', 'empleado'],
+  },
+  {
+    label: 'Catálogo',
+    icon:  Package,
+    roles: ['superadmin', 'admin', 'empleado'],
+    items: [
+      { path: '/servicios',                 label: 'Servicios',          icon: Wrench,     roles: ['superadmin', 'admin', 'empleado'] },
+      { path: '/materiales',                label: 'Materiales',         icon: Package,    roles: ['superadmin', 'admin', 'empleado'] },
+      { path: '/materiales/rendimientos',   label: 'Rendimientos mat.',  icon: TrendingUp, roles: ['superadmin', 'admin', 'empleado'] },
+      { path: '/mano-de-obra',              label: 'Mano de Obra',       icon: Users,      roles: ['superadmin', 'admin', 'empleado'] },
+      { path: '/mano-de-obra/rendimientos', label: 'Rendimientos MO',    icon: TrendingUp, roles: ['superadmin', 'admin', 'empleado'] },
+    ],
+  },
+  {
+    label: 'Finanzas',
+    icon:  Receipt,
+    roles: ['superadmin', 'admin', 'socio'],
+    items: [
+      { path: '/ventas',      label: 'Ventas',      icon: Receipt,        roles: ['superadmin', 'admin', 'socio'] },
+      { path: '/compras',     label: 'Compras',     icon: ShoppingCart,   roles: ['superadmin', 'admin', 'socio'] },
+      { path: '/movimientos', label: 'Movimientos', icon: ArrowLeftRight, roles: ['superadmin', 'admin', 'socio'] },
+    ],
+  },
 ]
 
 const ROL_BADGE: Record<Rol, string> = {
@@ -27,58 +77,139 @@ const ROL_BADGE: Record<Rol, string> = {
   empleado:   'bg-ink-800 text-ink-400',
 }
 
+// ─── Dropdown de grupo ────────────────────────────────────────────────────────
+
+function NavGroupButton({ group, rol }: { group: NavGroup; rol: Rol | null }) {
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const location = useLocation()
+
+  const visibles = group.items.filter((i) => rol && i.roles.includes(rol))
+  if (!visibles.length) return null
+
+  const isGroupActive = visibles.some((i) => location.pathname.startsWith(i.path))
+
+  const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    setOpen(true)
+  }
+  const handleMouseLeave = () => {
+    closeTimer.current = setTimeout(() => setOpen(false), 120)
+  }
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        className={cn(
+          'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+          isGroupActive
+            ? 'bg-ink-800 text-accent-400'
+            : 'text-ink-300 hover:bg-ink-800/50 hover:text-ink-100'
+        )}
+      >
+        {group.label}
+        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1 min-w-[180px] overflow-hidden rounded-lg border border-ink-700 bg-ink-900 py-1 shadow-xl">
+          {visibles.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2.5 px-4 py-2 text-sm transition-colors',
+                  isActive
+                    ? 'bg-ink-800 text-accent-400'
+                    : 'text-ink-300 hover:bg-ink-800/60 hover:text-ink-100'
+                )
+              }
+            >
+              <item.icon className="h-3.5 w-3.5 shrink-0 text-ink-500" />
+              {item.label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Header ───────────────────────────────────────────────────────────────────
+
 export function Header() {
   const { user, signOut, rol, nombre } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({})
 
-  const itemsVisibles = navItems.filter((i) => rol && i.roles.includes(rol))
-  const puedeSettings = rol === 'superadmin' || rol === 'admin'
+  const puedeSettings  = rol === 'superadmin' || rol === 'admin'
+  const handleSignOut  = () => signOut()
 
-  const handleSignOut = () => { signOut() }
+  const toggleMobileGroup = (label: string) =>
+    setMobileGroups((prev) => ({ ...prev, [label]: !prev[label] }))
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-800 bg-ink-950/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+
         {/* Logo */}
-        <div className="flex items-center gap-3">
-          <NavLink to="/" className="flex items-center gap-3">
-            <span className="font-mono text-xl select-none">
-              <span className="font-light text-accent-500">/</span>
-              <span className="font-medium tracking-tight text-ink-100">root</span>
-            </span>
-            <div className="hidden h-6 w-px bg-ink-700 sm:block" />
-            <div className="hidden sm:block">
-              <div className="text-sm font-medium leading-tight text-ink-100">Los Limones Creativos</div>
-              <div className="text-[10px] uppercase tracking-widest text-ink-500">Sistema de gestión</div>
-            </div>
-          </NavLink>
-        </div>
+        <NavLink to="/" className="flex items-center gap-3 shrink-0">
+          <span className="font-mono text-xl select-none">
+            <span className="font-light text-accent-500">/</span>
+            <span className="font-medium tracking-tight text-ink-100">root</span>
+          </span>
+          <div className="hidden h-6 w-px bg-ink-700 sm:block" />
+          <div className="hidden sm:block">
+            <div className="text-sm font-medium leading-tight text-ink-100">Los Limones Creativos</div>
+            <div className="text-[10px] uppercase tracking-widest text-ink-500">Sistema de gestión</div>
+          </div>
+        </NavLink>
 
         {/* Nav desktop */}
         <nav className="hidden items-center gap-1 lg:flex">
-          {itemsVisibles.map(({ path, label }) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={path === '/'}
-              className={({ isActive }) =>
-                cn('rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-                  isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-300 hover:bg-ink-800/50 hover:text-ink-100')
-              }
-            >
-              {label}
-            </NavLink>
-          ))}
+          {NAV.map((entry) => {
+            if (!rol) return null
+            if (!entry.roles.includes(rol)) return null
+
+            if (isGroup(entry)) {
+              return <NavGroupButton key={entry.label} group={entry} rol={rol} />
+            }
+
+            return (
+              <NavLink
+                key={entry.path}
+                to={entry.path}
+                end={entry.path === '/'}
+                className={({ isActive }) =>
+                  cn(
+                    'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-ink-800 text-accent-400'
+                      : 'text-ink-300 hover:bg-ink-800/50 hover:text-ink-100'
+                  )
+                }
+              >
+                {entry.label}
+              </NavLink>
+            )
+          })}
         </nav>
 
         {/* User menu desktop */}
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex shrink-0">
           {puedeSettings && (
             <NavLink
               to="/settings"
               className={({ isActive }) =>
-                cn('rounded-md p-2 transition-colors',
-                  isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-400 hover:bg-ink-800/50 hover:text-ink-100')
+                cn(
+                  'rounded-md p-2 transition-colors',
+                  isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-400 hover:bg-ink-800/50 hover:text-ink-100'
+                )
               }
               aria-label="Configuración"
             >
@@ -93,7 +224,7 @@ export function Header() {
               </span>
             )}
           </div>
-          <button onClick={handleSignOut} className="btn-ghost" aria-label="Cerrar sesión">
+          <button type="button" onClick={handleSignOut} className="btn-ghost" aria-label="Cerrar sesión">
             <LogOut className="h-4 w-4" />
           </button>
         </div>
@@ -112,46 +243,105 @@ export function Header() {
       {mobileOpen && (
         <div className="border-t border-ink-800 bg-ink-950 lg:hidden">
           <nav className="mx-auto max-w-7xl px-6 py-3">
-            <div className="grid gap-1">
-              {itemsVisibles.map(({ path, label, icon: Icon }) => (
-                <NavLink
-                  key={path}
-                  to={path}
-                  end={path === '/'}
-                  onClick={() => setMobileOpen(false)}
-                  className={({ isActive }) =>
-                    cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-300 hover:bg-ink-800/50')
-                  }
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </NavLink>
-              ))}
+            <div className="grid gap-0.5">
+              {NAV.map((entry) => {
+                if (!rol) return null
+                if (!entry.roles.includes(rol)) return null
+
+                if (isGroup(entry)) {
+                  const visibles = entry.items.filter((i) => i.roles.includes(rol))
+                  if (!visibles.length) return null
+                  const expanded = !!mobileGroups[entry.label]
+
+                  return (
+                    <div key={entry.label}>
+                      <button
+                        onClick={() => toggleMobileGroup(entry.label)}
+                        className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-ink-300 hover:bg-ink-800/50 transition-colors"
+                      >
+                        <span className="flex items-center gap-3">
+                          <entry.icon className="h-4 w-4" />
+                          {entry.label}
+                        </span>
+                        <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', expanded && 'rotate-180')} />
+                      </button>
+                      {expanded && (
+                        <div className="ml-4 mt-0.5 grid gap-0.5 border-l border-ink-800 pl-3">
+                          {visibles.map((item) => (
+                            <NavLink
+                              key={item.path}
+                              to={item.path}
+                              onClick={() => setMobileOpen(false)}
+                              className={({ isActive }) =>
+                                cn(
+                                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                                  isActive ? 'text-accent-400' : 'text-ink-400 hover:bg-ink-800/50 hover:text-ink-200'
+                                )
+                              }
+                            >
+                              <item.icon className="h-3.5 w-3.5" />
+                              {item.label}
+                            </NavLink>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                }
+
+                return (
+                  <NavLink
+                    key={entry.path}
+                    to={entry.path}
+                    end={entry.path === '/'}
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      cn(
+                        'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                        isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-300 hover:bg-ink-800/50'
+                      )
+                    }
+                  >
+                    <entry.icon className="h-4 w-4" />
+                    {entry.label}
+                  </NavLink>
+                )
+              })}
+
               <div className="my-2 border-t border-ink-800" />
+
               {puedeSettings && (
                 <NavLink
                   to="/settings"
                   onClick={() => setMobileOpen(false)}
                   className={({ isActive }) =>
-                    cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                      isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-300 hover:bg-ink-800/50')
+                    cn(
+                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-300 hover:bg-ink-800/50'
+                    )
                   }
                 >
                   <SettingsIcon className="h-4 w-4" />
                   Configuración
                 </NavLink>
               )}
+
               <button
+                type="button"
                 onClick={() => { setMobileOpen(false); handleSignOut() }}
-                className="flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-ink-300 hover:bg-ink-800/50"
+                className="flex items-center gap-3 rounded-md px-3 py-2 text-left text-sm font-medium text-ink-300 hover:bg-ink-800/50 transition-colors"
               >
                 <LogOut className="h-4 w-4" />
                 Cerrar sesión
               </button>
+
               <div className="px-3 pt-2">
                 <p className="text-xs text-ink-300">{nombre || user?.email}</p>
-                {rol && <span className={cn('mt-1 inline-block rounded px-1.5 py-px text-[10px] font-medium', ROL_BADGE[rol])}>{rol}</span>}
+                {rol && (
+                  <span className={cn('mt-1 inline-block rounded px-1.5 py-px text-[10px] font-medium', ROL_BADGE[rol])}>
+                    {rol}
+                  </span>
+                )}
               </div>
             </div>
           </nav>
