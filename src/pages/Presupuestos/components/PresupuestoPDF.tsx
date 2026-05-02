@@ -257,6 +257,8 @@ const s = StyleSheet.create({
   finColCuotas: { flex: 2, textAlign: 'right' },
   finNote: { fontSize: 7.5, color: C.gray500, marginTop: 5 },
 
+  logoImg: { height: 36, width: 130, objectFit: 'contain' },
+
   fotoRow: { flexDirection: 'row', marginBottom: 8 },
   fotoCell: { width: 248, height: 172, overflow: 'hidden', borderRadius: 3 },
   fotoCellRight: { marginLeft: 9 },
@@ -325,10 +327,19 @@ function EstadoBadge({ estado }: { estado: string }) {
   )
 }
 
-function TablaServicios({ items, esExtra }: { items: PresupuestoCompleto['servicios']; esExtra?: boolean }) {
+function TablaServicios({
+  items,
+  esExtra,
+  totalManoObra = 0,
+}: {
+  items: PresupuestoCompleto['servicios']
+  esExtra?: boolean
+  totalManoObra?: number
+}) {
   if (items.length === 0) return null
   const th = esExtra ? s.thTextExtra : s.thText
   const header = esExtra ? s.tableHeaderExtra : s.tableHeader
+  const totalSubtotalItems = items.reduce((acc, sv) => acc + Number(sv.subtotal), 0)
   return (
     <View style={s.table}>
       <View style={header}>
@@ -337,14 +348,21 @@ function TablaServicios({ items, esExtra }: { items: PresupuestoCompleto['servic
         <Text style={[th, s.colM2]}>m²</Text>
         <Text style={[th, s.colSubtotal]}>SUBTOTAL</Text>
       </View>
-      {items.map((sv, i) => (
-        <View key={sv.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-          <Text style={[s.tdText, s.colNombre]}>{sv.nombre_snapshot}</Text>
-          <Text style={[s.tdMono, s.colPrecioM2, s.tdRight]}>{fmt(sv.precio_m2_snapshot * (sv.k_snapshot ?? 1))}</Text>
-          <Text style={[s.tdMono, s.colM2, s.tdRight]}>{sv.m2_snapshot}</Text>
-          <Text style={[s.tdMono, s.colSubtotal, s.tdRight, s.tdBold]}>{fmt(sv.subtotal)}</Text>
-        </View>
-      ))}
+      {items.map((sv, i) => {
+        const proporcion = totalSubtotalItems > 0 ? Number(sv.subtotal) / totalSubtotalItems : 0
+        const extraServicio = proporcion * totalManoObra
+        const m2 = sv.m2_snapshot || 1
+        const precioM2Display = sv.precio_m2_snapshot * (sv.k_snapshot ?? 1) + extraServicio / m2
+        const subtotalDisplay = Number(sv.subtotal) + extraServicio
+        return (
+          <View key={sv.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+            <Text style={[s.tdText, s.colNombre]}>{sv.nombre_snapshot}</Text>
+            <Text style={[s.tdMono, s.colPrecioM2, s.tdRight]}>{fmt(precioM2Display)}</Text>
+            <Text style={[s.tdMono, s.colM2, s.tdRight]}>{sv.m2_snapshot}</Text>
+            <Text style={[s.tdMono, s.colSubtotal, s.tdRight, s.tdBold]}>{fmt(subtotalDisplay)}</Text>
+          </View>
+        )
+      })}
     </View>
   )
 }
@@ -424,7 +442,13 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
 
 // ─── Página del presupuesto (exportada para uso en documento combinado) ───────
 
-export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
+export function PresupuestoPDFPage({
+  presupuesto,
+  logoUrl,
+}: {
+  presupuesto: PresupuestoCompleto
+  logoUrl?: string | null
+}) {
   const serviciosOrig = presupuesto.servicios.filter((s) => !s.es_adicional)
   const serviciosExtra = presupuesto.servicios.filter((s) => s.es_adicional)
   const materialesOrig = presupuesto.materiales.filter((m) => !m.es_adicional)
@@ -436,8 +460,14 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
   const subtotalMaterialesExtra = materialesExtra.reduce((acc, m) => acc + Number(m.subtotal), 0)
   const extrasMonto = subtotalServiciosExtra + subtotalMaterialesExtra
 
+  const dias = Number(presupuesto.dias_estimados_obra ?? 0)
+  const subtotalManoObra = presupuesto.mano_obra.reduce(
+    (acc, mo) => acc + mo.costo_diario_snapshot * mo.cantidad_empleados * dias,
+    0,
+  )
+
   const subtotalBruto =
-    subtotalServiciosOrig + subtotalMaterialesOrig + subtotalServiciosExtra + subtotalMaterialesExtra
+    subtotalServiciosOrig + subtotalMaterialesOrig + subtotalServiciosExtra + subtotalMaterialesExtra + subtotalManoObra
 
   const descuentoMonto = presupuesto.descuento_tipo
     ? presupuesto.descuento_tipo === 'fijo'
@@ -470,8 +500,11 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
 
       <View style={s.header}>
         <View style={s.headerLeft}>
-          <Text style={s.companyName}>Los Limones Creativos</Text>
-          <Text style={s.companySlug}>TRABAJOS EN ALTURA · FACHADAS</Text>
+          {logoUrl
+            ? <Image src={logoUrl} style={s.logoImg} />
+            : <Text style={s.companyName}>Los Limones Creativos</Text>
+          }
+          <Text style={s.companySlug}>Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
         </View>
         <View style={s.headerRight}>
           <Text style={s.presupNumero}>{presupuesto.numero ?? 'NUEVO'}</Text>
@@ -542,7 +575,7 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
       {serviciosOrig.length > 0 && (
         <View style={s.section}>
           <Text style={s.sectionTitle}>Servicios</Text>
-          <TablaServicios items={serviciosOrig} />
+          <TablaServicios items={serviciosOrig} totalManoObra={subtotalManoObra} />
         </View>
       )}
 
@@ -569,7 +602,7 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
         {serviciosOrig.length > 0 && (
           <View style={s.totalRow}>
             <Text style={s.totalLabel}>Subtotal servicios</Text>
-            <Text style={s.totalValue}>{fmt(subtotalServiciosOrig)}</Text>
+            <Text style={s.totalValue}>{fmt(subtotalServiciosOrig + subtotalManoObra)}</Text>
           </View>
         )}
         {materialesOrig.length > 0 && (
@@ -627,7 +660,7 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
       )}
 
       <View style={s.footer} fixed>
-        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura y fachadas</Text>
+        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
         <Text
           style={s.pageNumber}
           render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
@@ -639,7 +672,15 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
 
 // ─── Página de fotos ─────────────────────────────────────────────────────────
 
-export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCompleto; fotos: PresupuestoFoto[] }) {
+export function PaginaFotos({
+  presupuesto,
+  fotos,
+  logoUrl,
+}: {
+  presupuesto: PresupuestoCompleto
+  fotos: PresupuestoFoto[]
+  logoUrl?: string | null
+}) {
   if (fotos.length === 0) return null
 
   const rows: PresupuestoFoto[][] = []
@@ -649,8 +690,11 @@ export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCo
     <Page size="A4" style={s.page}>
       <View style={s.header}>
         <View style={s.headerLeft}>
-          <Text style={s.companyName}>Los Limones Creativos</Text>
-          <Text style={s.companySlug}>TRABAJOS EN ALTURA · FACHADAS</Text>
+          {logoUrl
+            ? <Image src={logoUrl} style={s.logoImg} />
+            : <Text style={s.companyName}>Los Limones Creativos</Text>
+          }
+          <Text style={s.companySlug}>Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
         </View>
         <View style={s.headerRight}>
           <Text style={s.presupNumero}>{presupuesto.numero ?? '—'}</Text>
@@ -671,7 +715,7 @@ export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCo
       </View>
 
       <View style={s.footer} fixed>
-        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura y fachadas</Text>
+        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
         <Text
           style={s.pageNumber}
           render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
@@ -683,12 +727,18 @@ export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCo
 
 // ─── Documento standalone ────────────────────────────────────────────────────
 
-export function PresupuestoPDFDocument({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
+export function PresupuestoPDFDocument({
+  presupuesto,
+  logoUrl,
+}: {
+  presupuesto: PresupuestoCompleto
+  logoUrl?: string | null
+}) {
   return (
     <Document title={`Presupuesto ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
-      <PresupuestoPDFPage presupuesto={presupuesto} />
+      <PresupuestoPDFPage presupuesto={presupuesto} logoUrl={logoUrl} />
       {presupuesto.fotos?.length > 0 && (
-        <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
+        <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} logoUrl={logoUrl} />
       )}
     </Document>
   )

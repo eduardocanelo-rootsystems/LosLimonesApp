@@ -11,6 +11,7 @@ import { PresupuestoContratoPDFDocument } from './components/PresupuestoContrato
 import { useContrato } from '@/pages/Contratos/useContrato'
 import { contratoToFormValues } from '@/pages/Contratos/components/ContratoPDF'
 import { useFirmaContratista } from '@/hooks/useConfiguracion'
+import { useLogoCliente } from '@/hooks/useLogoCliente'
 import { useServicios } from '@/pages/Servicios/useServicios'
 import { useMateriales } from '@/pages/Materiales/useMateriales'
 import { useManoDeObra } from '@/pages/ManoDeObra/useManoDeObra'
@@ -57,6 +58,7 @@ export default function PresupuestoFormPage() {
   const { data: contrato, isFetching: fetchingContrato } = useContrato(id)
   const { data: todosLosPresupuestos = [] } = usePresupuestos()
   const { data: firmaContratista } = useFirmaContratista()
+  const logoUrl = useLogoCliente()
   const { data: catalogoServicios = [] } = useServicios()
   const { data: catalogoMateriales = [] } = useMateriales()
   const { data: catalogoManoDeObra = [] } = useManoDeObra()
@@ -237,8 +239,9 @@ export default function PresupuestoFormPage() {
             firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
             firmaCliente={contrato?.firma_cliente_base64 ?? null}
             firmaUrl={firmaUrl}
+            logoUrl={logoUrl}
           />
-        : <PresupuestoPDFDocument presupuesto={presupuesto} />
+        : <PresupuestoPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />
 
       const blob        = await pdf(docElement).toBlob()
       const arrayBuffer = await blob.arrayBuffer()
@@ -319,15 +322,18 @@ export default function PresupuestoFormPage() {
     return neto + (neto * iva) / 100
   }, [subtotalServicios, subtotalMateriales, tieneDescuento, descuentoTipo, descuentoValor, ivaPct])
 
-  // importe_total = totalCliente con recargo del plan de financiamiento
-  // importe_servicios = proporción de servicios sobre el importe_total
+  // importe_total = total real al cliente incluyendo mano de obra (para que el ratio en cobros sea correcto)
+  // importe_servicios = solo la parte de servicios de lista (sin mano de obra), base de distribución entre socios
   const { importeTotal, importeServicios } = useMemo(() => {
     const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.35 : 0
-    const total = totalCliente * (1 + recargo)
-    const brutoTotal = subtotalServicios + subtotalMateriales
-    const ratio = brutoTotal > 0 ? subtotalServicios / brutoTotal : 1
-    return { importeTotal: total, importeServicios: total * ratio }
-  }, [totalCliente, planPago, subtotalServicios, subtotalMateriales])
+    const brutoBase = subtotalServicios + subtotalMateriales
+    const totalSinMO = totalCliente * (1 + recargo)
+    // Aplicar el mismo factor descuento+IVA de servicios/materiales a la mano de obra
+    const factor = brutoBase > 0 ? totalCliente / brutoBase : 1
+    const total = totalSinMO + costoManoObra * factor * (1 + recargo)
+    const ratio = brutoBase > 0 ? subtotalServicios / brutoBase : 1
+    return { importeTotal: total, importeServicios: totalSinMO * ratio }
+  }, [totalCliente, planPago, subtotalServicios, subtotalMateriales, costoManoObra])
 
   // ─── Guardar ─────────────────────────────────────────────────────────────────
 
@@ -480,6 +486,7 @@ export default function PresupuestoFormPage() {
                       firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
                       firmaCliente={contrato?.firma_cliente_base64 ?? null}
                       firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
+                      logoUrl={logoUrl}
                     />
                   }
                   fileName={`${presupuesto.numero ?? 'presupuesto'}-contrato.pdf`}
@@ -499,7 +506,7 @@ export default function PresupuestoFormPage() {
               ) : (
                 <PDFDownloadLink
                   key={presupuesto.fecha_actualizacion}
-                  document={<PresupuestoPDFDocument presupuesto={presupuesto} />}
+                  document={<PresupuestoPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />}
                   fileName={`${presupuesto.numero ?? 'presupuesto'}.pdf`}
                   className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
                 >

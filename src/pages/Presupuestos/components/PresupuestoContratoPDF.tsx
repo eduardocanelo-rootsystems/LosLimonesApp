@@ -10,21 +10,23 @@ export function PresupuestoContratoPDFDocument({
   firmaContratista,
   firmaCliente,
   firmaUrl,
+  logoUrl,
 }: {
   presupuesto: PresupuestoCompleto
   form: ContratoFormValues
   firmaContratista?: string | null
   firmaCliente?: string | null
   firmaUrl?: string
+  logoUrl?: string | null
 }) {
   return (
     <Document
       title={`${presupuesto.numero ?? 'Presupuesto'} · Contrato`}
       author="Los Limones Creativos"
     >
-      <PresupuestoPDFPage presupuesto={presupuesto} />
+      <PresupuestoPDFPage presupuesto={presupuesto} logoUrl={logoUrl} />
       {presupuesto.fotos?.length > 0 && (
-        <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
+        <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} logoUrl={logoUrl} />
       )}
       <ContratoPDFPage
         presupuesto={presupuesto}
@@ -32,6 +34,7 @@ export function PresupuestoContratoPDFDocument({
         firmaContratista={firmaContratista}
         firmaCliente={firmaCliente}
         firmaUrl={firmaUrl}
+        logoUrl={logoUrl}
       />
     </Document>
   )

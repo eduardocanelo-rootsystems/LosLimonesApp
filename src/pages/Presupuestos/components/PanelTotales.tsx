@@ -34,7 +34,12 @@ export function PanelTotales({
 
   const neto = subtotalBruto - descuentoMonto
   const ivaMonto = (neto * ivaPct) / 100
-  const totalCliente = neto + ivaMonto
+  const totalSinMO = neto + ivaMonto
+
+  // Mano de obra con el mismo factor descuento+IVA que los servicios/materiales
+  const factor = subtotalBruto > 0 ? totalSinMO / subtotalBruto : 1
+  const costoManoObraAjustado = costoManoObra * factor
+  const totalCliente = totalSinMO + costoManoObraAjustado
 
   const margenBruto = totalCliente - costoManoObra
   const margenPct = totalCliente > 0 ? (margenBruto / totalCliente) * 100 : 0
@@ -82,6 +87,9 @@ export function PanelTotales({
             </span>
             <span className="font-mono text-sm text-ink-300">{formatCurrency(ivaMonto)}</span>
           </div>
+          {costoManoObra > 0 && (
+            <Row label="Mano de obra (incluida)" value={costoManoObraAjustado} className="text-ink-400 text-xs" />
+          )}
           <div className="border-t border-ink-700 pt-2">
             <Row label="Total al cliente" value={totalCliente} bold accent />
           </div>

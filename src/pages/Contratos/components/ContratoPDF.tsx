@@ -163,6 +163,7 @@ const s = StyleSheet.create({
     alignItems: 'flex-end',
   },
   contratoHeaderLabel: { fontSize: 7, color: C.gray500, letterSpacing: 1.5, textTransform: 'uppercase' },
+  logoImg: { height: 22, width: 80, objectFit: 'contain' },
 
   title: {
     fontSize: 13,
@@ -283,12 +284,14 @@ export function ContratoPDFPage({
   firmaContratista,
   firmaCliente,
   firmaUrl,
+  logoUrl,
 }: {
   presupuesto: PresupuestoCompleto
   form: ContratoFormValues
   firmaContratista?: string | null
   firmaCliente?: string | null
   firmaUrl?: string
+  logoUrl?: string | null
 }) {
   const b = s.b
   const baseTotal = calcTotalPresupuesto(presupuesto)
@@ -317,7 +320,10 @@ export function ContratoPDFPage({
 
       {/* Encabezado con referencia al presupuesto */}
       <View style={s.contratoHeader}>
-        <Text style={s.contratoHeaderLabel}>Los Limones Creativos · Contrato de Locación de Obra</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {logoUrl && <Image src={logoUrl} style={s.logoImg} />}
+          <Text style={s.contratoHeaderLabel}>Los Limones Creativos · Contrato de Locación de Obra</Text>
+        </View>
         <Text style={s.contratoHeaderLabel}>Ref. Presupuesto {presupuesto.numero ?? '—'}</Text>
       </View>
 
@@ -601,12 +607,14 @@ export function ContratoPDFDocument({
   firmaContratista,
   firmaCliente,
   firmaUrl,
+  logoUrl,
 }: {
   presupuesto: PresupuestoCompleto
   form: ContratoFormValues
   firmaContratista?: string | null
   firmaCliente?: string | null
   firmaUrl?: string
+  logoUrl?: string | null
 }) {
   return (
     <Document title={`Contrato · ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
@@ -616,6 +624,7 @@ export function ContratoPDFDocument({
         firmaContratista={firmaContratista}
         firmaCliente={firmaCliente}
         firmaUrl={firmaUrl}
+        logoUrl={logoUrl}
       />
     </Document>
   )

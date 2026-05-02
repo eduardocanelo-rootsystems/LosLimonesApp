@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { usePresupuesto } from '@/pages/Presupuestos/usePresupuestos'
 import { useContrato, useGuardarContrato, useAnularFirmaCliente } from './useContrato'
 import { useFirmaContratista, useGuardarFirmaContratista } from '@/hooks/useConfiguracion'
+import { useLogoCliente } from '@/hooks/useLogoCliente'
 import { SignatureCanvas } from '@/components/SignatureCanvas'
 import {
   ContratoPDFDocument,
@@ -75,6 +76,7 @@ export default function ContratoFormPage() {
   const guardar      = useGuardarContrato()
   const anularFirma  = useAnularFirmaCliente()
   const { data: firmaGuardada } = useFirmaContratista()
+  const logoUrl = useLogoCliente()
   const guardarFirma = useGuardarFirmaContratista()
 
   const [mostrarCanvasFirma, setMostrarCanvasFirma] = useState(false)
@@ -332,6 +334,7 @@ export default function ContratoFormPage() {
                   firmaContratista={firmaEfectiva}
                   firmaCliente={contrato?.firma_cliente_base64 ?? null}
                   firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
+                  logoUrl={logoUrl}
                 />
               }
               fileName={fileName}

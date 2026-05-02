@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Package, Receipt,
@@ -146,6 +146,38 @@ function NavGroupButton({ group, rol }: { group: NavGroup; rol: Rol | null }) {
   )
 }
 
+// ─── Logo del cliente ─────────────────────────────────────────────────────────
+// Cuando el archivo /logo-cliente.png esté listo, colocarlo en public/
+// y se mostrará automáticamente en lugar de las iniciales.
+
+function ClienteLogo() {
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError]   = useState(false)
+
+  useEffect(() => {
+    const img = new Image()
+    img.onload  = () => setLoaded(true)
+    img.onerror = () => setError(true)
+    img.src = '/logo-cliente.png'
+  }, [])
+
+  if (loaded && !error) {
+    return (
+      <img
+        src="/logo-cliente.png"
+        alt="Los Limones Creativos"
+        className="h-10 w-10 shrink-0 rounded-lg object-contain"
+      />
+    )
+  }
+
+  return (
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ink-700 bg-ink-900 text-sm font-bold tracking-tight text-accent-400">
+      LL
+    </div>
+  )
+}
+
 // ─── Header ───────────────────────────────────────────────────────────────────
 
 export function Header() {
@@ -165,14 +197,30 @@ export function Header() {
 
         {/* Logo */}
         <NavLink to="/" className="flex items-center gap-3 shrink-0">
-          <span className="font-mono text-xl select-none">
-            <span className="font-light text-accent-500">/</span>
-            <span className="font-medium tracking-tight text-ink-100">root</span>
-          </span>
-          <div className="hidden h-6 w-px bg-ink-700 sm:block" />
-          <div className="hidden sm:block">
-            <div className="text-sm font-medium leading-tight text-ink-100">Los Limones Creativos</div>
-            <div className="text-[10px] uppercase tracking-widest text-ink-500">Sistema de gestión</div>
+          {/* /root block */}
+          <div className="flex flex-col leading-none select-none">
+            <span className="font-mono text-xl">
+              <span className="font-light text-accent-500">/</span>
+              <span className="font-medium tracking-tight text-ink-100">root</span>
+            </span>
+            <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-500">
+              Systems
+            </span>
+          </div>
+
+          <div className="hidden h-10 w-px bg-ink-700 sm:block" />
+
+          {/* Client block */}
+          <div className="hidden sm:flex items-center gap-2.5">
+            <ClienteLogo />
+            <div className="flex flex-col leading-none">
+              <span className="text-sm font-semibold text-ink-100 leading-tight">
+                Los Limones Creativos
+              </span>
+              <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">
+                Trabajos en altura - Fachadas - Impermeabilizaciones
+              </span>
+            </div>
           </div>
         </NavLink>
 
