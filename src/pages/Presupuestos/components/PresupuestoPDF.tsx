@@ -1,4 +1,4 @@
-import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { PresupuestoCompleto, PresupuestoFoto } from '@/types/database'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -428,7 +428,7 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
 
 // ─── Página del presupuesto (exportada para uso en documento combinado) ───────
 
-export function PresupuestoPDFPage({ presupuesto, firmaUrl }: { presupuesto: PresupuestoCompleto; firmaUrl?: string }) {
+export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
   const serviciosOrig = presupuesto.servicios.filter((s) => !s.es_adicional)
   const serviciosExtra = presupuesto.servicios.filter((s) => s.es_adicional)
   const materialesOrig = presupuesto.materiales.filter((m) => !m.es_adicional)
@@ -630,13 +630,6 @@ export function PresupuestoPDFPage({ presupuesto, firmaUrl }: { presupuesto: Pre
         </View>
       )}
 
-      {firmaUrl && presupuesto.estado === 'aprobado' && (
-        <View style={s.firmaBox} wrap={false}>
-          <Text style={s.firmaLabel}>Firmá el contrato en línea:</Text>
-          <Link src={firmaUrl} style={s.firmaLink}>{firmaUrl}</Link>
-        </View>
-      )}
-
       <View style={s.footer} fixed>
         <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura y fachadas</Text>
         <Text
@@ -694,10 +687,10 @@ export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCo
 
 // ─── Documento standalone ────────────────────────────────────────────────────
 
-export function PresupuestoPDFDocument({ presupuesto, firmaUrl }: { presupuesto: PresupuestoCompleto; firmaUrl?: string }) {
+export function PresupuestoPDFDocument({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
   return (
     <Document title={`Presupuesto ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
-      <PresupuestoPDFPage presupuesto={presupuesto} firmaUrl={firmaUrl} />
+      <PresupuestoPDFPage presupuesto={presupuesto} />
       {presupuesto.fotos?.length > 0 && (
         <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
       )}

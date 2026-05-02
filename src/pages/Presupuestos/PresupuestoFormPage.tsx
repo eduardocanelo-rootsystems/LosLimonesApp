@@ -439,10 +439,7 @@ export default function PresupuestoFormPage() {
               ) : (
                 <PDFDownloadLink
                   key={presupuesto.fecha_actualizacion}
-                  document={<PresupuestoPDFDocument
-                    presupuesto={presupuesto}
-                    firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
-                  />}
+                  document={<PresupuestoPDFDocument presupuesto={presupuesto} />}
                   fileName={`${presupuesto.numero ?? 'presupuesto'}.pdf`}
                   className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
                 >

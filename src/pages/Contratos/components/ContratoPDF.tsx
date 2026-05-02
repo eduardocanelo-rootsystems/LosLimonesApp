@@ -1,4 +1,4 @@
-import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import { Document, Image, Link, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { Contrato, PresupuestoCompleto } from '@/types/database'
 
 // ─── Tipos públicos ───────────────────────────────────────────────────────────
@@ -243,6 +243,21 @@ const s = StyleSheet.create({
   firmaTitulo: { fontSize: 9, fontFamily: 'Helvetica-Bold', textAlign: 'center' },
   firmaSubtitulo: { fontSize: 8.5, color: C.gray500, textAlign: 'center' },
 
+  firmaUrlBox: {
+    marginTop: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    backgroundColor: '#EFF6FF',
+    borderWidth: 0.5,
+    borderColor: '#0EA5E9',
+    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  firmaUrlLabel: { fontSize: 8.5, color: '#374151' },
+  firmaUrlLink:  { fontSize: 8.5, color: '#0EA5E9', textDecoration: 'underline' },
+
   footer: {
     position: 'absolute',
     bottom: 22,
@@ -267,11 +282,13 @@ export function ContratoPDFPage({
   form,
   firmaContratista,
   firmaCliente,
+  firmaUrl,
 }: {
   presupuesto: PresupuestoCompleto
   form: ContratoFormValues
   firmaContratista?: string | null
   firmaCliente?: string | null
+  firmaUrl?: string
 }) {
   const b = s.b
   const baseTotal = calcTotalPresupuesto(presupuesto)
@@ -555,6 +572,13 @@ export function ContratoPDFPage({
         </View>
       </View>
 
+      {firmaUrl && !firmaCliente && (
+        <View style={s.firmaUrlBox} wrap={false}>
+          <Text style={s.firmaUrlLabel}>Firmá este contrato en línea:</Text>
+          <Link src={firmaUrl} style={s.firmaUrlLink}>{firmaUrl}</Link>
+        </View>
+      )}
+
       {/* Footer */}
       <View style={s.footer} fixed>
         <Text style={s.footerText}>
@@ -576,11 +600,13 @@ export function ContratoPDFDocument({
   form,
   firmaContratista,
   firmaCliente,
+  firmaUrl,
 }: {
   presupuesto: PresupuestoCompleto
   form: ContratoFormValues
   firmaContratista?: string | null
   firmaCliente?: string | null
+  firmaUrl?: string
 }) {
   return (
     <Document title={`Contrato · ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
@@ -589,6 +615,7 @@ export function ContratoPDFDocument({
         form={form}
         firmaContratista={firmaContratista}
         firmaCliente={firmaCliente}
+        firmaUrl={firmaUrl}
       />
     </Document>
   )

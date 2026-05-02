@@ -331,6 +331,7 @@ export default function ContratoFormPage() {
                   form={formValues}
                   firmaContratista={firmaEfectiva}
                   firmaCliente={contrato?.firma_cliente_base64 ?? null}
+                  firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
                 />
               }
               fileName={fileName}

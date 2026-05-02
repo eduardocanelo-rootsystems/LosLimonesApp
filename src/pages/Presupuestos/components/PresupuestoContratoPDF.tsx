@@ -22,7 +22,7 @@ export function PresupuestoContratoPDFDocument({
       title={`${presupuesto.numero ?? 'Presupuesto'} · Contrato`}
       author="Los Limones Creativos"
     >
-      <PresupuestoPDFPage presupuesto={presupuesto} firmaUrl={firmaUrl} />
+      <PresupuestoPDFPage presupuesto={presupuesto} />
       {presupuesto.fotos?.length > 0 && (
         <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
       )}
@@ -31,6 +31,7 @@ export function PresupuestoContratoPDFDocument({
         form={form}
         firmaContratista={firmaContratista}
         firmaCliente={firmaCliente}
+        firmaUrl={firmaUrl}
       />
     </Document>
   )
