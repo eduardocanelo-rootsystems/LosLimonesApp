@@ -255,12 +255,13 @@ export default function PresupuestoFormPage() {
           nombreCliente: presupuesto.cliente_razon_social ?? '',
         },
       })
-      if (error) throw error
+      if (error) throw new Error(error.message ?? JSON.stringify(error))
       toast.success(`Presupuesto enviado a ${emailDest.trim()}`)
       setEmailModal(false)
     } catch (err) {
       console.error(err)
-      toast.error('Error al enviar el email. Verificá la configuración de Resend.')
+      const msg = err instanceof Error ? err.message : String(err)
+      toast.error(`Error al enviar: ${msg}`)
     } finally {
       setEnviando(false)
     }
