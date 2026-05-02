@@ -241,6 +241,8 @@ export type Database = {
           fecha_aprobacion: string | null
           factura_asociada_id: string | null
           plan_pago: 'contado' | '60dias' | '90dias' | null
+          importe_servicios: number | null
+          importe_total: number | null
         }
         Insert: {
           id?: string
@@ -275,6 +277,8 @@ export type Database = {
           fecha_aprobacion?: string | null
           factura_asociada_id?: string | null
           plan_pago?: 'contado' | '60dias' | '90dias' | null
+          importe_servicios?: number | null
+          importe_total?: number | null
         }
         Update: {
           id?: string
@@ -309,6 +313,8 @@ export type Database = {
           fecha_aprobacion?: string | null
           factura_asociada_id?: string | null
           plan_pago?: 'contado' | '60dias' | '90dias' | null
+          importe_servicios?: number | null
+          importe_total?: number | null
         }
         Relationships: []
       }

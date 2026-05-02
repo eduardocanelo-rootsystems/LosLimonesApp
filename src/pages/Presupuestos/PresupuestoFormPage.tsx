@@ -36,17 +36,19 @@ import { SeccionCobros } from './components/SeccionCobros'
 import { SeccionFotos } from './components/SeccionFotos'
 
 const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
-  emitido:    'Emitido',
-  aprobado:   'Aprobado',
-  finalizado: 'Finalizado',
-  rechazado:  'Rechazado',
+  emitido:      'Emitido',
+  aprobado:     'Aprobado',
+  finalizado:   'Finalizado',
+  rechazado:    'Rechazado',
+  relevamiento: 'Relevamiento',
 }
 
 const ESTADO_COLOR: Record<EstadoPresupuesto, string> = {
-  emitido:    'text-warning',
-  aprobado:   'text-success',
-  finalizado: 'text-ink-400',
-  rechazado:  'text-danger',
+  emitido:      'text-warning',
+  aprobado:     'text-success',
+  finalizado:   'text-ink-400',
+  rechazado:    'text-danger',
+  relevamiento: 'text-ink-500',
 }
 
 export default function PresupuestoFormPage() {

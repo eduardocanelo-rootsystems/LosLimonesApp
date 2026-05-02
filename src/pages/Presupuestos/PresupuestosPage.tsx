@@ -96,17 +96,19 @@ function FacturaAsociador({ presupuesto, facturas }: {
 // ─── Badges ───────────────────────────────────────────────────────────────────
 
 const ESTADO_BADGE: Record<EstadoPresupuesto, string> = {
-  emitido:    'badge badge-warning',
-  aprobado:   'badge badge-success',
-  finalizado: 'badge badge-muted',
-  rechazado:  'badge badge-danger',
+  emitido:      'badge badge-warning',
+  aprobado:     'badge badge-success',
+  finalizado:   'badge badge-muted',
+  rechazado:    'badge badge-danger',
+  relevamiento: 'badge badge-muted',
 }
 
 const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
-  emitido:    'Emitido',
-  aprobado:   'Aprobado',
-  finalizado: 'Finalizado',
-  rechazado:  'Rechazado',
+  emitido:      'Emitido',
+  aprobado:     'Aprobado',
+  finalizado:   'Finalizado',
+  rechazado:    'Rechazado',
+  relevamiento: 'Relevamiento',
 }
 
 function VencimientoBadge({ fechaCreacion }: { fechaCreacion: string }) {
