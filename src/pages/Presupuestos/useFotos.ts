@@ -48,6 +48,7 @@ export function useAgregarFoto(presupuestoId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuestos', presupuestoId] })
+      qc.invalidateQueries({ queryKey: ['relevamientos', presupuestoId] })
     },
   })
 }
@@ -64,6 +65,7 @@ export function useEliminarFoto(presupuestoId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['presupuestos', presupuestoId] })
+      qc.invalidateQueries({ queryKey: ['relevamientos', presupuestoId] })
     },
   })
 }
