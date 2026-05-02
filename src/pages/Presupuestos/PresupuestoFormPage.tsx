@@ -445,7 +445,7 @@ export default function PresupuestoFormPage() {
             <select
               value={estado}
               onChange={(e) => setEstado(e.target.value as EstadoPresupuesto)}
-              className="input-base text-sm"
+              className="input-base w-36 text-sm"
             >
               <option value="emitido">Emitido</option>
               <option value="aprobado">Aprobado</option>
