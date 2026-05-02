@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, DollarSign, Clock, CheckCircle, TrendingDown, Link, Unlink, Wand2 } from 'lucide-react'
+import { Upload, DollarSign, Clock, CheckCircle, TrendingDown, Link, Unlink, Wand2, Users } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ImportarExcelModal } from '@/components/shared/ImportarExcelModal'
 import { SortTh } from '@/components/shared/SortTh'
@@ -15,6 +15,7 @@ import {
   type FiltrosVentas,
   type CuentaArca,
 } from '@/hooks/useVentas'
+import { useSocios } from '@/hooks/useSocios'
 import { labelTipo, esNotaCredito, type FilaEmitida } from '@/lib/arcaParser'
 import type { FilaAny, ResultadoImport } from '@/components/shared/ImportarExcelModal'
 
@@ -162,7 +163,8 @@ export default function VentasPage() {
   const [ultimoMatch, setUltimoMatch]     = useState<number | null>(null)
 
   const { data: cuentas = [] }             = useCuentasArca()
-  const { data: facturas = [], isLoading } = useFacturasEmitidas(filtros)
+  const { data: facturas = [], isLoading, isError, error } = useFacturasEmitidas(filtros)
+  const { data: socios  = [] }             = useSocios()
   const importar           = useImportarEmitidas()
   const actualizarCobranza = useActualizarCobranza()
   const asociarNc          = useAsociarNcEmitida()
@@ -269,6 +271,34 @@ export default function VentasPage() {
         <KpiCard label="Notas crédito" value={`$${fmtImporte(totalNC)}`}        sub={`${ncs.length} NC · ${ncs.filter((n) => !n.factura_asociada_id).length} sin asociar`} icon={TrendingDown} color="text-red-400" />
       </div>
 
+      {/* Distribución por socio */}
+      {socios.some((s) => s.activo) && (
+        <div className="mb-6">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-500">Facturado por socio</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((s) => {
+              const total   = s.cuit ? facturasSolo.filter((f) => f.cuit_emisor === s.cuit && !f.anulada).reduce((acc, f) => acc + f.imp_total, 0) : 0
+              const ncsocio = s.cuit ? ncs.filter((f) => f.cuit_emisor === s.cuit).reduce((acc, f) => acc + f.imp_total, 0) : 0
+              return (
+                <div key={s.id} className="rounded-xl border border-ink-700 bg-ink-900 p-4">
+                  <div className="flex items-center gap-1.5 text-xs text-ink-400 mb-2">
+                    <Users className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{s.nombre}</span>
+                  </div>
+                  {s.cuit
+                    ? <>
+                        <p className="text-lg font-semibold text-accent-400">${fmtImporte(total - ncsocio)}</p>
+                        {ncsocio > 0 && <p className="text-xs text-ink-500 mt-0.5">NC: −${fmtImporte(ncsocio)}</p>}
+                      </>
+                    : <p className="text-xs text-ink-600 italic">Sin CUIT configurado</p>
+                  }
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <PeriodoSelector
           value={periodo}
@@ -289,6 +319,11 @@ export default function VentasPage() {
       <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
         {isLoading ? (
           <p className="px-6 py-10 text-center text-sm text-ink-500">Cargando…</p>
+        ) : isError ? (
+          <div className="px-6 py-10 text-center">
+            <p className="text-sm text-red-400">Error al cargar facturas:</p>
+            <p className="mt-1 font-mono text-xs text-red-300">{String(error)}</p>
+          </div>
         ) : facturas.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm text-ink-400">No hay comprobantes. Importá un Excel de ARCA para comenzar.</p>

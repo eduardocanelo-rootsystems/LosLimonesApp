@@ -26,17 +26,20 @@ import { SeccionMateriales } from './components/SeccionMateriales'
 import { SeccionDescuento } from './components/SeccionDescuento'
 import { SeccionManoDeObra } from './components/SeccionManoDeObra'
 import { PanelTotales } from './components/PanelTotales'
+import { SeccionFinanciamiento } from './components/SeccionFinanciamiento'
 
 const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
-  emitido: 'Emitido',
-  aprobado: 'Aprobado',
+  emitido:    'Emitido',
+  aprobado:   'Aprobado',
   finalizado: 'Finalizado',
+  rechazado:  'Rechazado',
 }
 
 const ESTADO_COLOR: Record<EstadoPresupuesto, string> = {
-  emitido: 'text-warning',
-  aprobado: 'text-success',
+  emitido:    'text-warning',
+  aprobado:   'text-success',
   finalizado: 'text-ink-400',
+  rechazado:  'text-danger',
 }
 
 export default function PresupuestoFormPage() {
@@ -44,8 +47,8 @@ export default function PresupuestoFormPage() {
   const navigate = useNavigate()
   const esNuevo = !id
 
-  const { data: presupuesto, isLoading: loadingPresupuesto } = usePresupuesto(id)
-  const { data: contrato } = useContrato(id)
+  const { data: presupuesto, isLoading: loadingPresupuesto, isFetching: fetchingPresupuesto } = usePresupuesto(id)
+  const { data: contrato, isFetching: fetchingContrato } = useContrato(id)
   const { data: firmaContratista } = useFirmaContratista()
   const { data: catalogoServicios = [] } = useServicios()
   const { data: catalogoMateriales = [] } = useMateriales()
@@ -212,6 +215,18 @@ export default function PresupuestoFormPage() {
     return { subtotalServicios: ss, subtotalMateriales: sm, costoManoObra: cmo, extrasMonto: ext }
   }, [servicios, materiales, manoDeObra, m2, k, dias])
 
+  const totalCliente = useMemo(() => {
+    const bruto = subtotalServicios + subtotalMateriales
+    const descMonto = tieneDescuento
+      ? descuentoTipo === 'fijo'
+        ? parseFloat(descuentoValor) || 0
+        : (bruto * (parseFloat(descuentoValor) || 0)) / 100
+      : 0
+    const neto = bruto - descMonto
+    const iva = parseFloat(ivaPct) || 0
+    return neto + (neto * iva) / 100
+  }, [subtotalServicios, subtotalMateriales, tieneDescuento, descuentoTipo, descuentoValor, ivaPct])
+
   // ─── Guardar ─────────────────────────────────────────────────────────────────
 
   const esAprobado = estado === 'aprobado'
@@ -322,6 +337,7 @@ export default function PresupuestoFormPage() {
               <option value="emitido">Emitido</option>
               <option value="aprobado">Aprobado</option>
               <option value="finalizado">Finalizado</option>
+              <option value="rechazado">Rechazado</option>
             </select>
             {esAprobado && (
               <div className="flex items-center gap-1.5">
@@ -351,6 +367,7 @@ export default function PresupuestoFormPage() {
             {!esNuevo && presupuesto && (
               esAprobado ? (
                 <PDFDownloadLink
+                  key={presupuesto.fecha_actualizacion}
                   document={
                     <PresupuestoContratoPDFDocument
                       presupuesto={presupuesto}
@@ -360,10 +377,10 @@ export default function PresupuestoFormPage() {
                     />
                   }
                   fileName={`${presupuesto.numero ?? 'presupuesto'}-contrato.pdf`}
-                  className="btn-secondary"
+                  className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
                 >
                   {({ loading }) =>
-                    loading ? (
+                    fetchingPresupuesto || fetchingContrato || loading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
@@ -375,12 +392,13 @@ export default function PresupuestoFormPage() {
                 </PDFDownloadLink>
               ) : (
                 <PDFDownloadLink
+                  key={presupuesto.fecha_actualizacion}
                   document={<PresupuestoPDFDocument presupuesto={presupuesto} />}
                   fileName={`${presupuesto.numero ?? 'presupuesto'}.pdf`}
-                  className="btn-secondary"
+                  className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
                 >
                   {({ loading }) =>
-                    loading ? (
+                    fetchingPresupuesto || fetchingContrato || loading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
@@ -495,6 +513,8 @@ export default function PresupuestoFormPage() {
         costoManoObra={costoManoObra}
         onIvaChange={setIvaPct}
       />
+
+      <SeccionFinanciamiento total={totalCliente} />
     </div>
   )
 }

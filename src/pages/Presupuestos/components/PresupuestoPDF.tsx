@@ -223,6 +223,40 @@ const s = StyleSheet.create({
   totalValueFinal: { fontSize: 10, color: C.white, fontFamily: 'Helvetica-Bold' },
   descuentoValue: { fontSize: 8.5, color: C.warning, fontFamily: 'Helvetica-Bold' },
 
+  finTable: {
+    borderWidth: 0.5,
+    borderColor: C.gray300,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginTop: 4,
+  },
+  finHeader: {
+    flexDirection: 'row',
+    backgroundColor: C.gray100,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.gray300,
+  },
+  finRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 0.5,
+    borderBottomColor: C.gray100,
+  },
+  finRowShaded: { backgroundColor: C.gray50 },
+  finThText: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: C.gray500, letterSpacing: 0.5 },
+  finTdText: { fontSize: 8.5, color: C.black },
+  finTdMono: { fontSize: 8.5, color: C.gray700 },
+  finTdBold: { fontFamily: 'Helvetica-Bold', color: C.black },
+  finColPlan: { flex: 2.2 },
+  finColRecargo: { flex: 0.8, textAlign: 'right' },
+  finColTotal: { flex: 1.5, textAlign: 'right' },
+  finColAnticipo: { flex: 1.5, textAlign: 'right' },
+  finColCuotas: { flex: 2, textAlign: 'right' },
+  finNote: { fontSize: 7.5, color: C.gray500, marginTop: 5 },
+
   obsBox: {
     backgroundColor: C.gray50,
     borderWidth: 0.5,
@@ -286,7 +320,7 @@ function TablaServicios({ items, esExtra }: { items: PresupuestoCompleto['servic
       {items.map((sv, i) => (
         <View key={sv.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
           <Text style={[s.tdText, s.colNombre]}>{sv.nombre_snapshot}</Text>
-          <Text style={[s.tdMono, s.colPrecioM2, s.tdRight]}>{fmt(sv.precio_m2_snapshot)}</Text>
+          <Text style={[s.tdMono, s.colPrecioM2, s.tdRight]}>{fmt(sv.precio_m2_snapshot * (sv.k_snapshot ?? 1))}</Text>
           <Text style={[s.tdMono, s.colM2, s.tdRight]}>{sv.m2_snapshot}</Text>
           <Text style={[s.tdMono, s.colSubtotal, s.tdRight, s.tdBold]}>{fmt(sv.subtotal)}</Text>
         </View>
@@ -317,6 +351,47 @@ function TablaMateriales({ items, esExtra }: { items: PresupuestoCompleto['mater
           <Text style={[s.tdMono, s.colMatSubtotal, s.tdRight, s.tdBold]}>{fmt(mat.subtotal)}</Text>
         </View>
       ))}
+    </View>
+  )
+}
+
+const PLANES_FIN = [
+  { label: 'Contado (50/50)', recargo: 0 },
+  { label: 'Financiado a 60 días', recargo: 0.10 },
+  { label: 'Financiado a 90 días', recargo: 0.35 },
+]
+
+function TablaFinanciamiento({ total }: { total: number }) {
+  if (total <= 0) return null
+  const anticipo = total * 0.5
+  return (
+    <View style={s.finTable} wrap={false}>
+      <View style={s.finHeader}>
+        <Text style={[s.finThText, s.finColPlan]}>PLAN</Text>
+        <Text style={[s.finThText, s.finColRecargo]}>RECARGO</Text>
+        <Text style={[s.finThText, s.finColTotal]}>TOTAL</Text>
+        <Text style={[s.finThText, s.finColAnticipo]}>ANTICIPO</Text>
+        <Text style={[s.finThText, s.finColCuotas]}>CUOTAS / SALDO</Text>
+      </View>
+      {PLANES_FIN.map(({ label, recargo }, i) => {
+        const totalFinal = total * (1 + recargo)
+        const saldo = totalFinal - anticipo
+        const cuotasLabel = recargo === 0 ? fmt(saldo) : `2 × ${fmt(saldo / 2)}`
+        return (
+          <View key={label} style={[s.finRow, i % 2 === 1 ? s.finRowShaded : {}]}>
+            <Text style={[s.finTdText, s.finColPlan]}>{label}</Text>
+            <Text style={[s.finTdMono, s.finColRecargo]}>
+              {recargo === 0 ? '—' : `+${(recargo * 100).toFixed(0)}%`}
+            </Text>
+            <Text style={[s.finTdMono, s.finTdBold, s.finColTotal]}>{fmt(totalFinal)}</Text>
+            <Text style={[s.finTdMono, s.finColAnticipo]}>{fmt(anticipo)}</Text>
+            <Text style={[s.finTdMono, s.finColCuotas]}>{cuotasLabel}</Text>
+          </View>
+        )
+      })}
+      <Text style={s.finNote}>
+        * Anticipo: 50% del valor de contado en todos los planes. Los recargos aplican sobre el total.
+      </Text>
     </View>
   )
 }
@@ -352,8 +427,8 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
   const tieneDescuento = !!presupuesto.descuento_tipo && descuentoMonto > 0
   const tieneIva = Number(presupuesto.iva_pct) > 0
   const tieneObs = !!presupuesto.observaciones
-  const mostrarVigencia = presupuesto.estado === 'emitido' && !!presupuesto.fecha_creacion
-  const mostrarMarcaAgua = presupuesto.estado === 'aprobado' || presupuesto.estado === 'finalizado'
+  const mostrarVigencia  = presupuesto.estado === 'emitido' && !!presupuesto.fecha_creacion
+  const mostrarMarcaAgua = presupuesto.estado === 'aprobado' || presupuesto.estado === 'finalizado' || presupuesto.estado === 'rechazado'
 
   const edifAcabado = Array.isArray(presupuesto.edif_acabado)
     ? (presupuesto.edif_acabado as string[]).join(', ')
@@ -363,7 +438,7 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
     <Page size="A4" style={s.page}>
       {mostrarMarcaAgua && (
         <Text style={s.watermark} fixed>
-          {presupuesto.estado === 'aprobado' ? 'APROBADO' : 'FINALIZADO'}
+          {presupuesto.estado === 'aprobado' ? 'APROBADO' : presupuesto.estado === 'rechazado' ? 'RECHAZADO' : 'FINALIZADO'}
         </Text>
       )}
 
@@ -509,8 +584,15 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
         </View>
       </View>
 
+      {total > 0 && (
+        <View style={[s.section, { marginTop: 14 }]}>
+          <Text style={s.sectionTitle}>Opciones de financiamiento</Text>
+          <TablaFinanciamiento total={total} />
+        </View>
+      )}
+
       {tieneObs && (
-        <View style={[s.section, { marginTop: 16 }]}>
+        <View style={[s.section, { marginTop: 14 }]}>
           <Text style={s.sectionTitle}>Observaciones</Text>
           <View style={s.obsBox}>
             <Text style={s.obsText}>{presupuesto.observaciones}</Text>

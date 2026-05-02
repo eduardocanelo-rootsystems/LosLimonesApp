@@ -95,15 +95,17 @@ function FacturaAsociador({ presupuesto, facturas }: {
 // ─── Badges ───────────────────────────────────────────────────────────────────
 
 const ESTADO_BADGE: Record<EstadoPresupuesto, string> = {
-  emitido: 'badge badge-warning',
-  aprobado: 'badge badge-success',
+  emitido:    'badge badge-warning',
+  aprobado:   'badge badge-success',
   finalizado: 'badge badge-muted',
+  rechazado:  'badge badge-danger',
 }
 
 const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
-  emitido: 'Emitido',
-  aprobado: 'Aprobado',
+  emitido:    'Emitido',
+  aprobado:   'Aprobado',
   finalizado: 'Finalizado',
+  rechazado:  'Rechazado',
 }
 
 export default function PresupuestosPage() {
@@ -174,6 +176,7 @@ export default function PresupuestosPage() {
               <option value="emitido">Emitido</option>
               <option value="aprobado">Aprobado</option>
               <option value="finalizado">Finalizado</option>
+              <option value="rechazado">Rechazado</option>
             </select>
             <span className="hidden whitespace-nowrap text-xs text-ink-500 sm:inline">
               {filtrados.length} de {presupuestos.length}

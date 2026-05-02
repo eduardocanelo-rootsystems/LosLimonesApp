@@ -34,7 +34,7 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
   const egresosGenerales = movimientos.filter((m) => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0)
   const poolNeto         = totalServicios + ingresosExtra - egresosGenerales
 
-  const sociosActivos = socios.filter((s) => s.activo)
+  const sociosActivos = socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
 
   if (sociosActivos.length === 0) {
     return (
@@ -215,7 +215,7 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
               <label className="text-xs text-ink-400">Socio</label>
               <select className="input w-full" value={socioId} onChange={(e) => setSocioId(e.target.value)} required>
                 <option value="">— elegir socio —</option>
-                {socios.filter((s) => s.activo).map((s) => (
+                {socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((s) => (
                   <option key={s.id} value={s.id}>{s.nombre}</option>
                 ))}
               </select>

@@ -1,7 +1,9 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from 'react'
@@ -28,12 +30,21 @@ interface AuthContextValue {
   activo:  boolean
   nombre:  string
   signIn:  (email: string, password: string) => Promise<{ error: string | null }>
-  signOut: () => Promise<void>
+  signOut: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
-async function fetchRol(userId: string): Promise<RolData> {
+async function fetchRol(userId: string, appMeta?: Record<string, unknown>): Promise<RolData> {
+  // Leer primero desde app_metadata del JWT (no requiere query a la DB)
+  if (appMeta?.rol) {
+    return {
+      rol:    appMeta.rol    as Rol,
+      activo: appMeta.activo !== false,
+      nombre: (appMeta.nombre as string) ?? '',
+    }
+  }
+  // Fallback: query a user_roles
   try {
     const res = await db
       .from('user_roles')
@@ -66,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (_event, newSession) => {
         setSession(newSession)
         if (newSession?.user) {
-          setRolData(await fetchRol(newSession.user.id))
+          setRolData(await fetchRol(newSession.user.id, newSession.user.app_metadata))
         } else {
           setRolData(ROL_VACIO)
         }
@@ -78,26 +89,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => { subscription.unsubscribe(); clearTimeout(fallback) }
   }, [])
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error: error?.message ?? null }
-  }
+  }, [])
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-  }
+  const signOut = useCallback(() => {
+    supabase.auth.signOut().catch(() => {})
+    window.location.replace('/login')
+  }, [])
+
+  const value = useMemo(() => ({
+    session,
+    user:   session?.user ?? null,
+    loading,
+    rol:    rolData.rol,
+    activo: rolData.activo,
+    nombre: rolData.nombre,
+    signIn,
+    signOut,
+  }), [session, loading, rolData, signIn, signOut])
 
   return (
-    <AuthContext.Provider value={{
-      session,
-      user:    session?.user ?? null,
-      loading,
-      rol:     rolData.rol,
-      activo:  rolData.activo,
-      nombre:  rolData.nombre,
-      signIn,
-      signOut,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   )

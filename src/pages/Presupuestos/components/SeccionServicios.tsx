@@ -86,7 +86,7 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
                       </div>
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-ink-300">
-                      {formatCurrency(item.precio_m2)}
+                      {formatCurrency(item.precio_m2 * coefK)}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono font-medium text-ink-100">
                       {m2 && coefK ? formatCurrency(subtotal) : '—'}

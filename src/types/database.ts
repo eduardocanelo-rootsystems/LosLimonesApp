@@ -567,7 +567,7 @@ export type ManoDeObraTipoConCosto = ManoDeObraTipo & { costo_diario_actual: num
 
 // ─── Presupuestos ─────────────────────────────────────────────────────────────
 
-export type EstadoPresupuesto = 'emitido' | 'aprobado' | 'finalizado'
+export type EstadoPresupuesto = 'emitido' | 'aprobado' | 'finalizado' | 'rechazado'
 export type DescuentoTipo = 'fijo' | 'porcentaje'
 
 export type Presupuesto = Database['public']['Tables']['presupuestos']['Row']

@@ -42,7 +42,7 @@ export function contratoToFormValues(
     nombre_comitente: contrato?.nombre_comitente ?? presupuesto.cliente_razon_social ?? '',
     direccion_obra: contrato?.direccion_obra ?? presupuesto.cliente_direccion ?? '',
     nombre_administrador: contrato?.nombre_administrador ?? presupuesto.cliente_administrador ?? '',
-    administrador_dni: contrato?.administrador_dni ?? '',
+    administrador_dni: contrato?.administrador_dni ?? presupuesto.cliente_administrador_cuit ?? '',
     sector_obra: contrato?.sector_obra ?? '',
     plan_pago: (contrato?.plan_pago as PlanPago) ?? '',
     adelanto: contrato?.adelanto?.toString() ?? '',
@@ -90,6 +90,16 @@ const MESES = [
 
 function parseLocalDate(iso: string): Date {
   return new Date(iso.length === 10 ? iso + 'T12:00:00' : iso)
+}
+
+export function addWorkingDays(startIso: string, days: number): string {
+  const d = new Date(startIso + 'T12:00:00')
+  let added = 0
+  while (added < days) {
+    d.setDate(d.getDate() + 1)
+    if (d.getDay() !== 0 && d.getDay() !== 6) added++
+  }
+  return d.toISOString().substring(0, 10)
 }
 
 function fmtLong(iso: string | null | undefined): string {
@@ -269,13 +279,21 @@ export function ContratoPDFPage({
   const { totalFinal, anticipo, montoCuota } = calcFinanciamiento(baseTotal, plan)
 
   const comitente = form.nombre_comitente || presupuesto.cliente_razon_social || '___________'
+  const comitenteCuit = presupuesto.cliente_cuit || '___________'
   const dirObra = form.direccion_obra || presupuesto.cliente_direccion || '___________'
   const admin = form.nombre_administrador || presupuesto.cliente_administrador || '___________'
   const dni = form.administrador_dni || '___________'
   const sector = form.sector_obra || '___________'
   const dirLegal = form.direccion_legal || presupuesto.cliente_direccion || '___________'
-  const diasEstimados = presupuesto.dias_estimados_obra ?? 15
+  const diasEstimados = presupuesto.dias_estimados_obra ?? 0
   const esFinanciado = plan === '60dias' || plan === '90dias'
+  const fechaFin = form.fecha_inicio_obra && diasEstimados > 0
+    ? addWorkingDays(form.fecha_inicio_obra, diasEstimados)
+    : null
+  const serviciosNombres = presupuesto.servicios
+    .filter((sv) => !sv.es_adicional)
+    .map((sv) => sv.nombre_snapshot)
+    .join('; ')
 
   return (
     <Page size="A4" style={s.page}>
@@ -305,6 +323,8 @@ export function ContratoPDFPage({
         <Text style={b}>"EL CONTRATISTA"</Text>
         {'; y '}
         <Text style={b}>{comitente}</Text>
+        {', CUIT N.º '}
+        <Text style={b}>{comitenteCuit}</Text>
         {', sito en '}
         <Text style={b}>{dirObra}</Text>
         {', representado en este acto por el Sr. '}
@@ -328,7 +348,9 @@ export function ContratoPDFPage({
           <Text style={b}>{fmtShort(presupuesto.fecha_creacion)}</Text>
           {', a realizarse en el sector de '}
           <Text style={b}>{sector}</Text>
-          {' del edificio mencionado en el encabezado. Los trabajos comprenden la preparación de superficies, reparaciones de mampostería, tratamiento de grietas y terminación con pintura impermeable de primera calidad.'}
+          {' del edificio mencionado en el encabezado. Los trabajos incluyen: '}
+          <Text style={b}>{serviciosNombres || 'los detallados en el presupuesto adjunto'}</Text>
+          {'. Comprenden la preparación de superficies, reparaciones de mampostería, tratamiento de grietas y terminación con productos de primera calidad.'}
         </Text>
       </View>
 
@@ -397,9 +419,15 @@ export function ContratoPDFPage({
         <Text style={s.clausulaTexto}>
           {'La obra comenzará el día '}
           <Text style={b}>{fmtLong(form.fecha_inicio_obra)}</Text>
-          {' y tendrá una duración estimada de '}
-          <Text style={b}>{diasEstimados} días hábiles</Text>
-          {' de trabajo efectivo a cielo abierto. El plazo se extenderá por días de lluvia o condiciones climáticas que impidan técnicamente las tareas. Por cada día de retraso injustificado, se establece una multa de '}
+          {fechaFin ? ' y finalizará estimativamente el ' : ' y tendrá una duración estimada de '}
+          {fechaFin
+            ? <Text style={b}>{fmtLong(fechaFin)}</Text>
+            : <Text style={b}>{diasEstimados > 0 ? `${diasEstimados} días hábiles` : '_____ días hábiles'}</Text>
+          }
+          {fechaFin && diasEstimados > 0
+            ? ` (${diasEstimados} días hábiles de trabajo efectivo a cielo abierto).`
+            : ' de trabajo efectivo a cielo abierto.'}
+          {' El plazo se extenderá por días de lluvia o condiciones climáticas que impidan técnicamente las tareas. Por cada día de retraso injustificado, se establece una multa de '}
           <Text style={b}>{fmtOrBlank(form.monto_multa, true)}</Text>
           {'.'}
         </Text>

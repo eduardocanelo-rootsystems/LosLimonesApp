@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, DollarSign, TrendingDown, Building2, Briefcase, X, Link, Unlink } from 'lucide-react'
+import { Upload, DollarSign, TrendingDown, Building2, Briefcase, X, Link, Unlink, Users } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { ImportarExcelModal } from '@/components/shared/ImportarExcelModal'
 import { SortTh } from '@/components/shared/SortTh'
@@ -14,6 +14,7 @@ import {
   type FiltrosCompras,
 } from '@/hooks/useCompras'
 import { useCuentasArca, type CuentaArca } from '@/hooks/useVentas'
+import { useSocios } from '@/hooks/useSocios'
 import { labelTipo, esNotaCredito, type FilaRecibida } from '@/lib/arcaParser'
 import type { FilaAny, ResultadoImport } from '@/components/shared/ImportarExcelModal'
 
@@ -148,7 +149,8 @@ export default function ComprasPage() {
   const [soloNegocio, setSoloNegocio] = useState(false)
 
   const { data: cuentas = [] }            = useCuentasArca()
-  const { data: compras = [], isLoading } = useComprasRecibidas(filtros)
+  const { data: compras = [], isLoading, isError, error } = useComprasRecibidas(filtros)
+  const { data: socios  = [] }            = useSocios()
   const importar                          = useImportarRecibidas()
   const asociarNc                         = useAsociarNcCompra()
 
@@ -195,6 +197,34 @@ export default function ComprasPage() {
         <KpiCard label="Proveedores"    value={String(proveedores)}             sub="distintos"                                                        icon={Building2}   color="text-blue-400" />
       </div>
 
+      {/* Compras por socio */}
+      {socios.some((s) => s.activo) && (
+        <div className="mb-6">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-500">Compras por socio</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((s) => {
+              const total   = s.cuit ? facturasSolo.filter((c) => c.cuit_receptor === s.cuit && c.es_negocio).reduce((acc, c) => acc + c.imp_total, 0) : 0
+              const ncsocio = s.cuit ? ncs.filter((c) => c.cuit_receptor === s.cuit).reduce((acc, c) => acc + c.imp_total, 0) : 0
+              return (
+                <div key={s.id} className="rounded-xl border border-ink-700 bg-ink-900 p-4">
+                  <div className="flex items-center gap-1.5 text-xs text-ink-400 mb-2">
+                    <Users className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">{s.nombre}</span>
+                  </div>
+                  {s.cuit
+                    ? <>
+                        <p className="text-lg font-semibold text-red-400">−${fmtImporte(total - ncsocio)}</p>
+                        {ncsocio > 0 && <p className="text-xs text-ink-500 mt-0.5">NC: +${fmtImporte(ncsocio)}</p>}
+                      </>
+                    : <p className="text-xs text-ink-600 italic">Sin CUIT configurado</p>
+                  }
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Filtros */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <PeriodoSelector
@@ -217,6 +247,11 @@ export default function ComprasPage() {
       <div className="rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
         {isLoading ? (
           <p className="px-6 py-10 text-center text-sm text-ink-500">Cargando…</p>
+        ) : isError ? (
+          <div className="px-6 py-10 text-center">
+            <p className="text-sm text-red-400">Error al cargar compras:</p>
+            <p className="mt-1 font-mono text-xs text-red-300">{String(error)}</p>
+          </div>
         ) : comprasFiltradas.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="text-sm text-ink-400">No hay comprobantes. Importá un Excel de ARCA para comenzar.</p>

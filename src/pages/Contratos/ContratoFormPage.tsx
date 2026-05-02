@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Copy, FileDown, Loader2, PenLine, Save } from 'lucide-react'
 import { toast } from 'sonner'
@@ -13,6 +13,7 @@ import {
   calcTotalPresupuesto,
   calcFinanciamiento,
   PLANES_PAGO,
+  addWorkingDays,
 } from './components/ContratoPDF'
 import type { ContratoFormValues, PlanPago } from './components/ContratoPDF'
 
@@ -96,6 +97,12 @@ export default function ContratoFormPage() {
   const [direccionLegal, setDireccionLegal] = useState('')
   const [fechaInicioObra, setFechaInicioObra] = useState('')
   const [fechaFirma, setFechaFirma] = useState('')
+
+  // Fecha fin calculada: inicio + días hábiles del presupuesto (no se guarda en DB)
+  const fechaFinObra = useMemo(() => {
+    if (!fechaInicioObra || !presupuesto?.dias_estimados_obra) return ''
+    return addWorkingDays(fechaInicioObra, presupuesto.dias_estimados_obra)
+  }, [fechaInicioObra, presupuesto?.dias_estimados_obra])
 
   // ─── Inicialización ────────────────────────────────────────────────────────
 
@@ -563,6 +570,24 @@ export default function ContratoFormPage() {
               onChange={(e) => setFechaInicioObra(e.target.value)}
               className="input-base font-mono"
             />
+          </Field>
+          <Field
+            label="Fecha estimada de finalización"
+            hint={presupuesto.dias_estimados_obra
+              ? `Calculada automáticamente: ${presupuesto.dias_estimados_obra} días hábiles desde el inicio`
+              : 'Configurá los días estimados en el presupuesto para calcular este valor'}
+          >
+            <div className={cn(
+              'input-base font-mono select-none',
+              fechaFinObra ? 'text-ink-200' : 'text-ink-500'
+            )}>
+              {fechaFinObra
+                ? new Intl.DateTimeFormat('es-AR', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    timeZone: 'America/Argentina/Buenos_Aires',
+                  }).format(new Date(fechaFinObra + 'T12:00:00'))
+                : '—'}
+            </div>
           </Field>
           <Field label="Multa por día de retraso ($ ARS)">
             <input

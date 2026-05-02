@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, FileText, Wrench, Package, Users,
   Receipt, ShoppingCart, ArrowLeftRight,
@@ -29,16 +29,12 @@ const ROL_BADGE: Record<Rol, string> = {
 
 export function Header() {
   const { user, signOut, rol, nombre } = useAuth()
-  const navigate    = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const itemsVisibles = navItems.filter((i) => rol && i.roles.includes(rol))
   const puedeSettings = rol === 'superadmin' || rol === 'admin'
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
-  }
+  const handleSignOut = () => { signOut() }
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-800 bg-ink-950/80 backdrop-blur-md">

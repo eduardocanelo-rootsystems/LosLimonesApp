@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown } from 'lucide-react'
+import { PDFDownloadLink } from '@react-pdf/renderer'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PeriodoSelector, getRangoFechas, type Periodo } from '@/components/shared/PeriodoSelector'
 import { useFacturasEmitidas } from '@/hooks/useVentas'
@@ -8,6 +9,8 @@ import { usePresupuestos } from '@/pages/Presupuestos/usePresupuestos'
 import { useMovimientos, usePresupuestosRentabilidad } from '@/hooks/useMovimientos'
 import { useSocios } from '@/hooks/useSocios'
 import { esNotaCredito } from '@/lib/arcaParser'
+import { ResumenContadorPDF } from './ResumenContadorPDF'
+import type { ResumenContadorData } from './ResumenContadorPDF'
 
 function fmtImporte(n: number) {
   return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -70,11 +73,56 @@ export default function DashboardPage() {
   const ingresosExtra    = movimientos.filter((m) => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
   const egresosGenerales = movimientos.filter((m) => m.tipo === 'egreso').reduce((s, m) => s + m.monto, 0)
   const poolNeto         = totalServicios + ingresosExtra - egresosGenerales
-  const sociosActivos    = socios.filter((s) => s.activo)
+  const sociosActivos    = socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+
+  const pdfData = useMemo<ResumenContadorData>(() => ({
+    periodo,
+    rango,
+    totalFacturado,
+    totalNcEmitido,
+    totalCobrado,
+    pendienteCobro,
+    nFacturas:   facturasSolo.length,
+    nNcs:        ncsEmitidas.length,
+    totalCompras,
+    nCompras:    comprasSolo.length,
+    facturadoNeto,
+    resultado,
+    poolNeto,
+    socios: sociosActivos.map((soc) => {
+      const ventaNeta  = soc.cuit
+        ? facturasSolo.filter((f) => f.cuit_emisor === soc.cuit).reduce((a, f) => a + f.imp_total, 0)
+          - ncsEmitidas.filter((f) => f.cuit_emisor === soc.cuit).reduce((a, f) => a + f.imp_total, 0)
+        : 0
+      const compraNeta = soc.cuit
+        ? comprasSolo.filter((c) => c.cuit_receptor === soc.cuit).reduce((a, c) => a + c.imp_total, 0)
+          - compras.filter((c) => esNotaCredito(c.tipo_comprobante) && c.cuit_receptor === soc.cuit).reduce((a, c) => a + c.imp_total, 0)
+        : 0
+      const poolBruto = poolNeto * (soc.porcentaje / 100)
+      const retiros   = movimientos.filter((m) => m.tipo === 'retiro' && m.socio_id === soc.id).reduce((a, m) => a + m.monto, 0)
+      return { id: soc.id, nombre: soc.nombre, cuit: soc.cuit, porcentaje: soc.porcentaje, ventaNeta, compraNeta, poolBruto, retiros, neto: poolBruto - retiros }
+    }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [periodo, rango.desde, rango.hasta, facturas, compras, movimientos, socios])
+
+  const nombreArchivo = `resumen-contador-${rango.desde}-${rango.hasta}.pdf`
 
   return (
     <>
-      <PageHeader title="Dashboard" subtitle="Pulso financiero del período" />
+      <PageHeader
+        title="Dashboard"
+        subtitle="Pulso financiero del período"
+        actions={
+          <PDFDownloadLink document={<ResumenContadorPDF data={pdfData} />} fileName={nombreArchivo}>
+            {({ loading }) => (
+              <button className="btn-ghost flex items-center gap-2 text-sm" disabled={loading}>
+                <FileDown className="h-4 w-4" />
+                {loading ? 'Generando…' : 'Exportar PDF'}
+              </button>
+            )}
+          </PDFDownloadLink>
+        }
+      />
 
       <div className="mb-6">
         <PeriodoSelector

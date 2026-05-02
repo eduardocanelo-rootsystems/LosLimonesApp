@@ -85,7 +85,18 @@ export function useCrearInvitacion() {
         .select()
         .single()
       if (error) throw error
-      return data as Invitacion
+      const inv = data as Invitacion
+
+      // Enviar email automáticamente vía Edge Function
+      const { error: fnError } = await supabase.functions.invoke('resend-email', {
+        body: { email: inv.email, token: inv.token, rolInvitado: inv.rol },
+      })
+      if (fnError) {
+        console.error('[enviar-invitacion]', fnError)
+        // No bloqueamos: la invitación ya fue creada aunque falle el email
+      }
+
+      return inv
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_INV }),
   })
@@ -106,10 +117,16 @@ export function useCambiarRol() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ userId, rol }: { userId: string; rol: Rol }) => {
+      // Impedir escalada a superadmin desde el cliente
+      if (rol === 'superadmin') throw new Error('No se puede asignar el rol superadmin')
+      // Impedir que el usuario modifique su propio rol
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user.id === userId) throw new Error('No podés modificar tu propio rol')
       const { error } = await db
         .from('user_roles')
         .update({ rol, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
+        .neq('rol', 'superadmin') // nunca tocar filas de superadmin
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_ROLES }),
@@ -120,10 +137,14 @@ export function useToggleActivo() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ userId, activo }: { userId: string; activo: boolean }) => {
+      // Impedir desactivar superadmin
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user.id === userId) throw new Error('No podés desactivarte a vos mismo')
       const { error } = await db
         .from('user_roles')
         .update({ activo, updated_at: new Date().toISOString() })
         .eq('user_id', userId)
+        .neq('rol', 'superadmin') // nunca tocar filas de superadmin
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QK_ROLES }),

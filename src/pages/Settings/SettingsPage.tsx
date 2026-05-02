@@ -138,11 +138,13 @@ function SocioFila({ socio }: { socio: Socio }) {
   const [editando, setEditando]     = useState(false)
   const [nombre, setNombre]         = useState(socio.nombre)
   const [porcentaje, setPorcentaje] = useState(String(socio.porcentaje))
+  const [cuit, setCuit]             = useState(socio.cuit ?? '')
   const [activo, setActivo]         = useState(socio.activo)
 
   function cancelar() {
     setNombre(socio.nombre)
     setPorcentaje(String(socio.porcentaje))
+    setCuit(socio.cuit ?? '')
     setActivo(socio.activo)
     setEditando(false)
   }
@@ -150,7 +152,7 @@ function SocioFila({ socio }: { socio: Socio }) {
   async function guardarCambios() {
     const pct = parseFloat(porcentaje)
     if (isNaN(pct) || pct < 0 || pct > 100) return
-    await guardar.mutateAsync({ id: socio.id, nombre, porcentaje: pct, activo })
+    await guardar.mutateAsync({ id: socio.id, nombre, porcentaje: pct, cuit: cuit.trim() || null, activo })
     setEditando(false)
   }
 
@@ -158,6 +160,7 @@ function SocioFila({ socio }: { socio: Socio }) {
     return (
       <tr className="text-ink-300 hover:bg-ink-800/40">
         <td className="px-4 py-3">{socio.nombre}</td>
+        <td className="px-4 py-3 font-mono text-sm text-ink-400">{socio.cuit ?? <span className="text-ink-600 italic">sin CUIT</span>}</td>
         <td className="px-4 py-3 font-mono text-sm">{socio.porcentaje}%</td>
         <td className="px-4 py-3">
           <span className={`rounded px-2 py-0.5 text-xs ${socio.activo ? 'bg-green-900/40 text-green-400' : 'bg-ink-800 text-ink-500'}`}>
@@ -177,6 +180,9 @@ function SocioFila({ socio }: { socio: Socio }) {
     <tr className="bg-ink-800/40">
       <td className="px-4 py-2">
         <input className="input py-1 text-sm w-full" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+      </td>
+      <td className="px-4 py-2">
+        <input className="input py-1 text-sm font-mono w-full" value={cuit} onChange={(e) => setCuit(e.target.value)} placeholder="20-12345678-9" />
       </td>
       <td className="px-4 py-2 w-28">
         <div className="flex items-center gap-1">
@@ -212,23 +218,29 @@ function SocioFila({ socio }: { socio: Socio }) {
 function NuevoSocioForm({ onCrear }: { onCrear: () => void }) {
   const guardar                     = useGuardarSocio()
   const [nombre, setNombre]         = useState('')
+  const [cuit, setCuit]             = useState('')
   const [porcentaje, setPorcentaje] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const pct = parseFloat(porcentaje)
     if (!nombre.trim() || isNaN(pct)) return
-    await guardar.mutateAsync({ nombre: nombre.trim(), porcentaje: pct, activo: true })
+    await guardar.mutateAsync({ nombre: nombre.trim(), porcentaje: pct, cuit: cuit.trim() || null, activo: true })
     setNombre('')
+    setCuit('')
     setPorcentaje('')
     onCrear()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-end gap-3 rounded-lg border border-ink-700 bg-ink-800/50 p-4">
-      <div className="flex-1 space-y-1">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3 rounded-lg border border-ink-700 bg-ink-800/50 p-4">
+      <div className="flex-1 min-w-[140px] space-y-1">
         <label className="text-xs text-ink-400">Nombre</label>
         <input className="input w-full" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Luis Alfonzo" required />
+      </div>
+      <div className="flex-1 min-w-[140px] space-y-1">
+        <label className="text-xs text-ink-400">CUIT</label>
+        <input className="input w-full font-mono" value={cuit} onChange={(e) => setCuit(e.target.value)} placeholder="20-12345678-9" />
       </div>
       <div className="w-32 space-y-1">
         <label className="text-xs text-ink-400">Porcentaje</label>
@@ -351,8 +363,7 @@ function SeccionInvitaciones({ esSuperadmin }: { esSuperadmin: boolean }) {
     setError('')
     try {
       const inv = await crear.mutateAsync({ email: email.trim(), rol })
-      const link = `${window.location.origin}/registro?token=${inv.token}`
-      setLinkNuevo(link)
+      setLinkNuevo(inv.email)
       setEmail('')
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al crear invitación.')
@@ -386,10 +397,9 @@ function SeccionInvitaciones({ esSuperadmin }: { esSuperadmin: boolean }) {
       {error && <p className="text-xs text-red-400 px-1">{error}</p>}
 
       {linkNuevo && (
-        <div className="rounded-lg border border-accent-700 bg-accent-950/30 px-4 py-3 space-y-1">
-          <p className="text-xs text-accent-300 font-medium">Enlace de invitación (compartilo con el usuario):</p>
-          <p className="break-all font-mono text-xs text-accent-400 select-all">{linkNuevo}</p>
-          <button onClick={() => setLinkNuevo('')} className="text-xs text-ink-500 hover:text-ink-300">Cerrar</button>
+        <div className="rounded-lg border border-green-800 bg-green-950/30 px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-xs text-green-300">Email de invitación enviado a <strong>{linkNuevo}</strong></p>
+          <button onClick={() => setLinkNuevo('')} className="text-xs text-ink-500 hover:text-ink-300 shrink-0">✕</button>
         </div>
       )}
 
@@ -563,7 +573,8 @@ export default function SettingsPage() {
               <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
                 <tr>
                   <th className="px-4 py-3 text-left">Nombre</th>
-                  <th className="px-4 py-3 text-left">Porcentaje</th>
+                  <th className="px-4 py-3 text-left">CUIT</th>
+                  <th className="px-4 py-3 text-left">%</th>
                   <th className="px-4 py-3 text-left">Estado</th>
                   <th className="px-4 py-3" />
                 </tr>

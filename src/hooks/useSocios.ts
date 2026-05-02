@@ -10,6 +10,7 @@ export interface Socio {
   id:         string
   nombre:     string
   porcentaje: number
+  cuit:       string | null
   activo:     boolean
   created_at: string
   updated_at: string
@@ -29,18 +30,18 @@ export function useSocios() {
 export function useGuardarSocio() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { id?: string; nombre: string; porcentaje: number; activo: boolean }) => {
+    mutationFn: async (input: { id?: string; nombre: string; porcentaje: number; cuit?: string | null; activo: boolean }) => {
       const ts = new Date().toISOString()
       if (input.id) {
         const { error } = await db
           .from('socios')
-          .update({ nombre: input.nombre, porcentaje: input.porcentaje, activo: input.activo, updated_at: ts })
+          .update({ nombre: input.nombre, porcentaje: input.porcentaje, cuit: input.cuit ?? null, activo: input.activo, updated_at: ts })
           .eq('id', input.id)
         if (error) throw error
       } else {
         const { error } = await db
           .from('socios')
-          .insert({ nombre: input.nombre, porcentaje: input.porcentaje })
+          .insert({ nombre: input.nombre, porcentaje: input.porcentaje, cuit: input.cuit ?? null })
         if (error) throw error
       }
     },
