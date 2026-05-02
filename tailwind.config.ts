@@ -33,19 +33,26 @@ const config: Config = {
           950: '#0e1014',
         },
         accent: {
+          DEFAULT: '#B7FF00',
+          50:  '#f7ffe0',
+          100: '#eaffb8',
+          200: '#d9ff80',
+          300: '#c8ff4d',
+          400: '#bcff1a',
+          500: '#B7FF00',
+          600: '#92cc00',
+          700: '#6d9900',
+          800: '#496600',
+          900: '#243300',
+        },
+        // Cyan /root — solo para el bloque /root del header
+        sys: {
           DEFAULT: '#00e5ff',
-          50: '#e6fcff',
-          100: '#b3f5ff',
-          200: '#7eecff',
-          300: '#4ae0ff',
           400: '#1ad4ff',
           500: '#00e5ff',
           600: '#00b8cc',
-          700: '#008a99',
-          800: '#005c66',
-          900: '#002e33',
         },
-        // Paleta Los Limones Creativos — para PDFs y branding del cliente
+        // Paleta Los Limones Creativos
         limones: {
           carbon:  '#1F1F1F',
           grafito: '#5E5E5E',

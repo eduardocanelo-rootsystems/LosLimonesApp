@@ -79,7 +79,7 @@ const NAV: NavEntry[] = [
 const ROL_BADGE: Record<Rol, string> = {
   superadmin: 'bg-purple-900/50 text-purple-300',
   admin:      'bg-blue-900/50 text-blue-300',
-  socio:      'bg-accent-900/50 text-accent-300',
+  socio:      'bg-sys-600/20 text-sys-400',
   empleado:   'bg-ink-800 text-ink-400',
 }
 
@@ -200,7 +200,7 @@ export function Header() {
           {/* /root block */}
           <div className="flex flex-col leading-none select-none">
             <span className="font-mono text-xl">
-              <span className="font-light text-accent-500">/</span>
+              <span className="font-light text-sys-500">/</span>
               <span className="font-medium tracking-tight text-ink-100">root</span>
             </span>
             <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-500">
