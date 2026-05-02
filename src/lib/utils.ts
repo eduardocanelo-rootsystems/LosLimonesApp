@@ -54,6 +54,19 @@ export function formatDateTime(date: string | Date | null | undefined): string {
 }
 
 /**
+ * Días calendario hasta que vence un presupuesto (validez: 15 días desde emisión).
+ * Negativo si ya venció.
+ */
+export function diasHastaVencimiento(fechaCreacion: string): number {
+  const vencimiento = new Date(fechaCreacion)
+  vencimiento.setDate(vencimiento.getDate() + 15)
+  vencimiento.setHours(0, 0, 0, 0)
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
+  return Math.round((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+/**
  * Slugifica una cadena para usar como ID.
  */
 export function slugify(text: string): string {

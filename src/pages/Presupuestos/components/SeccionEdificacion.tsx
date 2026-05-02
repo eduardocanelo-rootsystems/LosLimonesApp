@@ -1,36 +1,38 @@
+import { cn } from '@/lib/utils'
+
 const ACABADOS = ['Mampostería', 'Vidrio', 'Ladrillo', 'Concreto', 'Texturizado']
 
 const CONDICIONES_ESTRUCTURALES = [
-  { value: 'sin_riesgo', label: 'Sin Riesgo', desc: 'Estado bueno/muy bueno. Sin fisuras, revoques firmes.' },
-  { value: 'deterioros_leves', label: 'Deterioros Leves', desc: 'Fisuras capilares (<1mm), manchas de humedad.' },
-  { value: 'riesgo_potencial', label: 'Riesgo Potencial', desc: 'Grietas con profundidad, carbonatación.' },
-  { value: 'peligro_inminente', label: 'Peligro Inminente', desc: 'Desprendimientos visibles, fallas estructurales.' },
+  { value: 'sin_riesgo',       label: 'Sin Riesgo',        desc: 'Estado bueno/muy bueno. Sin fisuras, revoques firmes.' },
+  { value: 'deterioros_leves', label: 'Deterioros Leves',  desc: 'Fisuras capilares (<1mm), manchas de humedad.' },
+  { value: 'riesgo_potencial', label: 'Riesgo Potencial',  desc: 'Grietas con profundidad, carbonatación.' },
+  { value: 'peligro_inminente',label: 'Peligro Inminente', desc: 'Desprendimientos visibles, fallas estructurales.' },
 ]
 
 const TIPOLOGIAS = [
-  { value: 'perimetro_libre', label: 'Edificio de Perímetro Libre (Torre)' },
-  { value: 'entre_medianeras', label: 'Edificio entre Medianeras' },
-  { value: 'ph', label: 'PH (Propiedad Horizontal)' },
-  { value: 'petit_hotel', label: 'Petit Hôtel' },
+  { value: 'perimetro_libre',   label: 'Edificio de Perímetro Libre (Torre)' },
+  { value: 'entre_medianeras',  label: 'Edificio entre Medianeras' },
+  { value: 'ph',                label: 'PH (Propiedad Horizontal)' },
+  { value: 'petit_hotel',       label: 'Petit Hôtel' },
 ]
 
 const CLASES_INCENDIO = [
-  { value: 'e1', label: 'E1 — menos de 12m' },
-  { value: 'e2', label: 'E2 — entre 12m y 47m' },
-  { value: 'e3', label: 'E3 — más de 47m' },
+  { value: 'e1', label: 'E1', desc: 'menos de 12 m' },
+  { value: 'e2', label: 'E2', desc: 'entre 12 m y 47 m' },
+  { value: 'e3', label: 'E3', desc: 'más de 47 m' },
 ]
 
 const PROTECCIONES = [
-  { value: 'integral', label: 'Protección Integral' },
+  { value: 'integral',    label: 'Protección Integral' },
   { value: 'estructural', label: 'Protección Estructural' },
-  { value: 'cautelar', label: 'Protección Cautelar' },
+  { value: 'cautelar',    label: 'Protección Cautelar' },
 ]
 
 export const COEF_K = [
-  { value: 1.0, label: 'K1 — Plano', desc: 'Fachada lisa, sin salientes, menos de 1 AC por piso' },
-  { value: 1.25, label: 'K2 — Semi-Saturado', desc: 'Balcones corridos, 1-2 AC por paño, molduras simples' },
-  { value: 1.5, label: 'K3 — Saturado', desc: 'Celosías, múltiples AC, antenas, redes de protección' },
-  { value: 1.8, label: 'K4 — Crítico', desc: 'Ángulos negativos, gárgolas, fragilidad estructural' },
+  { value: 1.0,  label: 'K1 — Plano',         desc: 'Fachada lisa, sin salientes, menos de 1 AC por piso' },
+  { value: 1.25, label: 'K2 — Semi-Saturado',  desc: 'Balcones corridos, 1-2 AC por paño, molduras simples' },
+  { value: 1.5,  label: 'K3 — Saturado',       desc: 'Celosías, múltiples AC, antenas, redes de protección' },
+  { value: 1.8,  label: 'K4 — Crítico',        desc: 'Ángulos negativos, gárgolas, fragilidad estructural' },
 ]
 
 interface SeccionEdificacionProps {
@@ -41,7 +43,6 @@ interface SeccionEdificacionProps {
   m2: string
   condicionEstructural: string
   tipologia: string
-  claseIncendio: string
   valorPatrimonial: boolean
   proteccion: string
   coefK: string
@@ -51,25 +52,23 @@ interface SeccionEdificacionProps {
 function claseDeAltura(alturaStr: string): string {
   const h = parseFloat(alturaStr)
   if (isNaN(h) || h <= 0) return ''
-  if (h < 12) return 'e1'
+  if (h < 12)  return 'e1'
   if (h <= 47) return 'e2'
   return 'e3'
 }
 
 export function SeccionEdificacion({
   anios, altura, color, acabado, m2,
-  condicionEstructural, tipologia, claseIncendio,
+  condicionEstructural, tipologia,
   valorPatrimonial, proteccion, coefK,
   onChange,
 }: SeccionEdificacionProps) {
 
   const claseAuto = claseDeAltura(altura)
-  const esAuto = !!claseAuto && claseIncendio === claseAuto
 
   const handleAltura = (val: string) => {
     onChange('edif_altura', val)
-    const clase = claseDeAltura(val)
-    if (clase) onChange('edif_clase_incendio', clase)
+    onChange('edif_clase_incendio', claseDeAltura(val))
   }
 
   const toggleAcabado = (item: string) => {
@@ -79,12 +78,15 @@ export function SeccionEdificacion({
     onChange('edif_acabado', next)
   }
 
+  const claseInfo = CLASES_INCENDIO.find((c) => c.value === claseAuto)
+
   return (
     <section className="card p-6">
       <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-ink-400">
         Características de la edificación
       </h2>
 
+      {/* Métricas principales */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
@@ -159,6 +161,7 @@ export function SeccionEdificacion({
         </div>
       </div>
 
+      {/* Condición + Tipología */}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
@@ -195,47 +198,61 @@ export function SeccionEdificacion({
             ))}
           </select>
         </div>
-        <div>
-          <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-ink-400">
-            Clasificación técnica de incendio
-            {esAuto && (
-              <span className="rounded bg-accent-500/15 px-1.5 py-0.5 text-[10px] font-semibold normal-case tracking-normal text-accent-400">
-                auto
-              </span>
-            )}
-          </label>
-          <select
-            value={claseIncendio}
-            onChange={(e) => onChange('edif_clase_incendio', e.target.value)}
-            className="input-base"
-          >
-            <option value="">Seleccionar…</option>
-            {CLASES_INCENDIO.map((c) => (
-              <option key={c.value} value={c.value}>{c.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
-            Coeficiente de complejidad K <span className="text-danger">*</span>
-          </label>
-          <select
-            value={coefK}
-            onChange={(e) => onChange('coef_k', e.target.value)}
-            className="input-base font-mono"
-          >
-            <option value="">Seleccionar…</option>
-            {COEF_K.map((k) => (
-              <option key={k.value} value={k.value}>
-                {k.label} (×{k.value})
-              </option>
-            ))}
-          </select>
-          {coefK && (
-            <p className="mt-1 text-xs text-ink-500">
-              {COEF_K.find((k) => String(k.value) === coefK)?.desc}
-            </p>
-          )}
+      </div>
+
+      {/* Clasificación de incendio — derivada de altura */}
+      <div className="mt-4">
+        <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
+          Clasificación técnica de incendio
+        </label>
+        {claseAuto ? (
+          <div className="flex items-center gap-3 rounded-lg border border-ink-700 bg-ink-900/60 px-4 py-2.5">
+            <span className="font-mono text-base font-bold text-accent-400">{claseInfo?.label}</span>
+            <span className="text-sm text-ink-300">{claseInfo?.desc}</span>
+            <span className="ml-auto text-xs text-ink-600">calculado por altura</span>
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-ink-800 px-4 py-2.5 text-xs text-ink-500">
+            Completar la altura para determinar la clase
+          </div>
+        )}
+      </div>
+
+      {/* Coeficiente K — tarjetas */}
+      <div className="mt-4">
+        <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-ink-400">
+          Coeficiente de complejidad K <span className="text-danger">*</span>
+        </label>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {COEF_K.map((k) => (
+            <button
+              key={k.value}
+              type="button"
+              onClick={() => onChange('coef_k', String(k.value))}
+              className={cn(
+                'rounded-lg border p-3 text-left transition-colors',
+                coefK === String(k.value)
+                  ? 'border-accent-500 bg-accent-500/10'
+                  : 'border-ink-700 hover:border-ink-600 hover:bg-ink-900/40'
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <span className={cn(
+                  'text-sm font-semibold',
+                  coefK === String(k.value) ? 'text-accent-400' : 'text-ink-200'
+                )}>
+                  {k.label}
+                </span>
+                <span className={cn(
+                  'font-mono text-xs font-bold',
+                  coefK === String(k.value) ? 'text-accent-400' : 'text-ink-500'
+                )}>
+                  ×{k.value}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs leading-snug text-ink-500">{k.desc}</p>
+            </button>
+          ))}
         </div>
       </div>
 

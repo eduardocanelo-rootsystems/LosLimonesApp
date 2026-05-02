@@ -176,7 +176,6 @@ export default function FirmarContratoPage() {
               alt="Firma del contratista"
               className="h-16 w-auto rounded border border-gray-100 bg-gray-50 p-1"
             />
-            <p className="mt-1 text-xs text-gray-500">Luis Alfonzo · CUIT 27-96416229-3</p>
           </div>
         )}
 

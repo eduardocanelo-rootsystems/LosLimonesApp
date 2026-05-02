@@ -475,8 +475,8 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
       {mostrarVigencia && (
         <View style={s.vigenciaBox}>
           <Text style={s.vigenciaText}>Válido hasta el </Text>
-          <Text style={s.vigenciaBold}>{fmtDate(addDays(presupuesto.fecha_creacion, 30))}</Text>
-          <Text style={s.vigenciaText}> (30 días desde la emisión)</Text>
+          <Text style={s.vigenciaBold}>{fmtDate(addDays(presupuesto.fecha_creacion, 15))}</Text>
+          <Text style={s.vigenciaText}> (15 días desde la emisión)</Text>
         </View>
       )}
 

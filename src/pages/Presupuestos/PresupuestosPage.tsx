@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { FileText, Link, Loader2, Plus, Search, Unlink } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { cn, formatDate } from '@/lib/utils'
+import { cn, formatDate, diasHastaVencimiento } from '@/lib/utils'
 import type { EstadoPresupuesto, Presupuesto } from '@/types/database'
 import { usePresupuestos, useAsociarFacturaPresupuesto } from './usePresupuestos'
+import { useContratosResumen } from '@/pages/Contratos/useContrato'
 import { useFacturasEmitidas, type FacturaEmitida } from '@/hooks/useVentas'
 import { esNotaCredito, labelTipo } from '@/lib/arcaParser'
 import { SortTh } from '@/components/shared/SortTh'
@@ -108,9 +109,28 @@ const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
   rechazado:  'Rechazado',
 }
 
+function VencimientoBadge({ fechaCreacion }: { fechaCreacion: string }) {
+  const dias = diasHastaVencimiento(fechaCreacion)
+  if (dias > 7) return null
+  if (dias <= 0) return (
+    <span className="mt-1 block text-xs font-medium text-red-400">Vencido</span>
+  )
+  if (dias <= 3) return (
+    <span className="mt-1 block text-xs font-medium text-red-400">Vence en {dias}d</span>
+  )
+  return (
+    <span className="mt-1 block text-xs font-medium text-amber-400">Vence en {dias}d</span>
+  )
+}
+
 export default function PresupuestosPage() {
   const { data: presupuestos = [], isLoading, isError, error } = usePresupuestos()
   const { data: facturas = [] }                                 = useFacturasEmitidas()
+  const { data: contratosResumen = [] }                         = useContratosResumen()
+
+  const contratoFirmaMap = new Map(
+    contratosResumen.map((c) => [c.presupuesto_id, c.firmado_cliente])
+  )
   const navigate = useNavigate()
 
   const [busqueda, setBusqueda]       = useState('')
@@ -226,7 +246,7 @@ export default function PresupuestosPage() {
               </thead>
               <tbody className="divide-y divide-ink-800">
                 {filtrados.map((p) => (
-                  <PresupuestoRow key={p.id} presupuesto={p} facturas={facturas} onClick={() => navigate(`/presupuestos/${p.id}`)} />
+                  <PresupuestoRow key={p.id} presupuesto={p} facturas={facturas} firmadoCliente={contratoFirmaMap.get(p.id)} onClick={() => navigate(`/presupuestos/${p.id}`)} />
                 ))}
               </tbody>
             </table>
@@ -237,10 +257,11 @@ export default function PresupuestosPage() {
   )
 }
 
-function PresupuestoRow({ presupuesto: p, facturas, onClick }: {
-  presupuesto: Presupuesto
-  facturas:    FacturaEmitida[]
-  onClick:     () => void
+function PresupuestoRow({ presupuesto: p, facturas, firmadoCliente, onClick }: {
+  presupuesto:   Presupuesto
+  facturas:      FacturaEmitida[]
+  firmadoCliente?: boolean
+  onClick:       () => void
 }) {
   return (
     <tr
@@ -262,6 +283,15 @@ function PresupuestoRow({ presupuesto: p, facturas, onClick }: {
         <span className={cn(ESTADO_BADGE[p.estado])}>
           {ESTADO_LABEL[p.estado]}
         </span>
+        {p.estado === 'emitido' && (
+          <VencimientoBadge fechaCreacion={p.fecha_creacion} />
+        )}
+        {(p.estado === 'aprobado' || p.estado === 'finalizado') && firmadoCliente === false && (
+          <span className="mt-1 block text-xs font-medium text-amber-400">Firma pendiente</span>
+        )}
+        {(p.estado === 'aprobado' || p.estado === 'finalizado') && firmadoCliente === true && (
+          <span className="mt-1 block text-xs font-medium text-green-400">Contrato firmado</span>
+        )}
       </td>
       <td className="px-4 py-3 font-mono text-xs text-ink-400">
         {formatDate(p.fecha_creacion)}

@@ -92,6 +92,8 @@ export interface GuardarPresupuestoInput {
   dias_estimados_obra: number | null
   fecha_aprobacion: string | null
   plan_pago: 'contado' | '60dias' | '90dias' | null
+  importe_servicios: number | null  // servicios netos con IVA y recargo (snapshot al guardar)
+  importe_total: number | null      // total al cliente con IVA y recargo (snapshot al guardar)
   // Ítems
   servicios: FormServicioItem[]
   materiales: FormMaterialItem[]
@@ -141,6 +143,8 @@ export function useGuardarPresupuesto() {
         dias_estimados_obra: input.dias_estimados_obra,
         fecha_aprobacion: input.fecha_aprobacion,
         plan_pago: input.plan_pago,
+        importe_servicios: input.importe_servicios,
+        importe_total: input.importe_total,
         fecha_actualizacion: new Date().toISOString(),
       }
 

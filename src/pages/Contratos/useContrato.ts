@@ -38,6 +38,51 @@ export function useContrato(presupuestoId: string | undefined) {
   })
 }
 
+export type ContratoResumen = {
+  presupuesto_id: string
+  firmado_cliente: boolean
+  fecha_firma_cliente: string | null
+  nombre_comitente: string | null
+  token_firma: string | null
+}
+
+export function useContratosResumen() {
+  return useQuery({
+    queryKey: [...QUERY_KEY, 'resumen'],
+    queryFn: async (): Promise<ContratoResumen[]> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await (supabase as any)
+        .from('contratos')
+        .select('presupuesto_id, firmado_cliente, fecha_firma_cliente, nombre_comitente, token_firma')
+      if (error) throw error
+      return (data ?? []) as ContratoResumen[]
+    },
+  })
+}
+
+export function useAnularFirmaCliente() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (presupuestoId: string) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('contratos')
+        .update({
+          firma_cliente_base64:  null,
+          firmado_cliente:       false,
+          fecha_firma_cliente:   null,
+          updated_at:            new Date().toISOString(),
+        })
+        .eq('presupuesto_id', presupuestoId)
+      if (error) throw error
+    },
+    onSuccess: (_data: unknown, presupuestoId: string) => {
+      qc.invalidateQueries({ queryKey: [...QUERY_KEY, presupuestoId] })
+      qc.invalidateQueries({ queryKey: [...QUERY_KEY, 'resumen'] })
+    },
+  })
+}
+
 export function useGuardarContrato() {
   const qc = useQueryClient()
   return useMutation({

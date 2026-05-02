@@ -19,8 +19,9 @@ import type {
   FormServicioItem,
 } from '@/types/database'
 import type { PlanFinanciamiento } from './components/SeccionFinanciamiento'
-import { useGuardarPresupuesto, usePresupuesto } from './usePresupuestos'
+import { useGuardarPresupuesto, usePresupuesto, usePresupuestos } from './usePresupuestos'
 import { SeccionCliente } from './components/SeccionCliente'
+import type { HistorialCliente } from './components/SeccionCliente'
 import { SeccionEdificacion } from './components/SeccionEdificacion'
 import { SeccionServicios } from './components/SeccionServicios'
 import { SeccionMateriales } from './components/SeccionMateriales'
@@ -28,6 +29,7 @@ import { SeccionDescuento } from './components/SeccionDescuento'
 import { SeccionManoDeObra } from './components/SeccionManoDeObra'
 import { PanelTotales } from './components/PanelTotales'
 import { SeccionFinanciamiento } from './components/SeccionFinanciamiento'
+import { SeccionCobros } from './components/SeccionCobros'
 import { SeccionFotos } from './components/SeccionFotos'
 
 const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
@@ -51,6 +53,7 @@ export default function PresupuestoFormPage() {
 
   const { data: presupuesto, isLoading: loadingPresupuesto, isFetching: fetchingPresupuesto } = usePresupuesto(id)
   const { data: contrato, isFetching: fetchingContrato } = useContrato(id)
+  const { data: todosLosPresupuestos = [] } = usePresupuestos()
   const { data: firmaContratista } = useFirmaContratista()
   const { data: catalogoServicios = [] } = useServicios()
   const { data: catalogoMateriales = [] } = useMateriales()
@@ -205,6 +208,29 @@ export default function PresupuestoFormPage() {
     }
   }
 
+  // ─── Historial de clientes ──────────────────────────────────────────────────
+
+  const historialClientes = useMemo((): HistorialCliente[] => {
+    const seen = new Set<string>()
+    return todosLosPresupuestos
+      .filter((p) => {
+        if (!p.cliente_razon_social) return false
+        const key = p.cliente_razon_social.toLowerCase()
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .map((p) => ({
+        razon_social:     p.cliente_razon_social!,
+        cuit:             p.cliente_cuit             ?? '',
+        telefono:         p.cliente_telefono         ?? '',
+        direccion:        p.cliente_direccion        ?? '',
+        administrador:    p.cliente_administrador    ?? '',
+        administrador_cuit: p.cliente_administrador_cuit ?? '',
+        email:            p.cliente_email            ?? '',
+      }))
+  }, [todosLosPresupuestos])
+
   // ─── Cálculos ────────────────────────────────────────────────────────────────
 
   const m2 = parseFloat(edifM2) || 0
@@ -232,6 +258,16 @@ export default function PresupuestoFormPage() {
     const iva = parseFloat(ivaPct) || 0
     return neto + (neto * iva) / 100
   }, [subtotalServicios, subtotalMateriales, tieneDescuento, descuentoTipo, descuentoValor, ivaPct])
+
+  // importe_total = totalCliente con recargo del plan de financiamiento
+  // importe_servicios = proporción de servicios sobre el importe_total
+  const { importeTotal, importeServicios } = useMemo(() => {
+    const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.35 : 0
+    const total = totalCliente * (1 + recargo)
+    const brutoTotal = subtotalServicios + subtotalMateriales
+    const ratio = brutoTotal > 0 ? subtotalServicios / brutoTotal : 1
+    return { importeTotal: total, importeServicios: total * ratio }
+  }, [totalCliente, planPago, subtotalServicios, subtotalMateriales])
 
   // ─── Guardar ─────────────────────────────────────────────────────────────────
 
@@ -278,6 +314,8 @@ export default function PresupuestoFormPage() {
         dias_estimados_obra: diasEstimados ? parseInt(diasEstimados) : null,
         fecha_aprobacion: fechaAprobacion ? new Date(fechaAprobacion).toISOString() : null,
         plan_pago: planPago,
+        importe_servicios: importeServicios > 0 ? importeServicios : null,
+        importe_total:     importeTotal     > 0 ? importeTotal     : null,
         servicios,
         materiales,
         mano_obra: manoDeObra,
@@ -443,6 +481,7 @@ export default function PresupuestoFormPage() {
         administrador={clienteAdministrador}
         administradorCuit={clienteAdministradorCuit}
         email={clienteEmail}
+        historial={historialClientes}
         onChange={handleField}
       />
 
@@ -454,7 +493,6 @@ export default function PresupuestoFormPage() {
         m2={edifM2}
         condicionEstructural={edifCondicion}
         tipologia={edifTipologia}
-        claseIncendio={edifClaseIncendio}
         valorPatrimonial={edifValorPatrimonial}
         proteccion={edifProteccion}
         coefK={coefK}
@@ -469,12 +507,12 @@ export default function PresupuestoFormPage() {
         <textarea
           value={observaciones}
           onChange={(e) => setObservaciones(e.target.value)}
-          maxLength={350}
-          rows={4}
+          maxLength={1500}
+          rows={6}
           className="input-base resize-none"
           placeholder="Notas sobre el estado del edificio, condiciones especiales de acceso, requerimientos del cliente…"
         />
-        <p className="mt-1 text-right text-xs text-ink-500">{observaciones.length}/350</p>
+        <p className="mt-1 text-right text-xs text-ink-500">{observaciones.length}/1500</p>
       </section>
 
       <SeccionServicios
@@ -526,6 +564,16 @@ export default function PresupuestoFormPage() {
         planSeleccionado={planPago}
         onChange={setPlanPago}
       />
+
+      {/* Cobros: solo visible en presupuestos aprobados o finalizados */}
+      {id && (estado === 'aprobado' || estado === 'finalizado') && (
+        <SeccionCobros
+          presupuestoId={id}
+          plan={planPago}
+          importeTotal={importeTotal > 0 ? importeTotal : null}
+          importeServicios={importeServicios > 0 ? importeServicios : null}
+        />
+      )}
 
       <SeccionFotos
         presupuestoId={id}

@@ -22,7 +22,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
   const agregar = () => {
     const material = catalogo.find((m) => m.id === seleccionado)
     if (!material) return
-    const cant = parseFloat(cantidad)
+    const cant = parseInt(cantidad)
     if (isNaN(cant) || cant <= 0) return
 
     const item: FormMaterialItem = {
@@ -39,11 +39,27 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
     setCantidad('1')
   }
 
+  const agregarTodos = () => {
+    const yaAgregados = new Set(items.map((i) => i.material_id))
+    const nuevos: FormMaterialItem[] = disponibles
+      .filter((m) => !yaAgregados.has(m.id))
+      .map((m) => ({
+        _key: crypto.randomUUID(),
+        material_id: m.id,
+        nombre: m.nombre,
+        unidad: m.unidad,
+        precio: m.precio_actual ?? 0,
+        cantidad: 1,
+        es_adicional: false,
+      }))
+    onChange([...items, ...nuevos])
+  }
+
   const quitar = (key: string) => onChange(items.filter((i) => i._key !== key))
 
   const actualizarCantidad = (key: string, val: string) => {
-    const num = parseFloat(val)
-    onChange(items.map((i) => i._key === key ? { ...i, cantidad: isNaN(num) ? i.cantidad : num } : i))
+    const int = parseInt(val)
+    onChange(items.map((i) => i._key === key ? { ...i, cantidad: isNaN(int) || int < 1 ? i.cantidad : int } : i))
   }
 
   return (
@@ -99,8 +115,8 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
                   <td className="px-4 py-2.5 text-right">
                     <input
                       type="number"
-                      min="0.001"
-                      step="0.001"
+                      min="1"
+                      step="1"
                       value={item.cantidad}
                       onChange={(e) => actualizarCantidad(item._key, e.target.value)}
                       className="w-24 rounded border border-ink-700 bg-ink-900 px-2 py-1 text-right font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
@@ -126,7 +142,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
       )}
 
       {disponibles.length > 0 ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={seleccionado}
             onChange={(e) => setSeleccionado(e.target.value)}
@@ -139,24 +155,36 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
               </option>
             ))}
           </select>
-          <input
-            type="number"
-            min="0.001"
-            step="0.001"
-            value={cantidad}
-            onChange={(e) => setCantidad(e.target.value)}
-            placeholder="Cant."
-            className="w-24 rounded border border-ink-700 bg-ink-900 px-3 py-2 text-right font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
-          />
-          <button
-            type="button"
-            onClick={agregar}
-            disabled={!seleccionado || !cantidad}
-            className="btn-primary disabled:opacity-40"
-          >
-            <Plus className="h-4 w-4" />
-            {esAprobado ? 'Agregar extra' : 'Agregar'}
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <input
+              type="number"
+              min="1"
+              step="1"
+              value={cantidad}
+              onChange={(e) => setCantidad(e.target.value)}
+              placeholder="Cant."
+              className="w-24 rounded border border-ink-700 bg-ink-900 px-3 py-2 text-right font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={agregar}
+              disabled={!seleccionado || !cantidad}
+              className="btn-primary disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" />
+              {esAprobado ? 'Agregar extra' : 'Agregar'}
+            </button>
+            {!esAprobado && disponibles.filter((m) => !items.some((i) => i.material_id === m.id)).length > 1 && (
+              <button
+                type="button"
+                onClick={agregarTodos}
+                className="btn-secondary"
+                title="Agregar todos los materiales activos del catálogo con cantidad 1"
+              >
+                Agregar todos ({disponibles.filter((m) => !items.some((i) => i.material_id === m.id)).length})
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <p className="text-xs text-ink-500">No hay materiales activos. Cargá materiales en el catálogo primero.</p>

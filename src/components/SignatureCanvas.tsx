@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
-import { Eraser, Check } from 'lucide-react'
+import { Eraser, Check, Upload } from 'lucide-react'
 
 interface SignatureCanvasProps {
   onSave: (dataUrl: string) => void
@@ -16,8 +16,9 @@ export function SignatureCanvas({
   height = 150,
   readOnly = false,
 }: SignatureCanvasProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const isDrawing = useRef(false)
+  const canvasRef    = useRef<HTMLCanvasElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const isDrawing    = useRef(false)
   const [hasDrawn, setHasDrawn] = useState(false)
 
   const fillBackground = useCallback(() => {
@@ -28,7 +29,6 @@ export function SignatureCanvas({
     ctx.fillRect(0, 0, width, height)
   }, [width, height])
 
-  // Inicializar canvas
   useEffect(() => {
     fillBackground()
     if (existingSignature) {
@@ -40,22 +40,22 @@ export function SignatureCanvas({
   }, [existingSignature, fillBackground, width, height])
 
   const getPos = (e: MouseEvent | TouchEvent, canvas: HTMLCanvasElement) => {
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
+    const rect   = canvas.getBoundingClientRect()
+    const scaleX = canvas.width  / rect.width
     const scaleY = canvas.height / rect.height
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
     return {
       x: (clientX - rect.left) * scaleX,
-      y: (clientY - rect.top) * scaleY,
+      y: (clientY - rect.top)  * scaleY,
     }
   }
 
   const startDraw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (readOnly) return
     const canvas = canvasRef.current!
-    const ctx = canvas.getContext('2d')!
-    const pos = getPos(e.nativeEvent, canvas)
+    const ctx    = canvas.getContext('2d')!
+    const pos    = getPos(e.nativeEvent, canvas)
     isDrawing.current = true
     ctx.beginPath()
     ctx.moveTo(pos.x, pos.y)
@@ -65,11 +65,11 @@ export function SignatureCanvas({
   const draw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (!isDrawing.current || readOnly) return
     const canvas = canvasRef.current!
-    const ctx = canvas.getContext('2d')!
-    const pos = getPos(e.nativeEvent, canvas)
-    ctx.lineWidth = 2.2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
+    const ctx    = canvas.getContext('2d')!
+    const pos    = getPos(e.nativeEvent, canvas)
+    ctx.lineWidth   = 2.2
+    ctx.lineCap     = 'round'
+    ctx.lineJoin    = 'round'
     ctx.strokeStyle = '#111111'
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
@@ -77,19 +77,39 @@ export function SignatureCanvas({
     e.preventDefault()
   }, [readOnly])
 
-  const endDraw = useCallback(() => {
-    isDrawing.current = false
-  }, [])
+  const endDraw = useCallback(() => { isDrawing.current = false }, [])
 
   const clear = () => {
     fillBackground()
     setHasDrawn(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const save = () => {
     if (!hasDrawn) return
-    const dataUrl = canvasRef.current!.toDataURL('image/png')
-    onSave(dataUrl)
+    onSave(canvasRef.current!.toDataURL('image/png'))
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      const img = new Image()
+      img.onload = () => {
+        const canvas = canvasRef.current!
+        const ctx    = canvas.getContext('2d')!
+        fillBackground()
+        const scale = Math.min(canvas.width / img.width, canvas.height / img.height)
+        const x = (canvas.width  - img.width  * scale) / 2
+        const y = (canvas.height - img.height * scale) / 2
+        ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
+        setHasDrawn(true)
+      }
+      img.src = dataUrl
+    }
+    reader.readAsDataURL(file)
   }
 
   return (
@@ -114,7 +134,7 @@ export function SignatureCanvas({
         />
       </div>
       {!readOnly && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={clear}
@@ -132,7 +152,23 @@ export function SignatureCanvas({
             <Check className="h-3.5 w-3.5" />
             Guardar firma
           </button>
-          <span className="text-xs text-ink-500">Dibujá tu firma con el mouse o dedo</span>
+
+          {/* Separador */}
+          <span className="text-xs text-ink-600">·</span>
+
+          <label className="flex cursor-pointer items-center gap-1.5 rounded-md border border-ink-700 px-3 py-1.5 text-xs text-ink-400 hover:border-ink-500 hover:text-ink-200 transition-colors">
+            <Upload className="h-3.5 w-3.5" />
+            Subir imagen
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={handleImageUpload}
+            />
+          </label>
+
+          <span className="text-xs text-ink-600">Dibujá o subí una foto de tu firma</span>
         </div>
       )}
     </div>

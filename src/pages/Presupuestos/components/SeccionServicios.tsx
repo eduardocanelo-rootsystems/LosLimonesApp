@@ -37,6 +37,17 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
     setSeleccionado('')
   }
 
+  const agregarTodos = () => {
+    const nuevos: FormServicioItem[] = disponibles.map((s) => ({
+      _key: crypto.randomUUID(),
+      servicio_id: s.id,
+      nombre: s.nombre,
+      precio_m2: s.precio_m2_actual ?? 0,
+      es_adicional: false,
+    }))
+    onChange([...items, ...nuevos])
+  }
+
   const quitar = (key: string) => onChange(items.filter((i) => i._key !== key))
 
   return (
@@ -109,7 +120,7 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
       )}
 
       {disponibles.length > 0 ? (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
             value={seleccionado}
             onChange={(e) => setSeleccionado(e.target.value)}
@@ -122,15 +133,27 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
               </option>
             ))}
           </select>
-          <button
-            type="button"
-            onClick={agregar}
-            disabled={!seleccionado}
-            className="btn-primary disabled:opacity-40"
-          >
-            <Plus className="h-4 w-4" />
-            {esAprobado ? 'Agregar extra' : 'Agregar'}
-          </button>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={agregar}
+              disabled={!seleccionado}
+              className="btn-primary disabled:opacity-40"
+            >
+              <Plus className="h-4 w-4" />
+              {esAprobado ? 'Agregar extra' : 'Agregar'}
+            </button>
+            {!esAprobado && disponibles.length > 1 && (
+              <button
+                type="button"
+                onClick={agregarTodos}
+                className="btn-secondary"
+                title="Agregar todos los servicios activos del catálogo"
+              >
+                Agregar todos ({disponibles.length})
+              </button>
+            )}
+          </div>
         </div>
       ) : items.length > 0 ? (
         <p className="text-xs text-ink-500">Todos los servicios activos están agregados.</p>
