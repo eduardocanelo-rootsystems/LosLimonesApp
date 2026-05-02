@@ -35,11 +35,11 @@ serve(async (req) => {
         subject: `Presupuesto ${numero} — Los Limones Creativos`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111;">
-            <div style="background: #0e1014; padding: 24px 32px; border-radius: 8px 8px 0 0;">
-              <p style="color: #00e5ff; font-size: 22px; font-weight: bold; margin: 0;">Los Limones Creativos</p>
-              <p style="color: #6b7281; font-size: 11px; margin: 4px 0 0; letter-spacing: 2px; text-transform: uppercase;">Trabajos en altura · Fachadas</p>
+            <div style="background: #1F1F1F; padding: 24px 32px; border-radius: 8px 8px 0 0; border-bottom: 3px solid #B7FF00;">
+              <p style="color: #B7FF00; font-size: 22px; font-weight: bold; margin: 0;">Los Limones Creativos</p>
+              <p style="color: #5E5E5E; font-size: 11px; margin: 4px 0 0; letter-spacing: 2px; text-transform: uppercase;">Trabajos en altura · Fachadas · Impermeabilizaciones</p>
             </div>
-            <div style="background: #f9fafb; padding: 28px 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <div style="background: #F4F4F4; padding: 28px 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
               <p style="font-size: 15px; margin: 0 0 12px;">Estimado/a ${nombreCliente ?? 'cliente'},</p>
               <p style="font-size: 14px; color: #374151; margin: 0 0 20px;">
                 Adjuntamos el <strong>presupuesto N° ${numero}</strong> para su revisión.
@@ -49,7 +49,7 @@ serve(async (req) => {
               </p>
               <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 0 0 20px;" />
               <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-                Los Limones Creativos · Trabajos en altura y fachadas · Buenos Aires
+                Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones · Buenos Aires
               </p>
             </div>
           </div>
