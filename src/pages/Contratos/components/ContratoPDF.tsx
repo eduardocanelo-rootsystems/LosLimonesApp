@@ -136,7 +136,7 @@ const C = {
   gray500: '#6B7280',
   gray300: '#D1D5DB',
   white: '#FFFFFF',
-  accent: '#0EA5E9',
+  accent: '#B7FF00',
 }
 
 // ─── Estilos ──────────────────────────────────────────────────────────────────
@@ -250,14 +250,14 @@ const s = StyleSheet.create({
     paddingVertical: 9,
     backgroundColor: '#EFF6FF',
     borderWidth: 0.5,
-    borderColor: '#0EA5E9',
+    borderColor: '#B7FF00',
     borderRadius: 4,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
   },
   firmaUrlLabel: { fontSize: 8.5, color: '#374151' },
-  firmaUrlLink:  { fontSize: 8.5, color: '#0EA5E9', textDecoration: 'underline' },
+  firmaUrlLink:  { fontSize: 8.5, color: '#B7FF00', textDecoration: 'underline' },
 
   footer: {
     position: 'absolute',

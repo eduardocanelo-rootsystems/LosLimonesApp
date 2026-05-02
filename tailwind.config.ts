@@ -19,7 +19,7 @@ const config: Config = {
       colors: {
         // Paleta /root — fondo oscuro con cyan acento
         ink: {
-          DEFAULT: '#0e1014', // fondo más profundo
+          DEFAULT: '#0e1014',
           50: '#f6f7f8',
           100: '#e8eaee',
           200: '#c8ccd3',
@@ -28,12 +28,12 @@ const config: Config = {
           500: '#4a505d',
           600: '#363a44',
           700: '#262931',
-          800: '#1a1d21', // fondo cards
+          800: '#1a1d21',
           900: '#13161a',
           950: '#0e1014',
         },
         accent: {
-          DEFAULT: '#00e5ff', // cyan /root
+          DEFAULT: '#00e5ff',
           50: '#e6fcff',
           100: '#b3f5ff',
           200: '#7eecff',
@@ -44,6 +44,13 @@ const config: Config = {
           700: '#008a99',
           800: '#005c66',
           900: '#002e33',
+        },
+        // Paleta Los Limones Creativos — para PDFs y branding del cliente
+        limones: {
+          carbon:  '#1F1F1F',
+          grafito: '#5E5E5E',
+          blanco:  '#F4F4F4',
+          lima:    '#B7FF00',
         },
         success: '#10b981',
         warning: '#f59e0b',

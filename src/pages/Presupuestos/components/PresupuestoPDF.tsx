@@ -36,7 +36,7 @@ const C = {
   gray300: '#D1D5DB',
   gray100: '#F3F4F6',
   gray50: '#F9FAFB',
-  accent: '#0EA5E9',
+  accent: '#B7FF00',
   white: '#FFFFFF',
   warning: '#F59E0B',
   warningBg: '#FFFBEB',
@@ -219,8 +219,8 @@ const s = StyleSheet.create({
   totalLabelExtra: { fontSize: 8.5, color: '#92400E', fontFamily: 'Helvetica-Bold' },
   totalValue: { fontSize: 8.5, color: C.black, fontFamily: 'Helvetica-Bold' },
   totalValueExtra: { fontSize: 8.5, color: '#92400E', fontFamily: 'Helvetica-Bold' },
-  totalLabelFinal: { fontSize: 10, color: C.white, fontFamily: 'Helvetica-Bold' },
-  totalValueFinal: { fontSize: 10, color: C.white, fontFamily: 'Helvetica-Bold' },
+  totalLabelFinal: { fontSize: 10, color: C.black, fontFamily: 'Helvetica-Bold' },
+  totalValueFinal: { fontSize: 10, color: C.black, fontFamily: 'Helvetica-Bold' },
   descuentoValue: { fontSize: 8.5, color: C.warning, fontFamily: 'Helvetica-Bold' },
 
   finTable: {

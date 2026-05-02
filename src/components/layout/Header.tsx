@@ -172,7 +172,7 @@ function ClienteLogo() {
   }
 
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-ink-700 bg-ink-900 text-sm font-bold tracking-tight text-accent-400">
+    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-limones-lima text-sm font-bold tracking-tight text-limones-carbon">
       LL
     </div>
   )
@@ -214,7 +214,7 @@ export function Header() {
           <div className="hidden sm:flex items-center gap-2.5">
             <ClienteLogo />
             <div className="flex flex-col leading-none">
-              <span className="text-sm font-semibold text-ink-100 leading-tight">
+              <span className="text-sm font-semibold text-limones-lima leading-tight">
                 Los Limones Creativos
               </span>
               <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">
