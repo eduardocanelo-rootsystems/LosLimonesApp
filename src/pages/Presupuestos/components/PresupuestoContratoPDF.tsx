@@ -1,5 +1,5 @@
 import { Document } from '@react-pdf/renderer'
-import { PresupuestoPDFPage } from './PresupuestoPDF'
+import { PaginaFotos, PresupuestoPDFPage } from './PresupuestoPDF'
 import { ContratoPDFPage } from '@/pages/Contratos/components/ContratoPDF'
 import type { PresupuestoCompleto } from '@/types/database'
 import type { ContratoFormValues } from '@/pages/Contratos/components/ContratoPDF'
@@ -21,6 +21,9 @@ export function PresupuestoContratoPDFDocument({
       author="Los Limones Creativos"
     >
       <PresupuestoPDFPage presupuesto={presupuesto} />
+      {presupuesto.fotos?.length > 0 && (
+        <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
+      )}
       <ContratoPDFPage
         presupuesto={presupuesto}
         form={form}

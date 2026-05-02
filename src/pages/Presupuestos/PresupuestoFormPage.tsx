@@ -18,6 +18,7 @@ import type {
   FormMaterialItem,
   FormServicioItem,
 } from '@/types/database'
+import type { PlanFinanciamiento } from './components/SeccionFinanciamiento'
 import { useGuardarPresupuesto, usePresupuesto } from './usePresupuestos'
 import { SeccionCliente } from './components/SeccionCliente'
 import { SeccionEdificacion } from './components/SeccionEdificacion'
@@ -27,6 +28,7 @@ import { SeccionDescuento } from './components/SeccionDescuento'
 import { SeccionManoDeObra } from './components/SeccionManoDeObra'
 import { PanelTotales } from './components/PanelTotales'
 import { SeccionFinanciamiento } from './components/SeccionFinanciamiento'
+import { SeccionFotos } from './components/SeccionFotos'
 
 const ESTADO_LABEL: Record<EstadoPresupuesto, string> = {
   emitido:    'Emitido',
@@ -103,6 +105,9 @@ export default function PresupuestoFormPage() {
   // Aprobación
   const [fechaAprobacion, setFechaAprobacion] = useState('')
 
+  // Financiamiento
+  const [planPago, setPlanPago] = useState<PlanFinanciamiento>(null)
+
   // ─── Cargar datos al editar ─────────────────────────────────────────────────
 
   useEffect(() => {
@@ -138,6 +143,7 @@ export default function PresupuestoFormPage() {
         ? presupuesto.fecha_aprobacion.substring(0, 10)
         : ''
     )
+    setPlanPago((presupuesto.plan_pago as PlanFinanciamiento) ?? null)
 
     setServicios(
       presupuesto.servicios.map((s) => ({
@@ -271,6 +277,7 @@ export default function PresupuestoFormPage() {
         iva_pct: parseFloat(ivaPct) || 0,
         dias_estimados_obra: diasEstimados ? parseInt(diasEstimados) : null,
         fecha_aprobacion: fechaAprobacion ? new Date(fechaAprobacion).toISOString() : null,
+        plan_pago: planPago,
         servicios,
         materiales,
         mano_obra: manoDeObra,
@@ -514,7 +521,16 @@ export default function PresupuestoFormPage() {
         onIvaChange={setIvaPct}
       />
 
-      <SeccionFinanciamiento total={totalCliente} />
+      <SeccionFinanciamiento
+        total={totalCliente}
+        planSeleccionado={planPago}
+        onChange={setPlanPago}
+      />
+
+      <SeccionFotos
+        presupuestoId={id}
+        fotos={presupuesto?.fotos ?? []}
+      />
     </div>
   )
 }

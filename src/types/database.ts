@@ -240,6 +240,7 @@ export type Database = {
           fecha_actualizacion: string
           fecha_aprobacion: string | null
           factura_asociada_id: string | null
+          plan_pago: 'contado' | '60dias' | '90dias' | null
         }
         Insert: {
           id?: string
@@ -273,6 +274,7 @@ export type Database = {
           fecha_actualizacion?: string
           fecha_aprobacion?: string | null
           factura_asociada_id?: string | null
+          plan_pago?: 'contado' | '60dias' | '90dias' | null
         }
         Update: {
           id?: string
@@ -306,6 +308,7 @@ export type Database = {
           fecha_actualizacion?: string
           fecha_aprobacion?: string | null
           factura_asociada_id?: string | null
+          plan_pago?: 'contado' | '60dias' | '90dias' | null
         }
         Relationships: []
       }
@@ -575,10 +578,20 @@ export type PresupuestoServicioItem = Database['public']['Tables']['presupuesto_
 export type PresupuestoMaterialItem = Database['public']['Tables']['presupuesto_materiales']['Row']
 export type PresupuestoManoObraItem = Database['public']['Tables']['presupuesto_mano_obra']['Row']
 
+export interface PresupuestoFoto {
+  id: string
+  presupuesto_id: string
+  orden: number
+  imagen_base64: string
+  nombre: string | null
+  created_at: string
+}
+
 export interface PresupuestoCompleto extends Presupuesto {
   servicios: PresupuestoServicioItem[]
   materiales: PresupuestoMaterialItem[]
   mano_obra: PresupuestoManoObraItem[]
+  fotos: PresupuestoFoto[]
 }
 
 // ─── Tipos de formulario (frontend only) ─────────────────────────────────────

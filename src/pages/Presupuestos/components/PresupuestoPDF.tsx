@@ -1,5 +1,5 @@
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
-import type { PresupuestoCompleto } from '@/types/database'
+import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
+import type { PresupuestoCompleto, PresupuestoFoto } from '@/types/database'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -257,6 +257,11 @@ const s = StyleSheet.create({
   finColCuotas: { flex: 2, textAlign: 'right' },
   finNote: { fontSize: 7.5, color: C.gray500, marginTop: 5 },
 
+  fotoRow: { flexDirection: 'row', marginBottom: 8 },
+  fotoCell: { width: 248, height: 172, overflow: 'hidden', borderRadius: 3 },
+  fotoCellRight: { marginLeft: 9 },
+  fotoImg: { width: 248, height: 172, objectFit: 'cover' },
+
   obsBox: {
     backgroundColor: C.gray50,
     borderWidth: 0.5,
@@ -356,12 +361,12 @@ function TablaMateriales({ items, esExtra }: { items: PresupuestoCompleto['mater
 }
 
 const PLANES_FIN = [
-  { label: 'Contado (50/50)', recargo: 0 },
-  { label: 'Financiado a 60 días', recargo: 0.10 },
-  { label: 'Financiado a 90 días', recargo: 0.35 },
+  { value: 'contado', label: 'Contado (50/50)', recargo: 0 },
+  { value: '60dias', label: 'Financiado a 60 días', recargo: 0.10 },
+  { value: '90dias', label: 'Financiado a 90 días', recargo: 0.35 },
 ]
 
-function TablaFinanciamiento({ total }: { total: number }) {
+function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planSeleccionado?: string | null }) {
   if (total <= 0) return null
   const anticipo = total * 0.5
   return (
@@ -373,17 +378,27 @@ function TablaFinanciamiento({ total }: { total: number }) {
         <Text style={[s.finThText, s.finColAnticipo]}>ANTICIPO</Text>
         <Text style={[s.finThText, s.finColCuotas]}>CUOTAS / SALDO</Text>
       </View>
-      {PLANES_FIN.map(({ label, recargo }, i) => {
+      {PLANES_FIN.filter(({ value }) =>
+        value === 'contado' || value === planSeleccionado
+      ).map(({ label, recargo, value }) => {
         const totalFinal = total * (1 + recargo)
         const saldo = totalFinal - anticipo
         const cuotasLabel = recargo === 0 ? fmt(saldo) : `2 × ${fmt(saldo / 2)}`
+        const isSelected = planSeleccionado === value
         return (
-          <View key={label} style={[s.finRow, i % 2 === 1 ? s.finRowShaded : {}]}>
-            <Text style={[s.finTdText, s.finColPlan]}>{label}</Text>
+          <View key={label} style={[
+            s.finRow,
+            isSelected ? { backgroundColor: '#EFF6FF', borderLeftWidth: 3, borderLeftColor: C.accent } : {}
+          ]}>
+            <Text style={[s.finTdText, s.finColPlan, isSelected ? { fontFamily: 'Helvetica-Bold', color: C.accent } : {}]}>
+              {label}{isSelected ? ' ✓' : ''}
+            </Text>
             <Text style={[s.finTdMono, s.finColRecargo]}>
               {recargo === 0 ? '—' : `+${(recargo * 100).toFixed(0)}%`}
             </Text>
-            <Text style={[s.finTdMono, s.finTdBold, s.finColTotal]}>{fmt(totalFinal)}</Text>
+            <Text style={[s.finTdMono, s.finTdBold, s.finColTotal, isSelected ? { color: C.accent } : {}]}>
+              {fmt(totalFinal)}
+            </Text>
             <Text style={[s.finTdMono, s.finColAnticipo]}>{fmt(anticipo)}</Text>
             <Text style={[s.finTdMono, s.finColCuotas]}>{cuotasLabel}</Text>
           </View>
@@ -587,7 +602,7 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
       {total > 0 && (
         <View style={[s.section, { marginTop: 14 }]}>
           <Text style={s.sectionTitle}>Opciones de financiamiento</Text>
-          <TablaFinanciamiento total={total} />
+          <TablaFinanciamiento total={total} planSeleccionado={presupuesto.plan_pago} />
         </View>
       )}
 
@@ -611,12 +626,59 @@ export function PresupuestoPDFPage({ presupuesto }: { presupuesto: PresupuestoCo
   )
 }
 
+// ─── Página de fotos ─────────────────────────────────────────────────────────
+
+export function PaginaFotos({ presupuesto, fotos }: { presupuesto: PresupuestoCompleto; fotos: PresupuestoFoto[] }) {
+  if (fotos.length === 0) return null
+
+  const rows: PresupuestoFoto[][] = []
+  for (let i = 0; i < fotos.length; i += 2) rows.push(fotos.slice(i, i + 2))
+
+  return (
+    <Page size="A4" style={s.page}>
+      <View style={s.header}>
+        <View style={s.headerLeft}>
+          <Text style={s.companyName}>Los Limones Creativos</Text>
+          <Text style={s.companySlug}>TRABAJOS EN ALTURA · FACHADAS</Text>
+        </View>
+        <View style={s.headerRight}>
+          <Text style={s.presupNumero}>{presupuesto.numero ?? '—'}</Text>
+        </View>
+      </View>
+
+      <View style={s.section}>
+        <Text style={s.sectionTitle}>Memoria fotográfica</Text>
+        {rows.map((row, ri) => (
+          <View key={ri} style={s.fotoRow}>
+            {row.map((foto, fi) => (
+              <View key={foto.id} style={[s.fotoCell, fi > 0 ? s.fotoCellRight : {}]}>
+                <Image src={foto.imagen_base64} style={s.fotoImg} />
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+
+      <View style={s.footer} fixed>
+        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura y fachadas</Text>
+        <Text
+          style={s.pageNumber}
+          render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
+        />
+      </View>
+    </Page>
+  )
+}
+
 // ─── Documento standalone ────────────────────────────────────────────────────
 
 export function PresupuestoPDFDocument({ presupuesto }: { presupuesto: PresupuestoCompleto }) {
   return (
     <Document title={`Presupuesto ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
       <PresupuestoPDFPage presupuesto={presupuesto} />
+      {presupuesto.fotos?.length > 0 && (
+        <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} />
+      )}
     </Document>
   )
 }

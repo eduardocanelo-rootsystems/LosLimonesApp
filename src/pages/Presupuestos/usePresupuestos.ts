@@ -41,7 +41,8 @@ export function usePresupuesto(id: string | undefined) {
           *,
           presupuesto_servicios (*),
           presupuesto_materiales (*),
-          presupuesto_mano_obra (*)
+          presupuesto_mano_obra (*),
+          presupuesto_fotos (*)
         `)
         .eq('id', id!)
         .single()
@@ -52,6 +53,7 @@ export function usePresupuesto(id: string | undefined) {
         servicios: data.presupuesto_servicios ?? [],
         materiales: data.presupuesto_materiales ?? [],
         mano_obra: data.presupuesto_mano_obra ?? [],
+        fotos: (data.presupuesto_fotos ?? []).sort((a: { orden: number }, b: { orden: number }) => a.orden - b.orden),
       } as PresupuestoCompleto
     },
   })
@@ -89,6 +91,7 @@ export interface GuardarPresupuestoInput {
   iva_pct: number
   dias_estimados_obra: number | null
   fecha_aprobacion: string | null
+  plan_pago: 'contado' | '60dias' | '90dias' | null
   // Ítems
   servicios: FormServicioItem[]
   materiales: FormMaterialItem[]
@@ -137,6 +140,7 @@ export function useGuardarPresupuesto() {
         iva_pct: input.iva_pct,
         dias_estimados_obra: input.dias_estimados_obra,
         fecha_aprobacion: input.fecha_aprobacion,
+        plan_pago: input.plan_pago,
         fecha_actualizacion: new Date().toISOString(),
       }
 
