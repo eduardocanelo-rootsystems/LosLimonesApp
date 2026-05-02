@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileDown, Loader2, Save, ScrollText } from 'lucide-react'
+import { ArrowLeft, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
 import { toast } from 'sonner'
-import { PDFDownloadLink } from '@react-pdf/renderer'
+import { pdf, PDFDownloadLink } from '@react-pdf/renderer'
+import { supabase } from '@/lib/supabase'
+import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
 import { PresupuestoPDFDocument } from './components/PresupuestoPDF'
 import { PresupuestoContratoPDFDocument } from './components/PresupuestoContratoPDF'
@@ -205,6 +207,62 @@ export default function PresupuestoFormPage() {
       case 'tiene_descuento': setTieneDescuento(value as boolean); break
       case 'descuento_tipo': setDescuentoTipo(value as 'fijo' | 'porcentaje'); break
       case 'descuento_valor': setDescuentoValor(value as string); break
+    }
+  }
+
+  // ─── Enviar por email ───────────────────────────────────────────────────────
+
+  const [emailModal, setEmailModal]   = useState(false)
+  const [emailDest,  setEmailDest]    = useState('')
+  const [enviando,   setEnviando]     = useState(false)
+  const emailInputRef = useRef<HTMLInputElement>(null)
+
+  const abrirEmailModal = () => {
+    setEmailDest(clienteEmail)
+    setEmailModal(true)
+    setTimeout(() => emailInputRef.current?.focus(), 50)
+  }
+
+  const enviarPorEmail = async () => {
+    if (!presupuesto || !emailDest.trim()) return
+    setEnviando(true)
+    try {
+      const firmaUrl = contrato?.token_firma
+        ? `${window.location.origin}/firmar/${contrato.token_firma}`
+        : undefined
+      const docElement = esAprobado
+        ? <PresupuestoContratoPDFDocument
+            presupuesto={presupuesto}
+            form={contratoToFormValues(contrato ?? null, presupuesto)}
+            firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
+            firmaCliente={contrato?.firma_cliente_base64 ?? null}
+            firmaUrl={firmaUrl}
+          />
+        : <PresupuestoPDFDocument presupuesto={presupuesto} />
+
+      const blob        = await pdf(docElement).toBlob()
+      const arrayBuffer = await blob.arrayBuffer()
+      const bytes       = new Uint8Array(arrayBuffer)
+      let binary = ''
+      bytes.forEach((b) => { binary += String.fromCharCode(b) })
+      const pdfBase64 = btoa(binary)
+
+      const { error } = await supabase.functions.invoke('enviar-presupuesto', {
+        body: {
+          email:         emailDest.trim(),
+          pdfBase64,
+          numero:        presupuesto.numero ?? 'S/N',
+          nombreCliente: presupuesto.cliente_razon_social ?? '',
+        },
+      })
+      if (error) throw error
+      toast.success(`Presupuesto enviado a ${emailDest.trim()}`)
+      setEmailModal(false)
+    } catch (err) {
+      console.error(err)
+      toast.error('Error al enviar el email. Verificá la configuración de Resend.')
+    } finally {
+      setEnviando(false)
     }
   }
 
@@ -456,6 +514,17 @@ export default function PresupuestoFormPage() {
                 </PDFDownloadLink>
               )
             )}
+            {!esNuevo && presupuesto && (
+              <button
+                type="button"
+                onClick={abrirEmailModal}
+                disabled={enviando}
+                className="btn-secondary"
+              >
+                <Mail className="h-4 w-4" />
+                Enviar
+              </button>
+            )}
             <button
               type="button"
               onClick={handleGuardar}
@@ -580,6 +649,51 @@ export default function PresupuestoFormPage() {
         presupuestoId={id}
         fotos={presupuesto?.fotos ?? []}
       />
+
+      <Modal
+        open={emailModal}
+        onClose={() => !enviando && setEmailModal(false)}
+        title="Enviar presupuesto por email"
+        size="sm"
+      >
+        <div className="flex flex-col gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm text-ink-300">Destinatario</label>
+            <input
+              ref={emailInputRef}
+              type="email"
+              value={emailDest}
+              onChange={(e) => setEmailDest(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') enviarPorEmail() }}
+              placeholder="email@cliente.com"
+              className="input-base w-full"
+              disabled={enviando}
+            />
+          </div>
+          <p className="text-xs text-ink-500">
+            Se enviará el PDF del presupuesto{esAprobado ? ' + contrato' : ''} adjunto.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setEmailModal(false)}
+              disabled={enviando}
+              className="btn-secondary"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={enviarPorEmail}
+              disabled={enviando || !emailDest.trim()}
+              className="btn-primary"
+            >
+              {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+              {enviando ? 'Enviando…' : 'Enviar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
