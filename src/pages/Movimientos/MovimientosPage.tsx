@@ -67,7 +67,8 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
       </div>
 
       {/* Tabla por socio */}
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full text-sm min-w-[480px]">
         <thead className="bg-ink-800 text-xs text-ink-400 uppercase tracking-wider">
           <tr>
             <th className="px-4 py-2 text-left">Socio</th>
@@ -100,6 +101,7 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
           })}
         </tbody>
       </table>
+      </div>
 
       {/* Presupuestos que componen el pool */}
       {presupuestos.length > 0 && (

@@ -14,7 +14,7 @@ export function PageHeader({ title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="mb-8 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       <div>
-        <h1 className="text-3xl font-medium tracking-tight text-ink-100">
+        <h1 className="text-2xl font-medium tracking-tight text-ink-100 sm:text-3xl">
           {title}
         </h1>
         {subtitle && (

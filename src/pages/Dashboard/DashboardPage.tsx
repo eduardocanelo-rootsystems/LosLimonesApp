@@ -142,7 +142,7 @@ function KpiCard({ label, value, sub, icon: Icon, color }: {
         <span className="text-xs text-ink-400 uppercase tracking-wider">{label}</span>
         <Icon className={`h-4 w-4 ${color}`} />
       </div>
-      <p className="mt-2 text-2xl font-semibold text-ink-100">{value}</p>
+      <p className="mt-2 text-xl font-semibold text-ink-100 sm:text-2xl">{value}</p>
       {sub && <p className="mt-0.5 text-xs text-ink-500">{sub}</p>}
     </div>
   )
@@ -175,7 +175,7 @@ function CapitalCard({ pct, capital, onChangePct }: {
         <span className="text-xs text-ink-400 uppercase tracking-wider">Capital</span>
         <Landmark className="h-4 w-4 text-violet-400" />
       </div>
-      <p className="mt-2 text-2xl font-semibold text-ink-100">${fmtImporte(capital)}</p>
+      <p className="mt-2 text-xl font-semibold text-ink-100 sm:text-2xl">${fmtImporte(capital)}</p>
       <div className="mt-0.5 flex items-center gap-1 text-xs text-ink-500">
         {editando ? (
           <>

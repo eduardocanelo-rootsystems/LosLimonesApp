@@ -416,7 +416,7 @@ export default function PresupuestoFormPage() {
   return (
     <div className="space-y-6 pb-16">
       {/* Header */}
-      <div className="sticky top-16 z-30 -mx-6 border-b border-ink-800 bg-ink-950/90 px-6 py-3 backdrop-blur-md">
+      <div className="sticky top-20 z-30 -mx-4 border-b border-ink-800 bg-ink-950/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <button

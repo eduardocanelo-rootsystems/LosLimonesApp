@@ -74,7 +74,8 @@ export function SeccionManoDeObra({ items, diasEstimados, catalogo, esAprobado, 
 
         {items.length > 0 && (
           <div className="mb-4 overflow-hidden rounded-lg border border-ink-800">
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[460px]">
               <thead>
                 <tr className="border-b border-ink-800 bg-ink-900/50">
                   <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-ink-400">Tipo</th>
@@ -128,6 +129,7 @@ export function SeccionManoDeObra({ items, diasEstimados, catalogo, esAprobado, 
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
 
