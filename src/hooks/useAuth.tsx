@@ -23,14 +23,15 @@ interface RolData {
 const ROL_VACIO: RolData = { rol: null, activo: false, nombre: '' }
 
 interface AuthContextValue {
-  session: Session | null
-  user:    User | null
-  loading: boolean
-  rol:     Rol | null
-  activo:  boolean
-  nombre:  string
-  signIn:  (email: string, password: string) => Promise<{ error: string | null }>
-  signOut: () => void
+  session:     Session | null
+  user:        User | null
+  loading:     boolean
+  rol:         Rol | null
+  activo:      boolean
+  nombre:      string
+  signIn:      (email: string, password: string) => Promise<{ error: string | null }>
+  signOut:     () => void
+  refetchRol:  () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -100,16 +101,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => { window.location.replace('/login') })
   }, [])
 
+  const refetchRol = useCallback(async () => {
+    const { data: { session: s } } = await supabase.auth.getSession()
+    if (s?.user) {
+      setRolData(await fetchRol(s.user.id, s.user.app_metadata))
+    }
+  }, [])
+
   const value = useMemo(() => ({
     session,
-    user:   session?.user ?? null,
+    user:      session?.user ?? null,
     loading,
-    rol:    rolData.rol,
-    activo: rolData.activo,
-    nombre: rolData.nombre,
+    rol:       rolData.rol,
+    activo:    rolData.activo,
+    nombre:    rolData.nombre,
     signIn,
     signOut,
-  }), [session, loading, rolData, signIn, signOut])
+    refetchRol,
+  }), [session, loading, rolData, signIn, signOut, refetchRol])
 
   return (
     <AuthContext.Provider value={value}>
