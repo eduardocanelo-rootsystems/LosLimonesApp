@@ -166,7 +166,7 @@ function ClienteLogo() {
       <img
         src="/logo-cliente.svg"
         alt="Limones - Rope Access"
-        className="h-12 w-12 shrink-0 rounded-lg object-contain"
+        className="h-14 w-auto shrink-0 rounded-lg object-contain"
       />
     )
   }
