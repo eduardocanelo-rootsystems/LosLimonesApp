@@ -163,7 +163,7 @@ const s = StyleSheet.create({
     alignItems: 'flex-end',
   },
   contratoHeaderLabel: { fontSize: 7, color: C.gray500, letterSpacing: 1.5, textTransform: 'uppercase' },
-  logoImg: { height: 22, width: 80, objectFit: 'contain' },
+  logoImg: { height: 30, width: 98, objectFit: 'contain' },
 
   title: {
     fontSize: 13,

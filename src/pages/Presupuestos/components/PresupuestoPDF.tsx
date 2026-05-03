@@ -257,7 +257,7 @@ const s = StyleSheet.create({
   finColCuotas: { flex: 2, textAlign: 'right' },
   finNote: { fontSize: 7.5, color: C.gray500, marginTop: 5 },
 
-  logoImg: { height: 36, width: 130, objectFit: 'contain' },
+  logoImg: { height: 44, width: 144, objectFit: 'contain' },
 
   fotoRow: { flexDirection: 'row', marginBottom: 8 },
   fotoCell: { width: 248, height: 172, overflow: 'hidden', borderRadius: 3 },
