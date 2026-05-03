@@ -344,20 +344,16 @@ function TablaServicios({
     <View style={s.table}>
       <View style={header}>
         <Text style={[th, s.colNombre]}>DESCRIPCIÓN</Text>
-        <Text style={[th, s.colPrecioM2]}>PRECIO/m²</Text>
         <Text style={[th, s.colM2]}>m²</Text>
         <Text style={[th, s.colSubtotal]}>SUBTOTAL</Text>
       </View>
       {items.map((sv, i) => {
         const proporcion = totalSubtotalItems > 0 ? Number(sv.subtotal) / totalSubtotalItems : 0
         const extraServicio = proporcion * totalManoObra
-        const m2 = sv.m2_snapshot || 1
-        const precioM2Display = sv.precio_m2_snapshot * (sv.k_snapshot ?? 1) + extraServicio / m2
         const subtotalDisplay = Number(sv.subtotal) + extraServicio
         return (
           <View key={sv.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
             <Text style={[s.tdText, s.colNombre]}>{sv.nombre_snapshot}</Text>
-            <Text style={[s.tdMono, s.colPrecioM2, s.tdRight]}>{fmt(precioM2Display)}</Text>
             <Text style={[s.tdMono, s.colM2, s.tdRight]}>{sv.m2_snapshot}</Text>
             <Text style={[s.tdMono, s.colSubtotal, s.tdRight, s.tdBold]}>{fmt(subtotalDisplay)}</Text>
           </View>
