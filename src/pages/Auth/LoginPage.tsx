@@ -49,14 +49,20 @@ export default function LoginPage() {
         {/* Brand top */}
         <div className="mb-12 text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
-            <span className="font-mono text-4xl select-none">
-              <span className="font-light text-sys-500">/</span>
-              <span className="font-medium tracking-tight text-ink-100">root</span>
-            </span>
-            <div className="h-8 w-px bg-ink-700" />
-            <div className="flex flex-col items-start gap-1">
-              <img src="/logo-cliente.svg" alt="Limones · Rope Access" className="h-10 w-auto object-contain" />
-              <div className="text-[10px] uppercase tracking-widest text-ink-500">Sistema de gestión</div>
+            <div className="flex flex-col leading-none select-none">
+              <span className="font-mono text-xl">
+                <span className="font-light text-sys-500">/</span>
+                <span className="font-medium tracking-tight text-ink-100">root</span>
+              </span>
+              <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-500">Systems</span>
+            </div>
+            <div className="h-10 w-px bg-ink-700" />
+            <div className="flex items-center gap-2.5">
+              <img src="/logo-cliente.svg" alt="Limones · Rope Access" className="h-16 w-auto object-contain" />
+              <div className="flex flex-col leading-none text-left">
+                <span className="text-sm font-semibold text-limones-lima leading-tight">Limones · Rope Access</span>
+                <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">Trabajos en altura - Fachadas - Impermeabilizaciones</span>
+              </div>
             </div>
           </div>
         </div>
