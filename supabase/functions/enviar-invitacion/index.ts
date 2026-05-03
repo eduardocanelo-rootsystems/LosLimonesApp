@@ -92,6 +92,10 @@ serve(async (req) => {
                   Crear mi cuenta
                 </a>
               </div>
+              <p style="font-size:12px;color:#6b7280;text-align:center;margin:0 0 20px;">
+                Si el botón no funciona, copiá este enlace en tu navegador:<br>
+                <a href="${link}" style="color:#374151;word-break:break-all;">${link}</a>
+              </p>
               <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;" />
               <p style="color:#9ca3af;font-size:12px;margin:0;">
                 Este enlace vence en 7 días. Si no esperabas esta invitación, podés ignorar este email.
