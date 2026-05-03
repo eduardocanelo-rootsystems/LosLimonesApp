@@ -6,7 +6,7 @@ export function useLogoCliente(): string | null {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch('/logo-cliente.png')
+    fetch('/logo-cliente.svg')
       .then((r) => {
         if (!r.ok) throw new Error('not found')
         return r.blob()

@@ -158,13 +158,13 @@ function ClienteLogo() {
     const img = new Image()
     img.onload  = () => setLoaded(true)
     img.onerror = () => setError(true)
-    img.src = '/logo-cliente.png'
+    img.src = '/logo-cliente.svg'
   }, [])
 
   if (loaded && !error) {
     return (
       <img
-        src="/logo-cliente.png"
+        src="/logo-cliente.svg"
         alt="Los Limones Creativos"
         className="h-10 w-10 shrink-0 rounded-lg object-contain"
       />

@@ -5,10 +5,6 @@ interface RootLogoProps {
   size?: 'sm' | 'md' | 'lg'
 }
 
-/**
- * Logo wordmark de /root.
- * El slash siempre va en cyan (accent), el texto en gris claro.
- */
 export function RootLogo({ className, size = 'md' }: RootLogoProps) {
   const sizes = {
     sm: 'text-base',
@@ -24,7 +20,7 @@ export function RootLogo({ className, size = 'md' }: RootLogoProps) {
         className
       )}
     >
-      <span className="font-light text-accent-500 tracking-tight">/</span>
+      <span className="font-light text-sys-500 tracking-tight">/</span>
       <span className="font-medium text-ink-100 tracking-tight -ml-0.5">
         root
       </span>

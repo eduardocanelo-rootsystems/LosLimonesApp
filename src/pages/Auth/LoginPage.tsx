@@ -50,7 +50,7 @@ export default function LoginPage() {
         <div className="mb-12 text-center">
           <div className="mb-4 flex items-center justify-center gap-3">
             <span className="font-mono text-4xl select-none">
-              <span className="font-light text-accent-500">/</span>
+              <span className="font-light text-sys-500">/</span>
               <span className="font-medium tracking-tight text-ink-100">root</span>
             </span>
             <div className="h-8 w-px bg-ink-700" />
