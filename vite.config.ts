@@ -14,6 +14,20 @@ export default defineConfig({
     port: 5173,
     host: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react':   ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query':   ['@tanstack/react-query'],
+          'vendor-pdf':     ['@react-pdf/renderer'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-xlsx':    ['xlsx'],
+          'vendor-ui':      ['lucide-react', 'sonner', 'clsx', 'tailwind-merge'],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
