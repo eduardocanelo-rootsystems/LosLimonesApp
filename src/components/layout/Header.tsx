@@ -7,7 +7,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { cn } from '@/lib/utils'
-import type { Rol } from '@/hooks/useUsuarios'
+import { useUsuarios, type Rol } from '@/hooks/useUsuarios'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -191,7 +191,9 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mobileGroups, setMobileGroups] = useState<Record<string, boolean>>({})
 
-  const puedeSettings  = rol === 'superadmin' || rol === 'admin'
+  const puedeSettings   = rol === 'superadmin' || rol === 'admin'
+  const { data: usuarios = [] } = useUsuarios()
+  const pendingCount    = puedeSettings ? usuarios.filter((u) => !u.activo).length : 0
   const handleSignOut  = () => signOut()
 
   const toggleMobileGroup = (label: string) =>
@@ -267,13 +269,19 @@ export function Header() {
               to="/settings"
               className={({ isActive }) =>
                 cn(
-                  'rounded-md p-2 transition-colors',
+                  'relative rounded-md p-2 transition-colors',
                   isActive ? 'bg-ink-800 text-accent-400' : 'text-ink-400 hover:bg-ink-800/50 hover:text-ink-100'
                 )
               }
               aria-label="Configuración"
             >
               <SettingsIcon className="h-4 w-4" />
+              {pendingCount > 0 && (
+                <span className="absolute right-1 top-1 flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+              )}
             </NavLink>
           )}
           <div className="hidden xl:flex xl:flex-col xl:items-end max-w-[160px]">

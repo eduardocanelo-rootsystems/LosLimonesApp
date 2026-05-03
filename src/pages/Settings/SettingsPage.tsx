@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, Check, X, AlertTriangle } from 'lucide-react'
+import { Plus, Pencil, Check, X, AlertTriangle, UserX } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import {
   useCuentasArca,
@@ -510,6 +510,25 @@ export default function SettingsPage() {
           <h2 className="text-base font-medium text-ink-100">Usuarios</h2>
           <p className="text-xs text-ink-500 mt-0.5">Miembros del sistema e invitaciones pendientes.</p>
         </div>
+
+        {usuarios.some((u) => !u.activo) && (
+          <div className="mb-4 rounded-lg border border-amber-700 bg-amber-950/40 px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <UserX className="h-4 w-4 text-amber-400 shrink-0" />
+              <span className="text-sm font-medium text-amber-300">
+                {usuarios.filter((u) => !u.activo).length} usuario{usuarios.filter((u) => !u.activo).length !== 1 ? 's' : ''} pendiente{usuarios.filter((u) => !u.activo).length !== 1 ? 's' : ''} de activación
+              </span>
+            </div>
+            <ul className="space-y-1 ml-6">
+              {usuarios.filter((u) => !u.activo).map((u) => (
+                <li key={u.user_id} className="text-xs text-amber-400/80">
+                  {u.email}{u.nombre ? ` — ${u.nombre}` : ''}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 ml-6 text-xs text-amber-600">Hacé clic en "Activar" en la tabla de abajo para darles acceso.</p>
+          </div>
+        )}
 
         <div className="mb-4 rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
           {usuarios.length === 0 ? (
