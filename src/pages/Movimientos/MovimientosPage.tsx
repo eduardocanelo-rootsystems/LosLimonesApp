@@ -156,12 +156,27 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
   const [metodoCobro,  setMetodoCobro]  = useState<MetodoCobro>('transferencia')
   const [error,        setError]        = useState('')
 
-  const MODOS: { key: ModoTipo; label: string; icon: React.ElementType; color: string }[] = [
-    { key: 'egreso',    label: 'Egreso',      icon: TrendingDown,  color: 'text-red-400'      },
-    { key: 'compra_sf', label: 'Compra s/f',  icon: ShoppingCart,  color: 'text-orange-400'   },
-    { key: 'retiro',    label: 'Retiro',       icon: ArrowDownLeft, color: 'text-amber-400'    },
-    { key: 'ingreso',   label: 'Ingreso',      icon: TrendingUp,    color: 'text-green-400'    },
-    { key: 'venta_sf',  label: 'Venta s/f',   icon: Banknote,      color: 'text-emerald-400'  },
+  const GRUPOS = [
+    {
+      label: 'Ingresos',
+      modos: [
+        { key: 'ingreso'  as ModoTipo, label: 'Ingreso',     icon: TrendingUp,    color: 'text-green-400'   },
+        { key: 'venta_sf' as ModoTipo, label: 'Venta s/f',   icon: Banknote,      color: 'text-emerald-400' },
+      ],
+    },
+    {
+      label: 'Egresos',
+      modos: [
+        { key: 'egreso'    as ModoTipo, label: 'Egreso',     icon: TrendingDown,  color: 'text-red-400'     },
+        { key: 'compra_sf' as ModoTipo, label: 'Compra s/f', icon: ShoppingCart,  color: 'text-orange-400'  },
+      ],
+    },
+    {
+      label: 'Retiro',
+      modos: [
+        { key: 'retiro' as ModoTipo, label: 'Retiro de socio', icon: ArrowDownLeft, color: 'text-amber-400' },
+      ],
+    },
   ]
 
   async function handleSubmit(e: React.FormEvent) {
@@ -206,20 +221,27 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
 
           {/* Tipo */}
-          <div className="grid grid-cols-5 gap-1.5">
-            {MODOS.map(({ key, label, icon: Icon, color }) => (
-              <button
-                key={key} type="button"
-                onClick={() => setModo(key)}
-                className={`flex flex-col items-center gap-1 rounded-lg border py-2.5 px-1 text-xs font-medium transition-colors ${
-                  modo === key
-                    ? `border-current ${color} bg-ink-800`
-                    : 'border-ink-700 text-ink-500 hover:border-ink-600 hover:text-ink-300'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {label}
-              </button>
+          <div className="space-y-2">
+            {GRUPOS.map((grupo) => (
+              <div key={grupo.label} className="flex items-center gap-2">
+                <span className="w-14 shrink-0 text-right text-xs text-ink-600">{grupo.label}</span>
+                <div className={`grid flex-1 gap-1.5 ${grupo.modos.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                  {grupo.modos.map(({ key, label, icon: Icon, color }) => (
+                    <button
+                      key={key} type="button"
+                      onClick={() => setModo(key)}
+                      className={`flex items-center justify-center gap-2 rounded-lg border py-2 px-3 text-xs font-medium transition-colors ${
+                        modo === key
+                          ? `border-current ${color} bg-ink-800`
+                          : 'border-ink-700 text-ink-500 hover:border-ink-600 hover:text-ink-300'
+                      }`}
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
 
