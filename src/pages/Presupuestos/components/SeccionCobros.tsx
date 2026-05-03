@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { CheckCircle2, Circle, Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn, formatCurrency } from '@/lib/utils'
-import { useCobrosPresupuesto, useRegistrarCobro, useEliminarCobro } from '@/hooks/useCobros'
+import { useCobrosPresupuesto, useRegistrarCobro, useEliminarCobro, METODOS_COBRO, type MetodoCobro } from '@/hooks/useCobros'
 import type { PlanFinanciamiento } from './SeccionFinanciamiento'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -47,21 +47,22 @@ function FilaCuota({
   numero:        number
   label:         string
   montoEsperado: number
-  cobro?:        { id: string; monto: number; fecha_cobro: string; observacion: string | null }
+  cobro?:        { id: string; monto: number; fecha_cobro: string; metodo_cobro: MetodoCobro | null; observacion: string | null }
 }) {
-  const [abierto,    setAbierto]    = useState(false)
-  const [fecha,      setFecha]      = useState(() => new Date().toISOString().slice(0, 10))
-  const [monto,      setMonto]      = useState(() => montoEsperado.toFixed(2))
-  const [obs,        setObs]        = useState('')
-  const registrar  = useRegistrarCobro()
-  const eliminar   = useEliminarCobro()
-  const guardando  = registrar.isPending || eliminar.isPending
+  const [abierto,  setAbierto]  = useState(false)
+  const [fecha,    setFecha]    = useState(() => new Date().toISOString().slice(0, 10))
+  const [monto,    setMonto]    = useState(() => montoEsperado.toFixed(2))
+  const [metodo,   setMetodo]   = useState<MetodoCobro>('transferencia')
+  const [obs,      setObs]      = useState('')
+  const registrar = useRegistrarCobro()
+  const eliminar  = useEliminarCobro()
+  const guardando = registrar.isPending || eliminar.isPending
 
   const handleRegistrar = async () => {
     const v = parseFloat(monto.replace(',', '.'))
     if (isNaN(v) || v <= 0) { toast.error('Ingresá un monto válido.'); return }
     try {
-      await registrar.mutateAsync({ presupuesto_id: presupuestoId, numero_cuota: numero, monto: v, fecha_cobro: fecha, observacion: obs || undefined })
+      await registrar.mutateAsync({ presupuesto_id: presupuestoId, numero_cuota: numero, monto: v, fecha_cobro: fecha, metodo_cobro: metodo, observacion: obs || undefined })
       toast.success(`Cuota ${numero} registrada.`)
       setAbierto(false)
     } catch { toast.error('Error al registrar el cobro.') }
@@ -101,6 +102,9 @@ function FilaCuota({
             <div className="text-right">
               <p className="font-mono text-sm font-semibold text-green-400">{formatCurrency(cobro.monto)}</p>
               <p className="text-xs text-ink-500">{cobro.fecha_cobro}</p>
+              {cobro.metodo_cobro && (
+                <p className="text-xs text-ink-400">{METODOS_COBRO.find(m => m.value === cobro.metodo_cobro)?.label}</p>
+              )}
             </div>
           )}
           {cobrada ? (
@@ -128,29 +132,43 @@ function FilaCuota({
 
       {/* Formulario inline */}
       {abierto && !cobrada && (
-        <div className="mt-4 flex flex-wrap items-end gap-3 border-t border-ink-700 pt-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-ink-500">Fecha</label>
-            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="input-base w-36" />
+        <div className="mt-4 space-y-3 border-t border-ink-700 pt-4">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-ink-500">Fecha</label>
+              <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="input-base w-36" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs text-ink-500">Monto cobrado</label>
+              <input type="text" value={monto} onChange={(e) => setMonto(e.target.value)} className="input-base w-36 text-right font-mono" />
+            </div>
+            <div className="flex flex-1 flex-col gap-1">
+              <label className="text-xs text-ink-500">Observación (opcional)</label>
+              <input type="text" value={obs} onChange={(e) => setObs(e.target.value)} className="input-base" />
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-ink-500">Monto cobrado</label>
-            <input
-              type="text"
-              value={monto}
-              onChange={(e) => setMonto(e.target.value)}
-              className="input-base w-36 text-right font-mono"
-            />
-          </div>
-          <div className="flex flex-1 flex-col gap-1">
-            <label className="text-xs text-ink-500">Observación (opcional)</label>
-            <input type="text" value={obs} onChange={(e) => setObs(e.target.value)} className="input-base" />
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={handleRegistrar} disabled={guardando} className="btn-primary py-1.5 text-xs">
-              {guardando ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Confirmar'}
-            </button>
-            <button type="button" onClick={() => setAbierto(false)} className="btn-ghost py-1.5 text-xs">Cancelar</button>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-ink-500 shrink-0">Método:</span>
+            {METODOS_COBRO.map((m) => (
+              <button
+                key={m.value} type="button"
+                onClick={() => setMetodo(m.value)}
+                className={cn(
+                  'rounded-md border px-3 py-1 text-xs font-medium transition-colors',
+                  metodo === m.value
+                    ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                    : 'border-ink-700 text-ink-500 hover:border-ink-600 hover:text-ink-300'
+                )}
+              >
+                {m.label}
+              </button>
+            ))}
+            <div className="ml-auto flex gap-2">
+              <button type="button" onClick={handleRegistrar} disabled={guardando} className="btn-primary py-1.5 text-xs">
+                {guardando ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Confirmar'}
+              </button>
+              <button type="button" onClick={() => setAbierto(false)} className="btn-ghost py-1.5 text-xs">Cancelar</button>
+            </div>
           </div>
         </div>
       )}

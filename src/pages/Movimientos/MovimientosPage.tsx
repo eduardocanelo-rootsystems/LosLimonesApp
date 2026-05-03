@@ -10,6 +10,7 @@ import {
   type Movimiento,
   type MovimientoInput,
 } from '@/hooks/useMovimientos'
+import { METODOS_COBRO, type MetodoCobro } from '@/hooks/useCobros'
 import { useSocios, type Socio } from '@/hooks/useSocios'
 
 function fmtImporte(n: number) {
@@ -152,6 +153,7 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
   const [socioId,      setSocioId]      = useState('')
   const [categoria,    setCategoria]    = useState('')
   const [contraparte,  setContraparte]  = useState('')
+  const [metodoCobro,  setMetodoCobro]  = useState<MetodoCobro>('transferencia')
   const [error,        setError]        = useState('')
 
   const MODOS: { key: ModoTipo; label: string; icon: React.ElementType; color: string }[] = [
@@ -187,6 +189,7 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
       categoria:     categoria.trim() || null,
       contraparte:   contraparte.trim() || null,
       observaciones: null,
+      metodo_cobro:  modo === 'venta_sf' ? metodoCobro : null,
     })
     onClose()
   }
@@ -248,6 +251,27 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
             <div className="space-y-1">
               <label className="text-xs text-ink-400">{modo === 'compra_sf' ? 'Proveedor' : 'Cliente'} (opcional)</label>
               <input type="text" className="input w-full" value={contraparte} onChange={(e) => setContraparte(e.target.value)} placeholder={modo === 'compra_sf' ? 'Nombre del proveedor…' : 'Nombre del cliente…'} />
+            </div>
+          )}
+
+          {modo === 'venta_sf' && (
+            <div className="space-y-1.5">
+              <label className="text-xs text-ink-400">Método de cobro</label>
+              <div className="flex flex-wrap gap-2">
+                {METODOS_COBRO.map((m) => (
+                  <button
+                    key={m.value} type="button"
+                    onClick={() => setMetodoCobro(m.value)}
+                    className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
+                      metodoCobro === m.value
+                        ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                        : 'border-ink-700 text-ink-500 hover:border-ink-600 hover:text-ink-300'
+                    }`}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

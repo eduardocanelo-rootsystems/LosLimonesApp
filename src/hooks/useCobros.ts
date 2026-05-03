@@ -7,12 +7,22 @@ const db = supabase as any
 
 const QK = ['presupuesto_cobros'] as const
 
+export type MetodoCobro = 'efectivo' | 'transferencia' | 'cheque' | 'usd'
+
+export const METODOS_COBRO: { value: MetodoCobro; label: string }[] = [
+  { value: 'efectivo',      label: 'Efectivo'              },
+  { value: 'transferencia', label: 'Transferencia Bancaria' },
+  { value: 'cheque',        label: 'Cheque'                },
+  { value: 'usd',           label: 'USD'                   },
+]
+
 export interface Cobro {
   id:             string
   presupuesto_id: string
   numero_cuota:   number
   monto:          number
   fecha_cobro:    string
+  metodo_cobro:   MetodoCobro | null
   observacion:    string | null
   created_at:     string
 }
@@ -74,6 +84,7 @@ export interface RegistrarCobroInput {
   numero_cuota:   number
   monto:          number
   fecha_cobro:    string
+  metodo_cobro?:  MetodoCobro | null
   observacion?:   string
 }
 
@@ -89,6 +100,7 @@ export function useRegistrarCobro() {
             numero_cuota:   input.numero_cuota,
             monto:          input.monto,
             fecha_cobro:    input.fecha_cobro,
+            metodo_cobro:   input.metodo_cobro ?? null,
             observacion:    input.observacion ?? null,
           },
           { onConflict: 'presupuesto_id,numero_cuota' }

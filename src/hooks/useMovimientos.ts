@@ -21,6 +21,7 @@ export interface Movimiento {
   categoria:     string | null
   contraparte:   string | null
   observaciones: string | null
+  metodo_cobro:  string | null
   created_at:    string
 }
 
@@ -34,6 +35,7 @@ export interface MovimientoInput {
   categoria:     string | null
   contraparte:   string | null
   observaciones: string | null
+  metodo_cobro?: string | null
 }
 
 export function useMovimientos(rango: RangoFechas) {

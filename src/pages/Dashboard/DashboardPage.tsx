@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark } from 'lucide-react'
+import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark, CreditCard } from 'lucide-react'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PeriodoSelector, getRangoFechas, type Periodo } from '@/components/shared/PeriodoSelector'
@@ -10,7 +10,7 @@ import { usePresupuestos } from '@/pages/Presupuestos/usePresupuestos'
 import { useContratosResumen } from '@/pages/Contratos/useContrato'
 import { diasHastaVencimiento } from '@/lib/utils'
 import { useMovimientos, usePresupuestosRentabilidad, useManoObraStats } from '@/hooks/useMovimientos'
-import { useCobrosPeriodo } from '@/hooks/useCobros'
+import { useCobrosPeriodo, METODOS_COBRO } from '@/hooks/useCobros'
 import { useSocios } from '@/hooks/useSocios'
 import { esNotaCredito } from '@/lib/arcaParser'
 import { ResumenContadorPDF } from './ResumenContadorPDF'
@@ -463,6 +463,48 @@ export default function DashboardPage() {
           color={poolNeto >= 0 ? 'text-violet-400' : 'text-red-400'}
         />
       </div>
+
+      {/* Cobros por método de pago */}
+      {totalCobrosBruto > 0 && (() => {
+        const porMetodo = METODOS_COBRO.map((m) => ({
+          label: m.label,
+          total: cobros.filter((c) => c.metodo_cobro === m.value).reduce((s, c) => s + c.monto, 0),
+        })).filter((m) => m.total > 0)
+        const sinMetodo = cobros.filter((c) => !c.metodo_cobro).reduce((s, c) => s + c.monto, 0)
+        if (porMetodo.length === 0 && sinMetodo === 0) return null
+        return (
+          <>
+            <p className="mb-3 mt-0 text-xs font-medium uppercase tracking-wider text-ink-500">Cobros por método de pago</p>
+            <div className="mb-6 rounded-xl border border-ink-700 bg-ink-900 overflow-hidden">
+              <div className="divide-y divide-ink-800">
+                {porMetodo.map((m) => {
+                  const pct = totalCobrosBruto > 0 ? (m.total / totalCobrosBruto) * 100 : 0
+                  return (
+                    <div key={m.label} className="flex items-center gap-4 px-5 py-3">
+                      <CreditCard className="h-3.5 w-3.5 shrink-0 text-ink-500" />
+                      <span className="flex-1 text-sm text-ink-300">{m.label}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="hidden sm:block w-32 h-1.5 overflow-hidden rounded-full bg-ink-800">
+                          <div className="h-full rounded-full bg-accent-500/60 transition-all" style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className="w-10 text-right font-mono text-xs text-ink-500">{pct.toFixed(1)}%</span>
+                        <span className="w-32 text-right font-mono text-sm font-semibold text-green-400">${fmtImporte(m.total)}</span>
+                      </div>
+                    </div>
+                  )
+                })}
+                {sinMetodo > 0 && (
+                  <div className="flex items-center gap-4 px-5 py-3">
+                    <CreditCard className="h-3.5 w-3.5 shrink-0 text-ink-600" />
+                    <span className="flex-1 text-sm text-ink-500">Sin método registrado</span>
+                    <span className="font-mono text-sm text-ink-500">${fmtImporte(sinMetodo)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )
+      })()}
 
       {/* Mano de obra por tipo */}
       {moStats && moStats.byTipo.length > 0 && (
