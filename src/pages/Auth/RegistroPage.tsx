@@ -1,13 +1,21 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Loader2, ShieldCheck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { buscarInvitacionPorToken } from '@/hooks/useUsuarios'
+import type { Invitacion } from '@/hooks/useUsuarios'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = supabase as any
 
 export default function RegistroPage() {
-  const navigate = useNavigate()
+  const navigate        = useNavigate()
+  const [params]        = useSearchParams()
+  const token           = params.get('token')
+
+  const [invitacion, setInvitacion] = useState<Invitacion | null>(null)
+  const [cargando,   setCargando]   = useState(!!token)
+  const [tokenInvalido, setTokenInvalido] = useState(false)
 
   const [nombre,   setNombre]   = useState('')
   const [email,    setEmail]    = useState('')
@@ -16,6 +24,19 @@ export default function RegistroPage() {
   const [error,    setError]    = useState('')
   const [enviando, setEnviando] = useState(false)
   const [listo,    setListo]    = useState(false)
+
+  useEffect(() => {
+    if (!token) return
+    buscarInvitacionPorToken(token).then((inv) => {
+      if (!inv) {
+        setTokenInvalido(true)
+      } else {
+        setInvitacion(inv)
+        setEmail(inv.email)
+      }
+      setCargando(false)
+    })
+  }, [token])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -26,23 +47,29 @@ export default function RegistroPage() {
     setError('')
     setEnviando(true)
     try {
-      // 1. Crear cuenta en Supabase Auth
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email:   email.trim().toLowerCase(),
+        email:    email.trim().toLowerCase(),
         password,
-        options: { data: { nombre: nombre.trim() } },
+        options:  { data: { nombre: nombre.trim() } },
       })
       if (signUpError) throw signUpError
       if (!data.user) throw new Error('No se pudo crear el usuario.')
 
-      // 2. Crear fila en user_roles inactiva — el admin la activa y asigna rol
+      const esInvitado = !!invitacion
+
       await db.from('user_roles').insert({
-        user_id: data.user.id,
-        email:   email.trim().toLowerCase(),
-        nombre:  nombre.trim(),
-        rol:     'empleado',
-        activo:  false,
+        user_id:      data.user.id,
+        email:        email.trim().toLowerCase(),
+        nombre:       nombre.trim(),
+        rol:          invitacion?.rol ?? 'empleado',
+        activo:       esInvitado,
+        invitado_por: invitacion?.creado_por ?? null,
       })
+
+      // Marcar invitación como usada
+      if (invitacion) {
+        await db.from('invitaciones').update({ usado: true }).eq('id', invitacion.id)
+      }
 
       setListo(true)
     } catch (err: unknown) {
@@ -53,25 +80,51 @@ export default function RegistroPage() {
     }
   }
 
+  // ── Estados de pantalla ──────────────────────────────────────────────────────
+
+  if (cargando) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-ink-950">
+        <Loader2 className="h-6 w-6 animate-spin text-accent-500" />
+      </div>
+    )
+  }
+
+  if (tokenInvalido) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-ink-950 px-4 text-center">
+        <p className="text-lg font-medium text-ink-100">Enlace inválido o vencido</p>
+        <p className="text-sm text-ink-400">
+          Este enlace de invitación ya fue usado o expiró. Pedí al administrador que te envíe uno nuevo.
+        </p>
+        <button onClick={() => navigate('/login')} className="btn-secondary mt-2">Ir al login</button>
+      </div>
+    )
+  }
+
   if (listo) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-ink-950 px-4 text-center">
-        <ShieldCheck className="h-10 w-10 text-accent-400" />
+        <ShieldCheck className="h-10 w-10 text-accent-500" />
         <p className="text-lg font-medium text-ink-100">¡Cuenta creada!</p>
         <p className="text-sm text-ink-400">
-          Tu cuenta fue registrada. El administrador la activará antes de que puedas ingresar.
+          {invitacion
+            ? 'Tu cuenta está activa. Ya podés iniciar sesión.'
+            : 'El administrador activará tu cuenta antes de que puedas ingresar.'}
         </p>
         <button onClick={() => navigate('/login')} className="btn-primary mt-2">Ir al login</button>
       </div>
     )
   }
 
+  // ── Formulario ───────────────────────────────────────────────────────────────
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink-950 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <span className="font-mono text-2xl">
-            <span className="font-light text-accent-500">/</span>
+            <span className="font-light text-sys-500">/</span>
             <span className="font-medium text-ink-100">root</span>
           </span>
           <p className="mt-2 text-sm text-ink-400">Los Limones Creativos</p>
@@ -79,14 +132,18 @@ export default function RegistroPage() {
 
         <div className="rounded-xl border border-ink-700 bg-ink-900 p-6 shadow-2xl">
           <h1 className="mb-1 text-lg font-semibold text-ink-100">Crear cuenta</h1>
-          <p className="mb-5 text-xs text-ink-500">El administrador habilitará tu acceso una vez registrado.</p>
+          <p className="mb-5 text-xs text-ink-500">
+            {invitacion
+              ? `Invitado como ${invitacion.rol} · El email ya está confirmado.`
+              : 'El administrador habilitará tu acceso una vez registrado.'}
+          </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1">
               <label className="text-xs text-ink-400">Nombre completo</label>
               <input
                 type="text"
-                className="input w-full"
+                className="input-base"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Luis García"
@@ -98,10 +155,12 @@ export default function RegistroPage() {
               <label className="text-xs text-ink-400">Email</label>
               <input
                 type="email"
-                className="input w-full"
+                className="input-base"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
+                readOnly={!!invitacion}
+                disabled={!!invitacion}
                 required
               />
             </div>
@@ -109,7 +168,7 @@ export default function RegistroPage() {
               <label className="text-xs text-ink-400">Contraseña</label>
               <input
                 type="password"
-                className="input w-full"
+                className="input-base"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Mínimo 8 caracteres"
@@ -120,7 +179,7 @@ export default function RegistroPage() {
               <label className="text-xs text-ink-400">Confirmar contraseña</label>
               <input
                 type="password"
-                className="input w-full"
+                className="input-base"
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="Repetí la contraseña"
@@ -128,7 +187,7 @@ export default function RegistroPage() {
               />
             </div>
 
-            {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p className="text-xs text-danger">{error}</p>}
 
             <button type="submit" disabled={enviando} className="btn-primary w-full">
               {enviando ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : 'Crear cuenta'}

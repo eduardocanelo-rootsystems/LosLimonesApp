@@ -88,7 +88,7 @@ export function useCrearInvitacion() {
       const inv = data as Invitacion
 
       // Enviar email automáticamente vía Edge Function
-      const { error: fnError } = await supabase.functions.invoke('resend-email', {
+      const { error: fnError } = await supabase.functions.invoke('enviar-invitacion', {
         body: { email: inv.email, token: inv.token, rolInvitado: inv.rol },
       })
       if (fnError) {
