@@ -165,14 +165,14 @@ function ClienteLogo() {
     return (
       <img
         src="/logo-cliente.svg"
-        alt="Los Limones Creativos"
-        className="h-10 w-10 shrink-0 rounded-lg object-contain"
+        alt="Limones - Rope Access"
+        className="h-12 w-12 shrink-0 rounded-lg object-contain"
       />
     )
   }
 
   return (
-    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-limones-lima text-sm font-bold tracking-tight text-limones-carbon">
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-limones-lima text-sm font-bold tracking-tight text-limones-carbon">
       LL
     </div>
   )
@@ -215,7 +215,7 @@ export function Header() {
             <ClienteLogo />
             <div className="flex flex-col leading-none">
               <span className="text-sm font-semibold text-limones-lima leading-tight">
-                Los Limones Creativos
+                Limones · Rope Access
               </span>
               <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">
                 Trabajos en altura - Fachadas - Impermeabilizaciones
