@@ -220,8 +220,8 @@ export function Header() {
           <div className="hidden sm:flex items-center gap-2.5">
             <ClienteLogo />
             <div className="flex flex-col leading-none">
-              <span className="text-sm font-semibold text-limones-lima leading-tight">
-                Limones · Rope Access
+              <span className="text-sm font-semibold leading-tight">
+                <span className="text-limones-lima">Limones · </span><span className="text-white">Rope Access</span>
               </span>
               <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">
                 Trabajos en altura - Fachadas - Impermeabilizaciones
