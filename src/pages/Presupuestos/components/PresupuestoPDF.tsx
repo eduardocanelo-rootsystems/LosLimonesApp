@@ -417,15 +417,15 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
         return (
           <View key={label} style={[
             s.finRow,
-            isSelected ? { backgroundColor: '#EFF6FF', borderLeftWidth: 3, borderLeftColor: C.accent } : {}
+            isSelected ? { backgroundColor: '#F5FFD6', borderLeftWidth: 3, borderLeftColor: '#5A7D00' } : {}
           ]}>
-            <Text style={[s.finTdText, s.finColPlan, isSelected ? { fontFamily: 'Helvetica-Bold', color: C.accent } : {}]}>
+            <Text style={[s.finTdText, s.finColPlan, isSelected ? { fontFamily: 'Helvetica-Bold', color: C.black } : {}]}>
               {label}{isSelected ? ' ✓' : ''}
             </Text>
             <Text style={[s.finTdMono, s.finColRecargo]}>
               {recargo === 0 ? '—' : `+${(recargo * 100).toFixed(0)}%`}
             </Text>
-            <Text style={[s.finTdMono, s.finTdBold, s.finColTotal, isSelected ? { color: C.accent } : {}]}>
+            <Text style={[s.finTdMono, s.finTdBold, s.finColTotal, isSelected ? { color: C.black } : {}]}>
               {fmt(totalFinal)}
             </Text>
             <Text style={[s.finTdMono, s.finColAnticipo]}>{fmt(anticipo)}</Text>
