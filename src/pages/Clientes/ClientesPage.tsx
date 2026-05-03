@@ -29,24 +29,82 @@ interface ClienteAgregado {
 
 // ─── PDF ──────────────────────────────────────────────────────────────────────
 
+const C = {
+  black:   '#111111',
+  white:   '#FFFFFF',
+  accent:  '#B7FF00',
+  gray700: '#374151',
+  gray500: '#6B7280',
+  gray300: '#D1D5DB',
+  gray100: '#F3F4F6',
+  gray50:  '#F9FAFB',
+}
+
 const ps = StyleSheet.create({
-  page:       { fontFamily: 'Helvetica', fontSize: 8, color: '#111', paddingTop: 36, paddingBottom: 40, paddingHorizontal: 36, backgroundColor: '#fff' },
-  title:      { fontSize: 14, fontFamily: 'Helvetica-Bold', marginBottom: 4 },
-  subtitle:   { fontSize: 8, color: '#6B7280', marginBottom: 16 },
-  header:     { flexDirection: 'row', backgroundColor: '#F3F4F6', paddingVertical: 5, paddingHorizontal: 6, borderTopWidth: 0.5, borderBottomWidth: 0.5, borderColor: '#D1D5DB' },
-  th:         { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#6B7280' },
-  row:        { flexDirection: 'row', paddingVertical: 5, paddingHorizontal: 6, borderBottomWidth: 0.5, borderBottomColor: '#F3F4F6' },
-  rowAlt:     { backgroundColor: '#F9FAFB' },
-  td:         { fontSize: 8, color: '#111' },
-  tdGray:     { fontSize: 7, color: '#6B7280' },
-  colNombre:  { flex: 3 },
-  colCuit:    { flex: 2 },
-  colTel:     { flex: 2 },
-  colEmail:   { flex: 3 },
-  colPresp:   { flex: 1, textAlign: 'center' },
-  colTotal:   { flex: 2, textAlign: 'right' },
-  footer:     { position: 'absolute', bottom: 20, left: 36, right: 36, borderTopWidth: 0.5, borderTopColor: '#D1D5DB', paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between' },
-  footerText: { fontSize: 7, color: '#9CA3AF' },
+  page: {
+    fontFamily: 'Helvetica', fontSize: 8, color: C.black,
+    paddingTop: 0, paddingBottom: 44, paddingHorizontal: 0,
+    backgroundColor: C.white,
+  },
+
+  // Header banda negra
+  band: {
+    backgroundColor: C.black,
+    paddingHorizontal: 36, paddingTop: 28, paddingBottom: 22,
+    marginBottom: 20,
+  },
+  bandTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  company: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 0.5 },
+  companySlug: { fontSize: 7, color: C.gray500, letterSpacing: 2, marginTop: 2 },
+  docTitle: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: C.accent },
+  docDate:  { fontSize: 8, color: C.gray500, marginTop: 3, textAlign: 'right' },
+
+  // KPI row
+  kpiRow: {
+    flexDirection: 'row', gap: 10,
+    marginTop: 16, paddingTop: 14,
+    borderTopWidth: 0.5, borderTopColor: '#2A2A2A',
+  },
+  kpiBox: {
+    flex: 1, backgroundColor: '#1C1C1C',
+    borderRadius: 4, paddingHorizontal: 12, paddingVertical: 8,
+  },
+  kpiLabel: { fontSize: 6.5, color: C.gray500, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 },
+  kpiValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: C.white },
+  kpiAccent: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: C.accent },
+
+  // Tabla
+  tableWrap: { paddingHorizontal: 36 },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: C.gray100,
+    paddingVertical: 6, paddingHorizontal: 8,
+    borderTopWidth: 0.5, borderBottomWidth: 0.5, borderColor: C.gray300,
+  },
+  th: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: C.gray500, letterSpacing: 0.8 },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: 6, paddingHorizontal: 8,
+    borderBottomWidth: 0.5, borderBottomColor: C.gray100,
+  },
+  rowAlt:    { backgroundColor: C.gray50 },
+  td:        { fontSize: 8.5, color: C.black },
+  tdSub:     { fontSize: 7, color: C.gray500, marginTop: 1.5 },
+  tdBold:    { fontSize: 8.5, color: C.black, fontFamily: 'Helvetica-Bold' },
+  colNombre: { flex: 3.2 },
+  colCuit:   { flex: 1.8 },
+  colTel:    { flex: 1.8 },
+  colEmail:  { flex: 2.8 },
+  colPresp:  { flex: 0.8, textAlign: 'center' },
+  colTotal:  { flex: 2, textAlign: 'right' },
+
+  // Footer
+  footer: {
+    position: 'absolute', bottom: 18, left: 36, right: 36,
+    borderTopWidth: 0.5, borderTopColor: C.gray300,
+    paddingTop: 6, flexDirection: 'row', justifyContent: 'space-between',
+  },
+  footerText: { fontSize: 7, color: C.gray500 },
 })
 
 function fmt(n: number) {
@@ -54,34 +112,69 @@ function fmt(n: number) {
 }
 
 function ClientesPDFDoc({ clientes, fecha }: { clientes: ClienteAgregado[]; fecha: string }) {
+  const totalAprobado = clientes.reduce((acc, c) => acc + c.total_aprobado, 0)
+  const totalPresup   = clientes.reduce((acc, c) => acc + c.presupuestos.length, 0)
+
   return (
     <Document title="Listado de Clientes" author="Los Limones Creativos">
       <Page size="A4" orientation="landscape" style={ps.page}>
-        <Text style={ps.title}>Listado de Clientes</Text>
-        <Text style={ps.subtitle}>Los Limones Creativos · Generado el {fecha} · {clientes.length} clientes</Text>
 
-        <View style={ps.header}>
-          <Text style={[ps.th, ps.colNombre]}>CLIENTE</Text>
-          <Text style={[ps.th, ps.colCuit]}>CUIT</Text>
-          <Text style={[ps.th, ps.colTel]}>TELÉFONO</Text>
-          <Text style={[ps.th, ps.colEmail]}>EMAIL</Text>
-          <Text style={[ps.th, ps.colPresp]}>PRESUP.</Text>
-          <Text style={[ps.th, ps.colTotal]}>TOTAL APROBADO</Text>
+        {/* Banda de header */}
+        <View style={ps.band} fixed>
+          <View style={ps.bandTop}>
+            <View>
+              <Text style={ps.company}>Los Limones Creativos</Text>
+              <Text style={ps.companySlug}>TRABAJOS EN ALTURA · FACHADAS · IMPERMEABILIZACIONES</Text>
+            </View>
+            <View>
+              <Text style={ps.docTitle}>Clientes</Text>
+              <Text style={ps.docDate}>Generado el {fecha}</Text>
+            </View>
+          </View>
+
+          <View style={ps.kpiRow}>
+            <View style={ps.kpiBox}>
+              <Text style={ps.kpiLabel}>Total clientes</Text>
+              <Text style={ps.kpiValue}>{clientes.length}</Text>
+            </View>
+            <View style={ps.kpiBox}>
+              <Text style={ps.kpiLabel}>Presupuestos emitidos</Text>
+              <Text style={ps.kpiValue}>{totalPresup}</Text>
+            </View>
+            <View style={ps.kpiBox}>
+              <Text style={ps.kpiLabel}>Total aprobado</Text>
+              <Text style={ps.kpiAccent}>{fmt(totalAprobado)}</Text>
+            </View>
+          </View>
         </View>
 
-        {clientes.map((c, i) => (
-          <View key={c.razon_social} style={[ps.row, i % 2 === 1 ? ps.rowAlt : {}]}>
-            <View style={ps.colNombre}>
-              <Text style={ps.td}>{c.razon_social}</Text>
-              {c.direccion ? <Text style={ps.tdGray}>{c.direccion}</Text> : null}
-            </View>
-            <Text style={[ps.td, ps.colCuit]}>{c.cuit || '—'}</Text>
-            <Text style={[ps.td, ps.colTel]}>{c.telefono || '—'}</Text>
-            <Text style={[ps.td, ps.colEmail]}>{c.email || '—'}</Text>
-            <Text style={[ps.td, ps.colPresp]}>{c.presupuestos.length}</Text>
-            <Text style={[ps.td, ps.colTotal]}>{c.total_aprobado > 0 ? fmt(c.total_aprobado) : '—'}</Text>
+        {/* Tabla */}
+        <View style={ps.tableWrap}>
+          <View style={ps.tableHeader}>
+            <Text style={[ps.th, ps.colNombre]}>CLIENTE</Text>
+            <Text style={[ps.th, ps.colCuit]}>CUIT</Text>
+            <Text style={[ps.th, ps.colTel]}>TELÉFONO</Text>
+            <Text style={[ps.th, ps.colEmail]}>EMAIL</Text>
+            <Text style={[ps.th, ps.colPresp]}>PRES.</Text>
+            <Text style={[ps.th, ps.colTotal]}>TOTAL APROBADO</Text>
           </View>
-        ))}
+
+          {clientes.map((c, i) => (
+            <View key={c.razon_social} style={[ps.row, i % 2 === 1 ? ps.rowAlt : {}]}>
+              <View style={ps.colNombre}>
+                <Text style={ps.tdBold}>{c.razon_social}</Text>
+                {c.direccion ? <Text style={ps.tdSub}>{c.direccion}</Text> : null}
+              </View>
+              <Text style={[ps.td, ps.colCuit]}>{c.cuit || '—'}</Text>
+              <Text style={[ps.td, ps.colTel]}>{c.telefono || '—'}</Text>
+              <Text style={[ps.td, ps.colEmail]}>{c.email || '—'}</Text>
+              <Text style={[ps.td, ps.colPresp]}>{c.presupuestos.length}</Text>
+              <Text style={[ps.tdBold, ps.colTotal]}>
+                {c.total_aprobado > 0 ? fmt(c.total_aprobado) : '—'}
+              </Text>
+            </View>
+          ))}
+        </View>
 
         <View style={ps.footer} fixed>
           <Text style={ps.footerText}>Los Limones Creativos · Listado de Clientes</Text>
