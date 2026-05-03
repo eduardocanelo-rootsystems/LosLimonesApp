@@ -54,8 +54,8 @@ export default function LoginPage() {
               <span className="font-medium tracking-tight text-ink-100">root</span>
             </span>
             <div className="h-8 w-px bg-ink-700" />
-            <div className="text-left">
-              <div className="text-base font-medium leading-tight text-ink-100">Los Limones Creativos</div>
+            <div className="flex flex-col items-start gap-1">
+              <img src="/logo-cliente.svg" alt="Limones · Rope Access" className="h-10 w-auto object-contain" />
               <div className="text-[10px] uppercase tracking-widest text-ink-500">Sistema de gestión</div>
             </div>
           </div>
