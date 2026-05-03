@@ -5,9 +5,6 @@ import { supabase } from '@/lib/supabase'
 import { buscarInvitacionPorToken } from '@/hooks/useUsuarios'
 import type { Invitacion } from '@/hooks/useUsuarios'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const db = supabase as any
-
 export default function RegistroPage() {
   const navigate        = useNavigate()
   const [params]        = useSearchParams()
@@ -47,34 +44,22 @@ export default function RegistroPage() {
     setError('')
     setEnviando(true)
     try {
+      // El trigger on_auth_user_created en la DB crea user_roles y marca la invitación
+      // como usada server-side, independientemente del estado de la sesión del cliente.
       const { data, error: signUpError } = await supabase.auth.signUp({
-        email:    email.trim().toLowerCase(),
+        email:   email.trim().toLowerCase(),
         password,
-        options:  { data: { nombre: nombre.trim() } },
+        options: { data: { nombre: nombre.trim() } },
       })
-      if (signUpError) throw signUpError
-      if (!data.user) throw new Error('No se pudo crear el usuario.')
-
-      const esInvitado = !!invitacion
-
-      await db.from('user_roles').insert({
-        user_id:      data.user.id,
-        email:        email.trim().toLowerCase(),
-        nombre:       nombre.trim(),
-        rol:          invitacion?.rol ?? 'empleado',
-        activo:       esInvitado,
-        invitado_por: invitacion?.creado_por ?? null,
-      })
-
-      // Marcar invitación como usada
-      if (invitacion) {
-        await db.from('invitaciones').update({ usado: true }).eq('id', invitacion.id)
+      if (signUpError) {
+        const msg = signUpError.message
+        throw new Error(msg.includes('already registered') ? 'Este email ya tiene una cuenta.' : msg)
       }
+      if (!data.user) throw new Error('No se pudo crear el usuario.')
 
       setListo(true)
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Error al registrar.'
-      setError(msg.includes('already registered') ? 'Este email ya tiene una cuenta.' : msg)
+      setError(err instanceof Error ? err.message : 'Error al registrar.')
     } finally {
       setEnviando(false)
     }
