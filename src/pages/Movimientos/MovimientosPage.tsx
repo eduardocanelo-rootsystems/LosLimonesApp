@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Trash2, TrendingUp, TrendingDown, ArrowDownLeft, Users } from 'lucide-react'
+import { Plus, Trash2, TrendingUp, TrendingDown, ArrowDownLeft, Users, ShoppingCart, Banknote } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PeriodoSelector, getRangoFechas, type Periodo, type RangoFechas } from '@/components/shared/PeriodoSelector'
 import {
@@ -130,42 +130,68 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
 // ─── Formulario nuevo movimiento ──────────────────────────────────────────────
 
 const TIPO_ICON = {
-  ingreso: TrendingUp,
-  egreso:  TrendingDown,
-  retiro:  ArrowDownLeft,
+  ingreso:  TrendingUp,
+  egreso:   TrendingDown,
+  retiro:   ArrowDownLeft,
+  venta_sf: Banknote,
+  compra_sf: ShoppingCart,
 }
-const TIPO_LABEL = { ingreso: 'Ingreso', egreso: 'Egreso', retiro: 'Retiro' }
-const TIPO_COLOR = { ingreso: 'text-green-400', egreso: 'text-red-400', retiro: 'text-amber-400' }
+const TIPO_LABEL = { ingreso: 'Ingreso', egreso: 'Egreso', retiro: 'Retiro', venta_sf: 'Venta s/f', compra_sf: 'Compra s/f' }
+const TIPO_COLOR = { ingreso: 'text-green-400', egreso: 'text-red-400', retiro: 'text-amber-400', venta_sf: 'text-emerald-400', compra_sf: 'text-orange-400' }
+
+type ModoTipo = 'egreso' | 'retiro' | 'ingreso' | 'compra_sf' | 'venta_sf'
 
 function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: () => void }) {
   const crear = useCrearMovimiento()
   const hoy   = new Date().toISOString().split('T')[0]
 
-  const [fecha, setFecha]             = useState(hoy)
-  const [tipo, setTipo]               = useState<MovimientoInput['tipo']>('egreso')
-  const [descripcion, setDescripcion] = useState('')
-  const [monto, setMonto]             = useState('')
-  const [socioId, setSocioId]         = useState('')
-  const [categoria, setCategoria]     = useState('')
-  const [error, setError]             = useState('')
+  const [fecha,        setFecha]        = useState(hoy)
+  const [modo,         setModo]         = useState<ModoTipo>('egreso')
+  const [descripcion,  setDescripcion]  = useState('')
+  const [monto,        setMonto]        = useState('')
+  const [socioId,      setSocioId]      = useState('')
+  const [categoria,    setCategoria]    = useState('')
+  const [contraparte,  setContraparte]  = useState('')
+  const [error,        setError]        = useState('')
+
+  const MODOS: { key: ModoTipo; label: string; icon: React.ElementType; color: string }[] = [
+    { key: 'egreso',    label: 'Egreso',      icon: TrendingDown,  color: 'text-red-400'      },
+    { key: 'compra_sf', label: 'Compra s/f',  icon: ShoppingCart,  color: 'text-orange-400'   },
+    { key: 'retiro',    label: 'Retiro',       icon: ArrowDownLeft, color: 'text-amber-400'    },
+    { key: 'ingreso',   label: 'Ingreso',      icon: TrendingUp,    color: 'text-green-400'    },
+    { key: 'venta_sf',  label: 'Venta s/f',   icon: Banknote,      color: 'text-emerald-400'  },
+  ]
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const montoNum = parseFloat(monto.replace(',', '.'))
     if (!montoNum || montoNum <= 0) { setError('El monto debe ser mayor a cero.'); return }
-    if (tipo === 'retiro' && !socioId) { setError('Seleccioná el socio para el retiro.'); return }
+    if (modo === 'retiro' && !socioId) { setError('Seleccioná el socio para el retiro.'); return }
     setError('')
+
+    const tipo: MovimientoInput['tipo'] =
+      modo === 'compra_sf' ? 'egreso' :
+      modo === 'venta_sf'  ? 'ingreso' : modo
+
+    const subtipo: MovimientoInput['subtipo'] =
+      modo === 'compra_sf' ? 'compra_sf' :
+      modo === 'venta_sf'  ? 'venta_sf'  : null
+
     await crear.mutateAsync({
       fecha,
-      descripcion: descripcion.trim(),
+      descripcion:   descripcion.trim(),
       tipo,
-      monto: montoNum,
-      socio_id:      tipo === 'retiro' ? socioId : null,
+      subtipo,
+      monto:         montoNum,
+      socio_id:      modo === 'retiro' ? socioId : null,
       categoria:     categoria.trim() || null,
+      contraparte:   contraparte.trim() || null,
       observaciones: null,
     })
     onClose()
   }
+
+  const esCompraVenta = modo === 'compra_sf' || modo === 'venta_sf'
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -175,26 +201,32 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
           <button onClick={onClose} className="btn-ghost p-1"><Plus className="h-4 w-4 rotate-45" /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 px-5 py-4">
+
           {/* Tipo */}
-          <div className="flex gap-2">
-            {(['egreso', 'retiro', 'ingreso'] as const).map((t) => {
-              const Icon = TIPO_ICON[t]
-              return (
-                <button
-                  key={t} type="button"
-                  onClick={() => setTipo(t)}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-colors ${
-                    tipo === t
-                      ? `border-current ${TIPO_COLOR[t]} bg-ink-800`
-                      : 'border-ink-700 text-ink-500 hover:border-ink-600 hover:text-ink-300'
-                  }`}
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {TIPO_LABEL[t]}
-                </button>
-              )
-            })}
+          <div className="grid grid-cols-5 gap-1.5">
+            {MODOS.map(({ key, label, icon: Icon, color }) => (
+              <button
+                key={key} type="button"
+                onClick={() => setModo(key)}
+                className={`flex flex-col items-center gap-1 rounded-lg border py-2.5 px-1 text-xs font-medium transition-colors ${
+                  modo === key
+                    ? `border-current ${color} bg-ink-800`
+                    : 'border-ink-700 text-ink-500 hover:border-ink-600 hover:text-ink-300'
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
           </div>
+
+          {esCompraVenta && (
+            <div className="rounded-lg border border-ink-700 bg-ink-800/40 px-3 py-2 text-xs text-ink-400">
+              {modo === 'compra_sf'
+                ? 'Compra sin factura: se registra como egreso. Indicá el proveedor abajo.'
+                : 'Venta sin factura: se registra como ingreso. Indicá el cliente abajo.'}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -209,10 +241,17 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
 
           <div className="space-y-1">
             <label className="text-xs text-ink-400">Descripción</label>
-            <input type="text" className="input w-full" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder="Herramientas, combustible…" required />
+            <input type="text" className="input w-full" value={descripcion} onChange={(e) => setDescripcion(e.target.value)} placeholder={esCompraVenta ? 'Ej: pintura exterior, materiales limpieza…' : 'Herramientas, combustible…'} required />
           </div>
 
-          {tipo === 'retiro' && (
+          {esCompraVenta && (
+            <div className="space-y-1">
+              <label className="text-xs text-ink-400">{modo === 'compra_sf' ? 'Proveedor' : 'Cliente'} (opcional)</label>
+              <input type="text" className="input w-full" value={contraparte} onChange={(e) => setContraparte(e.target.value)} placeholder={modo === 'compra_sf' ? 'Nombre del proveedor…' : 'Nombre del cliente…'} />
+            </div>
+          )}
+
+          {modo === 'retiro' && (
             <div className="space-y-1">
               <label className="text-xs text-ink-400">Socio</label>
               <select className="input w-full" value={socioId} onChange={(e) => setSocioId(e.target.value)} required>
@@ -224,7 +263,7 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
             </div>
           )}
 
-          {(tipo === 'egreso') && (
+          {(modo === 'egreso') && (
             <div className="space-y-1">
               <label className="text-xs text-ink-400">Categoría (opcional)</label>
               <input type="text" className="input w-full" value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Combustible, herramientas…" />
@@ -248,28 +287,31 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
 // ─── Lista de movimientos ─────────────────────────────────────────────────────
 
 function FilaMovimiento({ mov, socios }: { mov: Movimiento; socios: Socio[] }) {
-  const eliminar = useEliminarMovimiento()
-  const Icon     = TIPO_ICON[mov.tipo]
-  const socio    = socios.find((s) => s.id === mov.socio_id)
+  const eliminar  = useEliminarMovimiento()
+  const labelKey  = mov.subtipo ?? mov.tipo
+  const Icon      = TIPO_ICON[labelKey as keyof typeof TIPO_ICON] ?? TIPO_ICON[mov.tipo]
+  const color     = TIPO_COLOR[labelKey as keyof typeof TIPO_COLOR] ?? TIPO_COLOR[mov.tipo]
+  const label     = TIPO_LABEL[labelKey as keyof typeof TIPO_LABEL] ?? TIPO_LABEL[mov.tipo]
+  const socio     = socios.find((s) => s.id === mov.socio_id)
+  const esIngreso = mov.tipo === 'ingreso'
 
   return (
     <tr className="text-ink-300 hover:bg-ink-800/30">
       <td className="px-4 py-3 font-mono text-xs text-ink-400">{fmtFecha(mov.fecha)}</td>
       <td className="px-4 py-3">
-        <span className={`inline-flex items-center gap-1 text-xs font-medium ${TIPO_COLOR[mov.tipo]}`}>
+        <span className={`inline-flex items-center gap-1 text-xs font-medium ${color}`}>
           <Icon className="h-3 w-3" />
-          {TIPO_LABEL[mov.tipo]}
+          {label}
         </span>
       </td>
       <td className="px-4 py-3">
         <div>{mov.descripcion}</div>
-        {mov.categoria && <div className="text-xs text-ink-500">{mov.categoria}</div>}
-        {socio && <div className="text-xs text-amber-400/70">{socio.nombre}</div>}
+        {mov.contraparte && <div className="text-xs text-ink-400 mt-0.5">{mov.contraparte}</div>}
+        {mov.categoria   && <div className="text-xs text-ink-500">{mov.categoria}</div>}
+        {socio           && <div className="text-xs text-amber-400/70">{socio.nombre}</div>}
       </td>
-      <td className={`px-4 py-3 text-right font-mono font-medium ${
-        mov.tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'
-      }`}>
-        {mov.tipo === 'ingreso' ? '+' : '−'}${fmtImporte(mov.monto)}
+      <td className={`px-4 py-3 text-right font-mono font-medium ${esIngreso ? 'text-green-400' : 'text-red-400'}`}>
+        {esIngreso ? '+' : '−'}${fmtImporte(mov.monto)}
       </td>
       <td className="px-4 py-3 text-right">
         <button

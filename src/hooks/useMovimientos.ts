@@ -15,9 +15,11 @@ export interface Movimiento {
   fecha:         string
   descripcion:   string
   tipo:          'ingreso' | 'egreso' | 'retiro'
+  subtipo:       'compra_sf' | 'venta_sf' | null
   monto:         number
   socio_id:      string | null
   categoria:     string | null
+  contraparte:   string | null
   observaciones: string | null
   created_at:    string
 }
@@ -26,9 +28,11 @@ export interface MovimientoInput {
   fecha:         string
   descripcion:   string
   tipo:          'ingreso' | 'egreso' | 'retiro'
+  subtipo:       'compra_sf' | 'venta_sf' | null
   monto:         number
   socio_id:      string | null
   categoria:     string | null
+  contraparte:   string | null
   observaciones: string | null
 }
 
