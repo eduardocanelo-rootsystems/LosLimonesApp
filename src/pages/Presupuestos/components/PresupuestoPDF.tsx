@@ -398,7 +398,6 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
     <View style={s.finTable} wrap={false}>
       <View style={s.finHeader}>
         <Text style={[s.finThText, s.finColPlan]}>PLAN</Text>
-        <Text style={[s.finThText, s.finColRecargo]}>RECARGO</Text>
         <Text style={[s.finThText, s.finColTotal]}>TOTAL</Text>
         <Text style={[s.finThText, s.finColAnticipo]}>ANTICIPO</Text>
         <Text style={[s.finThText, s.finColCuotas]}>CUOTAS / SALDO</Text>
@@ -418,9 +417,6 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
             <Text style={[s.finTdText, s.finColPlan, isSelected ? { fontFamily: 'Helvetica-Bold', color: C.black } : {}]}>
               {label}{isSelected ? ' ✓' : ''}
             </Text>
-            <Text style={[s.finTdMono, s.finColRecargo]}>
-              {recargo === 0 ? '—' : `+${(recargo * 100).toFixed(0)}%`}
-            </Text>
             <Text style={[s.finTdMono, s.finTdBold, s.finColTotal, isSelected ? { color: C.black } : {}]}>
               {fmt(totalFinal)}
             </Text>
@@ -430,7 +426,7 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
         )
       })}
       <Text style={s.finNote}>
-        * Anticipo: 50% del valor de contado en todos los planes. Los recargos aplican sobre el total.
+        * Anticipo: 50% del valor de contado en todos los planes.
       </Text>
     </View>
   )
