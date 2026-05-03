@@ -47,10 +47,10 @@ describe('useCambiarRol — restricciones de escalada', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('lanza error al intentar asignar rol superadmin', async () => {
-    const { useCambiarRol } = await import('@/hooks/useUsuarios')
+    await import('@/hooks/useUsuarios')
     // La función lanza antes de llamar a la DB
     // Simulamos el comportamiento de la mutación directamente
-    const fn = async ({ userId, rol }: { userId: string; rol: string }) => {
+    const fn = async ({ userId: _userId, rol }: { userId: string; rol: string }) => {
       if (rol === 'superadmin') throw new Error('No se puede asignar el rol superadmin')
     }
     await expect(fn({ userId: 'uid-1', rol: 'superadmin' })).rejects.toThrow(
