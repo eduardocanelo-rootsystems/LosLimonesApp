@@ -296,11 +296,13 @@ const s = StyleSheet.create({
     borderTopWidth: 0.5,
     borderTopColor: C.gray300,
     paddingTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    gap: 3,
   },
+  footerTop: { flexDirection: 'row', justifyContent: 'space-between' },
   footerText: { fontSize: 7, color: C.gray500 },
   pageNumber: { fontSize: 7, color: C.gray500 },
+  footerCredit: { fontSize: 6.5, color: C.gray300, textAlign: 'center' },
 })
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
@@ -652,11 +654,11 @@ export function PresupuestoPDFPage({
       )}
 
       <View style={s.footer} fixed>
-        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
-        <Text
-          style={s.pageNumber}
-          render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
-        />
+        <View style={s.footerTop}>
+          <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
+          <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
+        </View>
+        <Text style={s.footerCredit}>Generado con Root Systems · Desarrollado por Eduardo Canelo</Text>
       </View>
     </Page>
   )
@@ -707,11 +709,11 @@ export function PaginaFotos({
       </View>
 
       <View style={s.footer} fixed>
-        <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
-        <Text
-          style={s.pageNumber}
-          render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`}
-        />
+        <View style={s.footerTop}>
+          <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
+          <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
+        </View>
+        <Text style={s.footerCredit}>Generado con Root Systems · Desarrollado por Eduardo Canelo</Text>
       </View>
     </Page>
   )
