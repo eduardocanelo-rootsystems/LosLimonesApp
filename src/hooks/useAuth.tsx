@@ -91,8 +91,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    const timeoutMs = 20_000
+    const timeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), timeoutMs)
+    )
+    try {
+      const result = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
+        timeout,
+      ]) as Awaited<ReturnType<typeof supabase.auth.signInWithPassword>>
+      return { error: result.error?.message ?? null }
+    } catch (err) {
+      if (err instanceof Error && err.message === 'timeout') {
+        return { error: 'Tiempo de espera agotado. Verificá tu conexión e intentá de nuevo.' }
+      }
+      return { error: 'Error de conexión. Intentá de nuevo.' }
+    }
   }, [])
 
   const signOut = useCallback(() => {
