@@ -18,6 +18,8 @@ vite.config.js
 
 # Playwright
 e2e/.auth/
+test-results/
+playwright-report/
 
 # Editor
 .vscode/*
