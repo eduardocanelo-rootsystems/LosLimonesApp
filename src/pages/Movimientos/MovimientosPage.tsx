@@ -213,7 +213,7 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="w-full max-w-md rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
+      <div role="dialog" aria-modal="true" aria-label="Nuevo movimiento" className="w-full max-w-md rounded-xl border border-ink-700 bg-ink-900 shadow-2xl">
         <div className="flex items-center justify-between border-b border-ink-700 px-5 py-4">
           <h2 className="text-base font-semibold text-ink-100">Nuevo movimiento</h2>
           <button onClick={onClose} className="btn-ghost p-1"><Plus className="h-4 w-4 rotate-45" /></button>
@@ -362,6 +362,7 @@ function FilaMovimiento({ mov, socios }: { mov: Movimiento; socios: Socio[] }) {
       <td className="px-4 py-3 text-right">
         <button
           onClick={() => { if (confirm('¿Eliminar este movimiento?')) eliminar.mutate(mov.id) }}
+          aria-label="Eliminar movimiento"
           className="text-ink-600 hover:text-red-400 transition-colors"
         >
           <Trash2 className="h-3.5 w-3.5" />

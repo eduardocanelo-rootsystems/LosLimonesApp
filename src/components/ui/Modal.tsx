@@ -40,6 +40,9 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
     >
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={cn(
           'relative z-10 w-full rounded-2xl border border-ink-700 bg-ink-900 shadow-2xl animate-scale-in',
           sizes[size]

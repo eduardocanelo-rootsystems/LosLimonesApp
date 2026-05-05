@@ -17,13 +17,14 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react':   ['react', 'react-dom', 'react-router-dom'],
-          'vendor-query':   ['@tanstack/react-query'],
-          'vendor-pdf':     ['@react-pdf/renderer'],
-          'vendor-supabase': ['@supabase/supabase-js'],
-          'vendor-xlsx':    ['xlsx'],
-          'vendor-ui':      ['lucide-react', 'sonner', 'clsx', 'tailwind-merge'],
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('react-dom') || id.includes('react-router') || id.includes('/react/')) return 'vendor-react'
+          if (id.includes('@tanstack/react-query')) return 'vendor-query'
+          if (id.includes('@react-pdf')) return 'vendor-pdf'
+          if (id.includes('@supabase')) return 'vendor-supabase'
+          if (id.includes('/xlsx/')) return 'vendor-xlsx'
+          if (id.includes('lucide-react') || id.includes('/sonner/') || id.includes('/clsx/') || id.includes('tailwind-merge')) return 'vendor-ui'
         },
       },
     },

@@ -14,6 +14,10 @@ vite.config.js
 .env
 .env.local
 .env.*.local
+.env.test
+
+# Playwright
+e2e/.auth/
 
 # Editor
 .vscode/*
@@ -46,3 +50,5 @@ supabase/.temp
 
 # OS
 .DS_Store
+
+.vercel
