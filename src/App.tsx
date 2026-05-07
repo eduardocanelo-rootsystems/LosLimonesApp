@@ -7,9 +7,10 @@ import { router } from '@/routes/router'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 30, // 30 segundos
+      staleTime:            1000 * 60 * 5,  // 5 minutos — evita refetches innecesarios
+      gcTime:               1000 * 60 * 10, // 10 minutos — libera memoria de queries viejas
       refetchOnWindowFocus: false,
-      retry: 1,
+      retry:                1,
     },
   },
 })

@@ -38,7 +38,7 @@ export function useUsuarios() {
   return useQuery({
     queryKey: QK_ROLES,
     queryFn: async () => {
-      const { data, error } = await db.from('user_roles').select('*').order('created_at')
+      const { data, error } = await db.from('user_roles').select('user_id,email,nombre,rol,activo,invitado_por,created_at').order('created_at')
       if (error) throw error
       return (data ?? []) as UserRol[]
     },
@@ -51,7 +51,7 @@ export function useInvitacionesPendientes() {
     queryFn: async () => {
       const { data, error } = await db
         .from('invitaciones')
-        .select('*')
+        .select('id,email,rol,token,usado,creado_por,expires_at,created_at')
         .eq('usado', false)
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -64,7 +64,7 @@ export function useInvitacionesPendientes() {
 export async function buscarInvitacionPorToken(token: string): Promise<Invitacion | null> {
   const { data } = await db
     .from('invitaciones')
-    .select('*')
+    .select('id,email,rol,token,usado,creado_por,expires_at,created_at')
     .eq('token', token)
     .eq('usado', false)
     .gt('expires_at', new Date().toISOString())

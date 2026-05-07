@@ -89,7 +89,7 @@ export function useCuentasArca() {
   return useQuery({
     queryKey: QK_CUENTAS,
     queryFn: async () => {
-      const { data, error } = await db.from('cuentas_arca').select('*').eq('activo', true).order('nombre')
+      const { data, error } = await db.from('cuentas_arca').select('id,nombre,cuit,activo,created_at,updated_at').eq('activo', true).order('nombre')
       if (error) throw error
       return data as CuentaArca[]
     },
@@ -132,7 +132,7 @@ export function useFacturasEmitidas(filtros: FiltrosVentas = {}) {
   return useQuery({
     queryKey: [...QK_VENTAS, filtros],
     queryFn: async () => {
-      let q = db.from('facturas_emitidas').select('*').order('fecha_emision', { ascending: false })
+      let q = db.from('facturas_emitidas').select('id,cuenta_arca_id,cuit_emisor,fecha_emision,tipo_comprobante,punto_venta,numero,cae,denominacion,cuit_receptor,imp_total,fecha_cobro,forma_pago,nro_comprobante,fecha_vencimiento,anulada,factura_asociada_id,synced_at,updated_at').order('fecha_emision', { ascending: false })
       if (filtros.cuenta_arca_id)  q = q.eq('cuenta_arca_id', filtros.cuenta_arca_id)
       if (filtros.desde)           q = q.gte('fecha_emision', filtros.desde)
       if (filtros.hasta)           q = q.lte('fecha_emision', filtros.hasta)

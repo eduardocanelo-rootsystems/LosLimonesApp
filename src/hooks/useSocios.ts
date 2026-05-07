@@ -20,7 +20,7 @@ export function useSocios() {
   return useQuery({
     queryKey: QK,
     queryFn: async () => {
-      const { data, error } = await db.from('socios').select('*').order('nombre')
+      const { data, error } = await db.from('socios').select('id,nombre,porcentaje,cuit,activo,created_at,updated_at').order('nombre')
       if (error) throw error
       return (data ?? []) as Socio[]
     },

@@ -71,7 +71,7 @@ export function useComprasRecibidas(filtros: FiltrosCompras = {}) {
   return useQuery({
     queryKey: [...QK_COMPRAS, filtros],
     queryFn: async () => {
-      let q = db.from('compras_recibidas').select('*').order('fecha_emision', { ascending: false })
+      let q = db.from('compras_recibidas').select('id,cuenta_arca_id,cuit_receptor,fecha_emision,tipo_comprobante,punto_venta,numero,denominacion,cuit_emisor,imp_total,es_negocio,anulada,factura_asociada_id,synced_at,updated_at').order('fecha_emision', { ascending: false })
       if (filtros.cuenta_arca_id) q = q.eq('cuenta_arca_id', filtros.cuenta_arca_id)
       if (filtros.desde)          q = q.gte('fecha_emision', filtros.desde)
       if (filtros.hasta)          q = q.lte('fecha_emision', filtros.hasta)

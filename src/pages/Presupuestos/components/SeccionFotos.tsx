@@ -71,6 +71,7 @@ export function SeccionFotos({ presupuestoId, fotos }: SeccionFotosProps) {
                 <img
                   src={foto.imagen_base64}
                   alt={foto.nombre ?? 'Foto de obra'}
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
                 <button

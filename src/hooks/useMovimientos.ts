@@ -44,7 +44,7 @@ export function useMovimientos(rango: RangoFechas) {
     queryFn: async () => {
       const { data, error } = await db
         .from('movimientos')
-        .select('*')
+        .select('id,fecha,descripcion,tipo,subtipo,monto,socio_id,categoria,contraparte,observaciones,metodo_cobro,created_at')
         .gte('fecha', rango.desde)
         .lte('fecha', rango.hasta)
         .order('fecha', { ascending: false })
