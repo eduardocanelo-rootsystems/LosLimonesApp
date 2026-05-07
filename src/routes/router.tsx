@@ -9,23 +9,40 @@ import LoginPage    from '@/pages/Auth/LoginPage'
 import RegistroPage from '@/pages/Auth/RegistroPage'
 import FirmarContratoPage from '@/pages/Firmar/FirmarContratoPage'
 
+// Cuando un chunk no se encuentra (deploy nuevo mientras el usuario tenía la app abierta),
+// recargamos la página para que cargue el index.html actualizado.
+function lazyWithReload<T extends React.ComponentType<unknown>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(() =>
+    factory().catch((err: unknown) => {
+      const msg = String(err)
+      if (msg.includes('Failed to fetch') || msg.includes('ChunkLoadError') || msg.includes('dynamically imported')) {
+        window.location.reload()
+        return new Promise<never>(() => {})
+      }
+      throw err
+    })
+  )
+}
+
 // Lazy — se cargan solo cuando el usuario navega a esa ruta
-const DashboardPage           = lazy(() => import('@/pages/Dashboard/DashboardPage'))
-const PresupuestosPage        = lazy(() => import('@/pages/Presupuestos/PresupuestosPage'))
-const PresupuestoFormPage     = lazy(() => import('@/pages/Presupuestos/PresupuestoFormPage'))
-const ContratoFormPage        = lazy(() => import('@/pages/Contratos/ContratoFormPage'))
-const ClientesPage            = lazy(() => import('@/pages/Clientes/ClientesPage'))
-const ServiciosPage           = lazy(() => import('@/pages/Servicios/ServiciosPage'))
-const MaterialesPage          = lazy(() => import('@/pages/Materiales/MaterialesPage'))
-const RendimientosPage        = lazy(() => import('@/pages/Materiales/RendimientosPage'))
-const ManoDeObraPage          = lazy(() => import('@/pages/ManoDeObra/ManoDeObraPage'))
-const RendimientosManoObraPage = lazy(() => import('@/pages/ManoDeObra/RendimientosManoObraPage'))
-const VentasPage              = lazy(() => import('@/pages/Ventas/VentasPage'))
-const ComprasPage             = lazy(() => import('@/pages/Compras/ComprasPage'))
-const MovimientosPage         = lazy(() => import('@/pages/Movimientos/MovimientosPage'))
-const RelevamientosPage       = lazy(() => import('@/pages/Relevamientos/RelevamientosPage'))
-const RelevamientoFormPage    = lazy(() => import('@/pages/Relevamientos/RelevamientoFormPage'))
-const SettingsPage            = lazy(() => import('@/pages/Settings/SettingsPage'))
+const DashboardPage           = lazyWithReload(() => import('@/pages/Dashboard/DashboardPage'))
+const PresupuestosPage        = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestosPage'))
+const PresupuestoFormPage     = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestoFormPage'))
+const ContratoFormPage        = lazyWithReload(() => import('@/pages/Contratos/ContratoFormPage'))
+const ClientesPage            = lazyWithReload(() => import('@/pages/Clientes/ClientesPage'))
+const ServiciosPage           = lazyWithReload(() => import('@/pages/Servicios/ServiciosPage'))
+const MaterialesPage          = lazyWithReload(() => import('@/pages/Materiales/MaterialesPage'))
+const RendimientosPage        = lazyWithReload(() => import('@/pages/Materiales/RendimientosPage'))
+const ManoDeObraPage          = lazyWithReload(() => import('@/pages/ManoDeObra/ManoDeObraPage'))
+const RendimientosManoObraPage = lazyWithReload(() => import('@/pages/ManoDeObra/RendimientosManoObraPage'))
+const VentasPage              = lazyWithReload(() => import('@/pages/Ventas/VentasPage'))
+const ComprasPage             = lazyWithReload(() => import('@/pages/Compras/ComprasPage'))
+const MovimientosPage         = lazyWithReload(() => import('@/pages/Movimientos/MovimientosPage'))
+const RelevamientosPage       = lazyWithReload(() => import('@/pages/Relevamientos/RelevamientosPage'))
+const RelevamientoFormPage    = lazyWithReload(() => import('@/pages/Relevamientos/RelevamientoFormPage'))
+const SettingsPage            = lazyWithReload(() => import('@/pages/Settings/SettingsPage'))
 
 function PageLoader() {
   return (
