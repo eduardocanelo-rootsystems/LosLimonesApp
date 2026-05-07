@@ -18,6 +18,8 @@ El sistema está **en producción y uso activo**. Todos los módulos principales
 |--------|--------|-------------|
 | **Dashboard** | ✅ completo | KPIs financieros, rentabilidad por cobros, distribución MO, socios |
 | **Presupuestos** | ✅ completo | ABM completo, PDF, contrato, cobros por cuotas |
+| **Clientes** | ✅ completo | Vista agregada de clientes derivada de presupuestos, exporta PDF/Excel |
+| **Relevamientos** | ✅ completo | Registro de relevamientos de obra con fotos y observaciones |
 | **Servicios** | ✅ completo | ABM con historial de precios snapshot |
 | **Materiales** | ✅ completo | ABM, rendimientos históricos editables |
 | **Mano de Obra** | ✅ completo | ABM con historial de costos, rendimientos por obra |
@@ -127,6 +129,7 @@ src/
 ├── lib/
 │   ├── supabase.ts         # Cliente Supabase tipado
 │   ├── arcaParser.ts       # Parser de XMLs de ARCA (AFIP)
+│   ├── chunkReload.ts      # Detecta chunks obsoletos post-deploy y recarga la página
 │   └── utils.ts            # cn(), formatCurrency, formatDate, diasHastaVencimiento
 └── types/
     └── database.ts         # Tipos generados del schema Supabase + tipos de formulario
@@ -291,6 +294,7 @@ El archivo `src/types/database.ts` contiene los tipos generados. Cuando se agreg
 npm run dev          # Dev server → http://localhost:5173
 npm run build        # Build de producción
 npm run preview      # Preview del build
+npm run test         # Vitest (solo src/__tests__, excluye e2e)
 npm run lint         # ESLint
 npm run type-check   # TypeScript check sin emitir
 npm run db:push      # Aplicar migraciones (requiere Supabase CLI)
@@ -306,14 +310,44 @@ npm run db:types     # Generar tipos desde el schema de Supabase
 - Cards: `ink-900` (#13161a)
 - Borders: `ink-800` (#1a1d21) / `ink-700`
 - Texto principal: `ink-100` (#e8eaee)
-- Texto secundario: `ink-400` (#6b7281)
-- Acento: `accent-500` (#00e5ff) — cyan
-- Estados: `success` (verde), `warning` (ámbar), `danger` (rojo)
+- Texto secundario: `ink-300` (#9ba1ad) / `ink-400` (#6b7281)
+- Acento: `accent-500` (#B7FF00) — lima neon (botones primarios, foco, highlights)
+- Cyan /root: `sys-500` (#00e5ff) — solo en el bloque `/root` del header
+- Estados: `success` (#10b981), `warning` (#f59e0b), `danger` (#ef4444)
 
 **Tipografía:** Jost (UI) + ui-monospace (datos numéricos)
 
 **Componentes base** (en `index.css` como `@layer components`):
 `.card`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.input-base`, `.badge` + variantes
+
+---
+
+## Convenciones de desarrollo
+
+### Commits — Conventional Commits
+
+Todos los commits deben seguir el formato **Conventional Commits** (validado por commitlint + husky en el hook `commit-msg`):
+
+```
+tipo(scope opcional): descripción en minúsculas
+```
+
+Tipos válidos: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`
+
+```bash
+feat: agregar módulo de relevamientos
+fix(pdf): recargar página al detectar chunk obsoleto tras deploy
+perf: diferir vendor-pdf a imports dinámicos
+chore: actualizar dependencias
+```
+
+El hook `pre-commit` corre `npm test` antes de cada commit. Si los tests fallan, el commit se rechaza.
+
+### Deploy
+
+El proyecto se despliega automáticamente en **Vercel** al hacer push a `main`. Las variables de entorno (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) están configuradas en el dashboard de Vercel.
+
+**Chunks obsoletos post-deploy:** Vite genera nombres con hash de contenido. Si un usuario tiene la app abierta durante un deploy, los links a chunks viejos fallan con MIME-type error. `src/lib/chunkReload.ts` detecta este caso y recarga la página automáticamente.
 
 ---
 
