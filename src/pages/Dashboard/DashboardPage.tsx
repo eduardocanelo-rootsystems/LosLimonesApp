@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark, CreditCard } from 'lucide-react'
-import { PDFDownloadLink } from '@react-pdf/renderer'
+import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark, CreditCard, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PeriodoSelector, getRangoFechas, type Periodo } from '@/components/shared/PeriodoSelector'
 import { useFacturasEmitidas } from '@/hooks/useVentas'
@@ -13,7 +13,6 @@ import { useMovimientos, usePresupuestosRentabilidad, useManoObraStats } from '@
 import { useCobrosPeriodo, METODOS_COBRO } from '@/hooks/useCobros'
 import { useSocios } from '@/hooks/useSocios'
 import { esNotaCredito } from '@/lib/arcaParser'
-import { ResumenContadorPDF } from './ResumenContadorPDF'
 import type { ResumenContadorData } from './ResumenContadorPDF'
 import type { Presupuesto } from '@/types/database'
 
@@ -311,20 +310,40 @@ export default function DashboardPage() {
 
   const nombreArchivo = `resumen-contador-${rango.desde}-${rango.hasta}.pdf`
 
+  const [generandoPDF, setGenerandoPDF] = useState(false)
+  const handleExportarPDF = async () => {
+    setGenerandoPDF(true)
+    try {
+      const [{ pdf }, { ResumenContadorPDF }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./ResumenContadorPDF'),
+      ])
+      const blob = await pdf(<ResumenContadorPDF data={pdfData} />).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = nombreArchivo
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Error al generar el PDF.')
+    } finally {
+      setGenerandoPDF(false)
+    }
+  }
+
   return (
     <>
       <PageHeader
         title="Dashboard"
         subtitle="Pulso financiero del período"
         actions={
-          <PDFDownloadLink document={<ResumenContadorPDF data={pdfData} />} fileName={nombreArchivo}>
-            {({ loading }) => (
-              <button className="btn-ghost flex items-center gap-2 text-sm" disabled={loading}>
-                <FileDown className="h-4 w-4" />
-                {loading ? 'Generando…' : 'Exportar PDF'}
-              </button>
-            )}
-          </PDFDownloadLink>
+          <button className="btn-ghost flex items-center gap-2 text-sm" disabled={generandoPDF} onClick={handleExportarPDF}>
+            {generandoPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
+            {generandoPDF ? 'Generando…' : 'Exportar PDF'}
+          </button>
         }
       />
 

@@ -232,7 +232,7 @@ export default function ComprasPage() {
           onChange={(p, rango) => { setPeriodo(p); setFiltros((f) => ({ ...f, desde: rango.desde, hasta: rango.hasta })) }}
         />
         {cuentas.length > 1 && (
-          <select className="input w-auto" value={filtros.cuenta_arca_id ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, cuenta_arca_id: e.target.value || undefined }))}>
+          <select aria-label="Filtrar por cuenta" className="input w-auto" value={filtros.cuenta_arca_id ?? ''} onChange={(e) => setFiltros((f) => ({ ...f, cuenta_arca_id: e.target.value || undefined }))}>
             <option value="">Todas las cuentas</option>
             {cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Copy, FileDown, Loader2, PenLine, Save, Upload } from 'lucide-react'
 import { toast } from 'sonner'
-import { PDFDownloadLink } from '@react-pdf/renderer'
 import { cn } from '@/lib/utils'
 import { usePresupuesto } from '@/pages/Presupuestos/usePresupuestos'
 import { useContrato, useGuardarContrato, useAnularFirmaCliente } from './useContrato'
@@ -10,13 +9,12 @@ import { useFirmaContratista, useGuardarFirmaContratista } from '@/hooks/useConf
 import { useLogoCliente } from '@/hooks/useLogoCliente'
 import { SignatureCanvas } from '@/components/SignatureCanvas'
 import {
-  ContratoPDFDocument,
   calcTotalPresupuesto,
   calcFinanciamiento,
   PLANES_PAGO,
   addWorkingDays,
-} from './components/ContratoPDF'
-import type { ContratoFormValues, PlanPago } from './components/ContratoPDF'
+} from './components/contratoUtils'
+import type { ContratoFormValues, PlanPago } from './components/contratoUtils'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -298,6 +296,39 @@ export default function ContratoFormPage() {
   const esFinanciado = planPago === '60dias' || planPago === '90dias'
   const fileName = `contrato-${presupuesto.numero ?? id}.pdf`
 
+  const [generandoPDF, setGenerandoPDF] = useState(false)
+  const handleDescargarContratoPDF = async () => {
+    setGenerandoPDF(true)
+    try {
+      const [{ pdf }, { ContratoPDFDocument }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('./components/ContratoPDF'),
+      ])
+      const blob = await pdf(
+        <ContratoPDFDocument
+          presupuesto={presupuesto}
+          form={formValues}
+          firmaContratista={firmaEfectiva}
+          firmaCliente={contrato?.firma_cliente_base64 ?? null}
+          firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
+          logoUrl={logoUrl}
+        />
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Error al generar el PDF.')
+    } finally {
+      setGenerandoPDF(false)
+    }
+  }
+
   return (
     <div className="space-y-6 pb-16">
 
@@ -326,31 +357,9 @@ export default function ContratoFormPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <PDFDownloadLink
-              document={
-                <ContratoPDFDocument
-                  presupuesto={presupuesto}
-                  form={formValues}
-                  firmaContratista={firmaEfectiva}
-                  firmaCliente={contrato?.firma_cliente_base64 ?? null}
-                  firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
-                  logoUrl={logoUrl}
-                />
-              }
-              fileName={fileName}
-              className="btn-secondary"
-            >
-              {({ loading }) =>
-                loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <FileDown className="h-4 w-4" />
-                    Solo contrato
-                  </>
-                )
-              }
-            </PDFDownloadLink>
+            <button type="button" onClick={handleDescargarContratoPDF} disabled={generandoPDF} className="btn-secondary">
+              {generandoPDF ? <Loader2 className="h-4 w-4 animate-spin" /> : <><FileDown className="h-4 w-4" />Solo contrato</>}
+            </button>
             <button
               type="button"
               onClick={handleGuardar}

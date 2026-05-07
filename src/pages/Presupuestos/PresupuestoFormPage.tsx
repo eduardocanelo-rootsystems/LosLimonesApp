@@ -2,14 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
 import { toast } from 'sonner'
-import { pdf, PDFDownloadLink } from '@react-pdf/renderer'
 import { supabase } from '@/lib/supabase'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
-import { PresupuestoPDFDocument } from './components/PresupuestoPDF'
-import { PresupuestoContratoPDFDocument } from './components/PresupuestoContratoPDF'
 import { useContrato } from '@/pages/Contratos/useContrato'
-import { contratoToFormValues } from '@/pages/Contratos/components/ContratoPDF'
+import { contratoToFormValues } from '@/pages/Contratos/components/contratoUtils'
 import { useFirmaContratista } from '@/hooks/useConfiguracion'
 import { useLogoCliente } from '@/hooks/useLogoCliente'
 import { useServicios } from '@/pages/Servicios/useServicios'
@@ -216,9 +213,10 @@ export default function PresupuestoFormPage() {
 
   // ─── Enviar por email ───────────────────────────────────────────────────────
 
-  const [emailModal, setEmailModal]   = useState(false)
-  const [emailDest,  setEmailDest]    = useState('')
-  const [enviando,   setEnviando]     = useState(false)
+  const [emailModal,     setEmailModal]     = useState(false)
+  const [emailDest,      setEmailDest]      = useState('')
+  const [enviando,       setEnviando]       = useState(false)
+  const [descargandoPDF, setDescargandoPDF] = useState(false)
   const emailInputRef = useRef<HTMLInputElement>(null)
 
   const abrirEmailModal = () => {
@@ -227,15 +225,20 @@ export default function PresupuestoFormPage() {
     setTimeout(() => emailInputRef.current?.focus(), 50)
   }
 
-  const enviarPorEmail = async () => {
-    if (!presupuesto || !emailDest.trim()) return
-    setEnviando(true)
+  const handleDescargarPDF = async () => {
+    if (!presupuesto) return
+    setDescargandoPDF(true)
     try {
-      const firmaUrl = contrato?.token_firma
-        ? `${window.location.origin}/firmar/${contrato.token_firma}`
-        : undefined
-      const docElement = esAprobado
-        ? <PresupuestoContratoPDFDocument
+      const { pdf } = await import('@react-pdf/renderer')
+      const fileName = esAprobado
+        ? `${presupuesto.numero ?? 'presupuesto'}-contrato.pdf`
+        : `${presupuesto.numero ?? 'presupuesto'}.pdf`
+      let blob: Blob
+      if (esAprobado) {
+        const { PresupuestoContratoPDFDocument } = await import('./components/PresupuestoContratoPDF')
+        const firmaUrl = contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined
+        blob = await pdf(
+          <PresupuestoContratoPDFDocument
             presupuesto={presupuesto}
             form={contratoToFormValues(contrato ?? null, presupuesto)}
             firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
@@ -243,9 +246,52 @@ export default function PresupuestoFormPage() {
             firmaUrl={firmaUrl}
             logoUrl={logoUrl}
           />
-        : <PresupuestoPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />
+        ).toBlob()
+      } else {
+        const { PresupuestoPDFDocument } = await import('./components/PresupuestoPDF')
+        blob = await pdf(<PresupuestoPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />).toBlob()
+      }
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Error al generar el PDF.')
+    } finally {
+      setDescargandoPDF(false)
+    }
+  }
 
-      const blob        = await pdf(docElement).toBlob()
+  const enviarPorEmail = async () => {
+    if (!presupuesto || !emailDest.trim()) return
+    setEnviando(true)
+    try {
+      const { pdf } = await import('@react-pdf/renderer')
+      const firmaUrl = contrato?.token_firma
+        ? `${window.location.origin}/firmar/${contrato.token_firma}`
+        : undefined
+      let blob: Blob
+      if (esAprobado) {
+        const { PresupuestoContratoPDFDocument } = await import('./components/PresupuestoContratoPDF')
+        blob = await pdf(
+          <PresupuestoContratoPDFDocument
+            presupuesto={presupuesto}
+            form={contratoToFormValues(contrato ?? null, presupuesto)}
+            firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
+            firmaCliente={contrato?.firma_cliente_base64 ?? null}
+            firmaUrl={firmaUrl}
+            logoUrl={logoUrl}
+          />
+        ).toBlob()
+      } else {
+        const { PresupuestoPDFDocument } = await import('./components/PresupuestoPDF')
+        blob = await pdf(<PresupuestoPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />).toBlob()
+      }
+
       const arrayBuffer = await blob.arrayBuffer()
       const bytes       = new Uint8Array(arrayBuffer)
       let binary = ''
@@ -478,52 +524,21 @@ export default function PresupuestoFormPage() {
               </button>
             )}
             {!esNuevo && presupuesto && (
-              esAprobado ? (
-                <PDFDownloadLink
-                  key={presupuesto.fecha_actualizacion}
-                  document={
-                    <PresupuestoContratoPDFDocument
-                      presupuesto={presupuesto}
-                      form={contratoToFormValues(contrato ?? null, presupuesto)}
-                      firmaContratista={firmaContratista ?? contrato?.firma_contratista_base64 ?? null}
-                      firmaCliente={contrato?.firma_cliente_base64 ?? null}
-                      firmaUrl={contrato?.token_firma ? `${window.location.origin}/firmar/${contrato.token_firma}` : undefined}
-                      logoUrl={logoUrl}
-                    />
-                  }
-                  fileName={`${presupuesto.numero ?? 'presupuesto'}-contrato.pdf`}
-                  className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
-                >
-                  {({ loading }) =>
-                    fetchingPresupuesto || fetchingContrato || loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <FileDown className="h-4 w-4" />
-                        Presupuesto + Contrato
-                      </>
-                    )
-                  }
-                </PDFDownloadLink>
-              ) : (
-                <PDFDownloadLink
-                  key={presupuesto.fecha_actualizacion}
-                  document={<PresupuestoPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />}
-                  fileName={`${presupuesto.numero ?? 'presupuesto'}.pdf`}
-                  className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
-                >
-                  {({ loading }) =>
-                    fetchingPresupuesto || fetchingContrato || loading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <FileDown className="h-4 w-4" />
-                        PDF
-                      </>
-                    )
-                  }
-                </PDFDownloadLink>
-              )
+              <button
+                type="button"
+                onClick={handleDescargarPDF}
+                disabled={descargandoPDF || fetchingPresupuesto || fetchingContrato}
+                className={cn('btn-secondary', (fetchingPresupuesto || fetchingContrato) && 'pointer-events-none opacity-60')}
+              >
+                {descargandoPDF || fetchingPresupuesto || fetchingContrato ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <FileDown className="h-4 w-4" />
+                    {esAprobado ? 'Presupuesto + Contrato' : 'PDF'}
+                  </>
+                )}
+              </button>
             )}
             {!esNuevo && presupuesto && (
               <button
