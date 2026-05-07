@@ -185,6 +185,7 @@ export function ImportarExcelModal({ tipo, cuentas, onImportar, onClose }: Props
                 <div className="flex items-center gap-3">
                   <label className="min-w-[100px] text-sm text-ink-400">Asignar a</label>
                   <select
+                    aria-label="Asignar a cuenta"
                     className="input flex-1"
                     value={cuentaIdManual}
                     onChange={(e) => setCuentaIdManual(e.target.value)}
@@ -202,6 +203,7 @@ export function ImportarExcelModal({ tipo, cuentas, onImportar, onClose }: Props
                 <div className="flex items-center gap-3">
                   <label className="min-w-[100px] text-sm text-ink-400">Cuenta</label>
                   <select
+                    aria-label="Cuenta"
                     className="input flex-1"
                     value={cuentaIdManual}
                     onChange={(e) => setCuentaIdManual(e.target.value)}

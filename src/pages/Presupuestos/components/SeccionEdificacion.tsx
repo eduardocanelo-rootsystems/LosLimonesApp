@@ -168,6 +168,7 @@ export function SeccionEdificacion({
             Condición estructural <span className="text-danger">*</span>
           </label>
           <select
+            aria-label="Condición estructural"
             value={condicionEstructural}
             onChange={(e) => onChange('edif_condicion_estructural', e.target.value)}
             className="input-base"
@@ -188,6 +189,7 @@ export function SeccionEdificacion({
             Tipología arquitectónica
           </label>
           <select
+            aria-label="Tipología arquitectónica"
             value={tipologia}
             onChange={(e) => onChange('edif_tipologia', e.target.value)}
             className="input-base"
@@ -272,6 +274,7 @@ export function SeccionEdificacion({
         </label>
         {valorPatrimonial && (
           <select
+            aria-label="Tipo de protección patrimonial"
             value={proteccion}
             onChange={(e) => onChange('edif_proteccion', e.target.value)}
             className="input-base sm:w-64"

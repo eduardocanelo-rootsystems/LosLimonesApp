@@ -71,6 +71,7 @@ function FacturaAsociador({ presupuesto, facturas }: {
         <p className="text-xs text-ink-500">Sin facturas para este cliente</p>
       ) : (
         <select
+          aria-label="Seleccionar factura a asociar"
           className="input py-1 text-xs"
           defaultValue=""
           onChange={(e) => {
@@ -190,6 +191,7 @@ export default function PresupuestosPage() {
           </div>
           <div className="flex items-center gap-2">
             <select
+              aria-label="Filtrar por estado"
               value={filtroEstado}
               onChange={(e) => setFiltroEstado(e.target.value as EstadoPresupuesto | 'todos')}
               className="input-base sm:w-44"

@@ -54,14 +54,14 @@ export default function LoginPage() {
                 <span className="font-light text-sys-500">/</span>
                 <span className="font-medium tracking-tight text-ink-100">root</span>
               </span>
-              <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-500">Systems</span>
+              <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-400">Systems</span>
             </div>
             <div className="h-10 w-px bg-ink-700" />
             <div className="flex items-center gap-2.5">
               <img src="/logo-cliente.svg" alt="Limones · Rope Access" className="h-16 w-auto object-contain" />
               <div className="flex flex-col leading-none text-left">
                 <span className="text-sm font-semibold text-limones-lima leading-tight">Limones · Rope Access</span>
-                <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">Trabajos en altura - Fachadas - Impermeabilizaciones</span>
+                <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-400">Trabajos en altura - Fachadas - Impermeabilizaciones</span>
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="email"
-                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-300"
               >
                 Email
               </label>
@@ -95,7 +95,7 @@ export default function LoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400"
+                className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-300"
               >
                 Contraseña
               </label>
@@ -135,7 +135,7 @@ export default function LoginPage() {
         </form>
 
         {/* Footer mini */}
-        <div className="mt-8 text-center text-xs text-ink-500">
+        <div className="mt-8 text-center text-xs text-ink-400">
           <span>Desarrollado por </span>
           <RootLogo size="sm" className="mx-1 text-[11px]" />
           <span>· Eduardo Canelo</span>

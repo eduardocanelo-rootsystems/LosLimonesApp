@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, CheckCircle, Copy, FileDown, Loader2, PenLine, Save, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { usePresupuesto } from '@/pages/Presupuestos/usePresupuestos'
 import { useContrato, useGuardarContrato, useAnularFirmaCliente } from './useContrato'
 import { useFirmaContratista, useGuardarFirmaContratista } from '@/hooks/useConfiguracion'
@@ -322,8 +323,8 @@ export default function ContratoFormPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar el PDF.')
+    } catch (err) {
+      if (!reloadOnStaleChunk(err)) toast.error('Error al generar el PDF.')
     } finally {
       setGenerandoPDF(false)
     }

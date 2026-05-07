@@ -146,6 +146,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
       {disponibles.length > 0 ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
+            aria-label="Seleccionar material"
             value={seleccionado}
             onChange={(e) => setSeleccionado(e.target.value)}
             className="input-base flex-1"

@@ -72,7 +72,7 @@ function NcAsociador({ nc, todas, onAsociar }: {
       {candidatas.length === 0 ? (
         <p className="text-xs text-ink-500">Sin facturas candidatas con igual importe y fecha ≤ NC</p>
       ) : (
-        <select className="input py-1 text-xs" defaultValue=""
+        <select aria-label="Seleccionar factura a asociar" className="input py-1 text-xs" defaultValue=""
           onChange={(e) => { if (e.target.value) { onAsociar(nc.id, e.target.value, null); setOpen(false) } }}>
           <option value="">— seleccionar factura —</option>
           {candidatas.map((f) => (

@@ -300,7 +300,7 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
           {modo === 'retiro' && (
             <div className="space-y-1">
               <label className="text-xs text-ink-400">Socio</label>
-              <select className="input w-full" value={socioId} onChange={(e) => setSocioId(e.target.value)} required>
+              <select aria-label="Socio" className="input w-full" value={socioId} onChange={(e) => setSocioId(e.target.value)} required>
                 <option value="">— elegir socio —</option>
                 {socios.filter((s) => s.activo).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')).map((s) => (
                   <option key={s.id} value={s.id}>{s.nombre}</option>

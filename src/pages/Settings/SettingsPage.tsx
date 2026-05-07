@@ -308,6 +308,7 @@ function FilaUsuario({ usuario, esSuperadmin, miId }: { usuario: UserRol; esSupe
           <span className={`rounded px-2 py-0.5 text-xs font-medium ${ROL_COLOR[usuario.rol]}`}>{usuario.rol}</span>
         ) : (
           <select
+            aria-label="Rol del usuario"
             className="input py-0.5 text-xs"
             value={usuario.rol}
             disabled={cambiarRol.isPending}
@@ -382,7 +383,7 @@ function SeccionInvitaciones({ esSuperadmin }: { esSuperadmin: boolean }) {
         </div>
         <div className="w-36 space-y-1">
           <label className="text-xs text-ink-400">Rol</label>
-          <select className="input w-full" value={rol} onChange={(e) => setRol(e.target.value as Rol)}>
+          <select aria-label="Rol" className="input w-full" value={rol} onChange={(e) => setRol(e.target.value as Rol)}>
             {ROL_OPTS.filter((o) => esSuperadmin || o.value !== 'admin').map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}

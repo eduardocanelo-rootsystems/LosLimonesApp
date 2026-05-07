@@ -124,6 +124,7 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
       {disponibles.length > 0 ? (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <select
+            aria-label="Seleccionar servicio"
             value={seleccionado}
             onChange={(e) => setSeleccionado(e.target.value)}
             className="input-base flex-1"

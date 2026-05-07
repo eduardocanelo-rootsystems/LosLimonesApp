@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronDown, ChevronRight, Search, FileDown, FileSpreadsheet } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { formatCurrency } from '@/lib/utils'
+import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { usePresupuestos } from '@/pages/Presupuestos/usePresupuestos'
 import type { Presupuesto } from '@/types/database'
@@ -128,6 +129,8 @@ export default function ClientesPage() {
       a.download  = `clientes_${new Date().toISOString().slice(0, 10)}.pdf`
       a.click()
       URL.revokeObjectURL(url)
+    } catch (err) {
+      reloadOnStaleChunk(err)
     } finally {
       setGenerandoPDF(false)
     }

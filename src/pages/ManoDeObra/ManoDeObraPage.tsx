@@ -131,6 +131,7 @@ export default function ManoDeObraPage() {
         </div>
         <div className="flex items-center gap-2">
           <select
+            aria-label="Filtrar por estado"
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
             className="input-base sm:w-44"

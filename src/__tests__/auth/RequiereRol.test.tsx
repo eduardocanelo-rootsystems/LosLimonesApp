@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { RequiereRol } from '@/routes/RequiereRol'
 import '../mocks/supabase'
@@ -14,7 +14,7 @@ function makeAuth(overrides = {}) {
   return {
     user: { id: 'uid-1' }, loading: false,
     rol: 'admin', activo: true, nombre: 'Test',
-    signIn: vi.fn(), signOut: vi.fn(),
+    signIn: vi.fn(), signOut: vi.fn(), refetchRol: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   }
 }
@@ -60,10 +60,12 @@ describe('RequiereRol — control de acceso por rol', () => {
     expect(screen.getByText(/pendiente de activación/i)).toBeInTheDocument()
   })
 
-  it('bloquea usuario autenticado sin rol asignado', () => {
+  it('bloquea usuario autenticado sin rol asignado', async () => {
     renderGuard(['admin'], { rol: null })
     expect(screen.queryByText('ACCESO CONCEDIDO')).not.toBeInTheDocument()
-    expect(screen.getByText(/no tiene permisos/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(/no se pudo cargar/i)).toBeInTheDocument()
+    })
   })
 
   it('socio NO puede acceder a ruta solo-admin', () => {

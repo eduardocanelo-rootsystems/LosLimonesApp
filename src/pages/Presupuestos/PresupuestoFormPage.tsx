@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
 import { toast } from 'sonner'
+import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { supabase } from '@/lib/supabase'
 import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
@@ -259,8 +260,8 @@ export default function PresupuestoFormPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar el PDF.')
+    } catch (err) {
+      if (!reloadOnStaleChunk(err)) toast.error('Error al generar el PDF.')
     } finally {
       setDescargandoPDF(false)
     }
@@ -311,9 +312,11 @@ export default function PresupuestoFormPage() {
       toast.success(`Presupuesto enviado a ${emailDest.trim()}`)
       setEmailModal(false)
     } catch (err) {
-      console.error(err)
-      const msg = err instanceof Error ? err.message : String(err)
-      toast.error(`Error al enviar: ${msg}`)
+      if (!reloadOnStaleChunk(err)) {
+        console.error(err)
+        const msg = err instanceof Error ? err.message : String(err)
+        toast.error(`Error al enviar: ${msg}`)
+      }
     } finally {
       setEnviando(false)
     }
@@ -489,6 +492,7 @@ export default function PresupuestoFormPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             <select
+              aria-label="Estado del presupuesto"
               value={estado}
               onChange={(e) => setEstado(e.target.value as EstadoPresupuesto)}
               className="input-base w-36 text-sm"

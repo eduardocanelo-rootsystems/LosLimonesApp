@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 import { RequiereRol } from './RequiereRol'
+import { isStaleChunkError } from '@/lib/chunkReload'
 
 // Eager — pequeños, necesarios en el primer render
 import LoginPage    from '@/pages/Auth/LoginPage'
@@ -16,8 +17,7 @@ function lazyWithReload<T extends React.ComponentType<unknown>>(
 ) {
   return lazy(() =>
     factory().catch((err: unknown) => {
-      const msg = String(err)
-      if (msg.includes('Failed to fetch') || msg.includes('ChunkLoadError') || msg.includes('dynamically imported')) {
+      if (isStaleChunkError(err)) {
         window.location.reload()
         return new Promise<never>(() => {})
       }

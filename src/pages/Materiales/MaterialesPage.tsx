@@ -141,6 +141,7 @@ export default function MaterialesPage() {
         </div>
         <div className="flex items-center gap-2">
           <select
+            aria-label="Filtrar por unidad"
             value={filtroUnidad}
             onChange={(e) => setFiltroUnidad(e.target.value)}
             className="input-base sm:w-36"
@@ -153,6 +154,7 @@ export default function MaterialesPage() {
             ))}
           </select>
           <select
+            aria-label="Filtrar por estado"
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value as FiltroEstado)}
             className="input-base sm:w-44"

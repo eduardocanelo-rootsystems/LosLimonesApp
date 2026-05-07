@@ -2,6 +2,7 @@ import { useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark, CreditCard, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PeriodoSelector, getRangoFechas, type Periodo } from '@/components/shared/PeriodoSelector'
 import { useFacturasEmitidas } from '@/hooks/useVentas'
@@ -327,8 +328,8 @@ export default function DashboardPage() {
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } catch {
-      toast.error('Error al generar el PDF.')
+    } catch (err) {
+      if (!reloadOnStaleChunk(err)) toast.error('Error al generar el PDF.')
     } finally {
       setGenerandoPDF(false)
     }

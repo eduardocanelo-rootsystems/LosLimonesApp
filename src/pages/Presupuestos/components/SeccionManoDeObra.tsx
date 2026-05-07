@@ -145,6 +145,7 @@ export function SeccionManoDeObra({ items, diasEstimados, catalogo, esAprobado, 
         {disponibles.length > 0 ? (
           <div className="flex items-center gap-2">
             <select
+              aria-label="Seleccionar tipo de empleado"
               value={seleccionado}
               onChange={(e) => setSeleccionado(e.target.value)}
               className="input-base flex-1"
