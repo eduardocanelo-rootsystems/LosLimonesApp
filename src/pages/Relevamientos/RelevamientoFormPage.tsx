@@ -120,8 +120,11 @@ export default function RelevamientoFormPage() {
       if (esNuevo) {
         navigate(`/relevamientos/${resultado.id}`, { replace: true })
       }
-    } catch {
-      toast.error('Error al guardar el relevamiento.')
+    } catch (err) {
+      const msg = err instanceof Error && err.message === 'timeout'
+        ? 'Tiempo de espera agotado. Verificá tu conexión e intentá de nuevo.'
+        : 'Error al guardar el relevamiento.'
+      toast.error(msg)
     }
   }
 

@@ -61,6 +61,15 @@ export function useRelevamiento(id: string | undefined) {
   })
 }
 
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), ms)
+    ),
+  ])
+}
+
 export function useGuardarRelevamiento() {
   const qc = useQueryClient()
   return useMutation({
@@ -90,23 +99,21 @@ export function useGuardarRelevamiento() {
         fecha_actualizacion:       now,
       }
 
+      type SupabaseResult = { data: Presupuesto | null; error: unknown }
       if (input.id) {
-        const { data, error } = await db
-          .from('presupuestos')
-          .update(payload)
-          .eq('id', input.id)
-          .select()
-          .single()
-        if (error) throw error
-        return data as Presupuesto
+        const res = await withTimeout<SupabaseResult>(
+          db.from('presupuestos').update(payload).eq('id', input.id).select().single(),
+          30_000
+        )
+        if (res.error) throw res.error
+        return res.data as Presupuesto
       } else {
-        const { data, error } = await db
-          .from('presupuestos')
-          .insert({ ...payload, fecha_creacion: now })
-          .select()
-          .single()
-        if (error) throw error
-        return data as Presupuesto
+        const res = await withTimeout<SupabaseResult>(
+          db.from('presupuestos').insert({ ...payload, fecha_creacion: now }).select().single(),
+          30_000
+        )
+        if (res.error) throw res.error
+        return res.data as Presupuesto
       }
     },
     onSuccess: (_data, variables) => {
