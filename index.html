@@ -22,9 +22,21 @@
       />
     </noscript>
     <title>Los Limones Creativos · Sistema de Gestión</title>
+    <style>
+      #app-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2rem;background:#0e1014}
+      #app-shell-brand{font-family:ui-monospace,monospace;font-size:1.25rem;color:#e8eaee;letter-spacing:-.02em;user-select:none}
+      #app-shell-brand span{color:#00e5ff;font-weight:300}
+      #app-shell-spinner{width:28px;height:28px;border-radius:50%;border:2px solid #262931;border-top-color:#B7FF00;animation:_s .75s linear infinite}
+      @keyframes _s{to{transform:rotate(360deg)}}
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="app-shell">
+        <div id="app-shell-brand"><span>/</span>root</div>
+        <div id="app-shell-spinner"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

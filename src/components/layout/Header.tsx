@@ -211,7 +211,7 @@ export function Header() {
               <span className="font-light text-sys-500">/</span>
               <span className="font-medium tracking-tight text-ink-100">root</span>
             </span>
-            <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-500">
+            <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-400">
               Systems
             </span>
           </div>
@@ -225,7 +225,7 @@ export function Header() {
               <span className="text-sm font-semibold leading-tight">
                 <span className="text-limones-lima">Limones · </span><span className="text-white">Rope Access</span>
               </span>
-              <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-500">
+              <span className="mt-1 text-[9px] uppercase tracking-wider text-ink-400">
                 Trabajos en altura - Fachadas - Impermeabilizaciones
               </span>
             </div>
