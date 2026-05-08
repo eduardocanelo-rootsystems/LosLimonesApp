@@ -45,14 +45,15 @@ async function fetchRol(userId: string, appMeta?: Record<string, unknown>): Prom
       nombre: (appMeta.nombre as string) ?? '',
     }
   }
-  // Fallback: query a user_roles
+  // Fallback: query a user_roles con timeout para no colgar en Android
   try {
-    const res = await db
-      .from('user_roles')
-      .select('rol, activo, nombre')
-      .eq('user_id', userId)
-      .maybeSingle()
-    const data = res?.data
+    const res = await Promise.race([
+      db.from('user_roles').select('rol, activo, nombre').eq('user_id', userId).maybeSingle(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('fetchRol timeout')), 8_000)
+      ),
+    ])
+    const data = (res as { data?: { rol?: Rol; activo?: boolean; nombre?: string } })?.data
     return {
       rol:    data?.rol    ?? null,
       activo: data?.activo ?? false,
@@ -70,24 +71,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Safety net: si algo falla en la red, no dejamos el spinner trabado para siempre
-    const fallback = setTimeout(() => setLoading(false), 8000)
+    let mounted = true
+    // Fallback reducido: getSession() debería resolver en <100ms desde localStorage
+    const fallback = setTimeout(() => { if (mounted) setLoading(false) }, 3000)
 
-    // onAuthStateChange dispara INITIAL_SESSION en el primer render con la sesión actual
+    // Patrón recomendado por Supabase para mobile: getSession() lee localStorage
+    // directamente sin red, garantizando que loading se resuelve rápido en Android.
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!mounted) return
+      clearTimeout(fallback)
+      setSession(s)
+      if (s?.user) {
+        setRolData(await fetchRol(s.user.id, s.user.app_metadata))
+      }
+      setLoading(false)
+    }).catch(() => {
+      if (mounted) { clearTimeout(fallback); setLoading(false) }
+    })
+
+    // Escucha cambios posteriores: sign-in, sign-out, token refresh
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
+        if (!mounted) return
+        // En SIGNED_IN bloqueamos loading para que RequiereRol no dispare
+        // auto-retry con rol=null antes de que fetchRol termine.
+        if (_event === 'SIGNED_IN') setLoading(true)
         setSession(newSession)
         if (newSession?.user) {
           setRolData(await fetchRol(newSession.user.id, newSession.user.app_metadata))
         } else {
           setRolData(ROL_VACIO)
         }
-        clearTimeout(fallback)
-        setLoading(false)
+        if (mounted) setLoading(false)
       }
     )
 
-    return () => { subscription.unsubscribe(); clearTimeout(fallback) }
+    return () => { mounted = false; subscription.unsubscribe(); clearTimeout(fallback) }
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {

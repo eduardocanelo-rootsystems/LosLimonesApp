@@ -12,14 +12,22 @@ import FirmarContratoPage from '@/pages/Firmar/FirmarContratoPage'
 
 // Cuando un chunk no se encuentra (deploy nuevo mientras el usuario tenía la app abierta),
 // recargamos la página para que cargue el index.html actualizado.
+const CHUNK_RELOAD_KEY = 'chunk_reloads'
+
 function lazyWithReload<T extends React.ComponentType<unknown>>(
   factory: () => Promise<{ default: T }>
 ) {
   return lazy(() =>
     factory().catch((err: unknown) => {
       if (isStaleChunkError(err)) {
-        window.location.reload()
-        return new Promise<never>(() => {})
+        // Evita bucle infinito en Android con red inestable: máximo 2 recargas
+        const count = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) ?? 0)
+        if (count < 2) {
+          sessionStorage.setItem(CHUNK_RELOAD_KEY, String(count + 1))
+          window.location.reload()
+          return new Promise<never>(() => {})
+        }
+        sessionStorage.removeItem(CHUNK_RELOAD_KEY)
       }
       throw err
     })

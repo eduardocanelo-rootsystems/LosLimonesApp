@@ -22,7 +22,11 @@ export function RequiereRol({ roles, children, redirect }: Props) {
     if (!loading && user && !rol && !autoRetried.current) {
       autoRetried.current = true
       setRetrying(true)
-      refetchRol().finally(() => setRetrying(false))
+      // Safety-net: si refetchRol se cuelga (Android + red muy lenta),
+      // cortamos el spinner a los 10s y mostramos el error con botón de reintento.
+      const safetyTimer = setTimeout(() => setRetrying(false), 10_000)
+      refetchRol().finally(() => { clearTimeout(safetyTimer); setRetrying(false) })
+      return () => clearTimeout(safetyTimer)
     }
   }, [loading, user, rol, refetchRol])
 
