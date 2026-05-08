@@ -87,6 +87,7 @@ export interface GuardarPresupuestoInput {
   coef_k: number | null
   // Otros
   observaciones: string
+  diagnostico_tecnico: string | null
   descuento_tipo: 'fijo' | 'porcentaje' | null
   descuento_valor: number | null
   iva_pct: number
@@ -138,6 +139,7 @@ export function useGuardarPresupuesto() {
         edif_proteccion: input.edif_proteccion || null,
         coef_k: input.coef_k,
         observaciones: input.observaciones || null,
+        diagnostico_tecnico: input.diagnostico_tecnico || null,
         descuento_tipo: input.descuento_tipo,
         descuento_valor: input.descuento_valor,
         iva_pct: input.iva_pct,
