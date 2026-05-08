@@ -90,7 +90,8 @@ export default function PresupuestoFormPage() {
   const [edifProteccion, setEdifProteccion] = useState('')
   const [coefK, setCoefK] = useState('')
 
-  // Observaciones
+  // Textos libres
+  const [diagnosticoTecnico, setDiagnosticoTecnico] = useState('')
   const [observaciones, setObservaciones] = useState('')
 
   // Ítems
@@ -139,6 +140,7 @@ export default function PresupuestoFormPage() {
     setEdifValorPatrimonial(presupuesto.edif_valor_patrimonial ?? false)
     setEdifProteccion(presupuesto.edif_proteccion ?? '')
     setCoefK(presupuesto.coef_k?.toString() ?? '')
+    setDiagnosticoTecnico(presupuesto.diagnostico_tecnico ?? '')
     setObservaciones(presupuesto.observaciones ?? '')
     setDescuentoTipo((presupuesto.descuento_tipo ?? 'porcentaje') as 'fijo' | 'porcentaje')
     setDescuentoValor(presupuesto.descuento_valor?.toString() ?? '')
@@ -424,6 +426,7 @@ export default function PresupuestoFormPage() {
         edif_valor_patrimonial: edifValorPatrimonial,
         edif_proteccion: edifProteccion,
         coef_k: coefK ? parseFloat(coefK) : null,
+        diagnostico_tecnico: diagnosticoTecnico || null,
         observaciones,
         descuento_tipo: tieneDescuento ? descuentoTipo : null,
         descuento_valor: tieneDescuento && descuentoValor ? parseFloat(descuentoValor) : null,
@@ -598,6 +601,22 @@ export default function PresupuestoFormPage() {
         coefK={coefK}
         onChange={handleField}
       />
+
+      {/* Diagnóstico Técnico */}
+      <section className="card p-6">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-400">
+          Diagnóstico Técnico
+        </h2>
+        <textarea
+          value={diagnosticoTecnico}
+          onChange={(e) => setDiagnosticoTecnico(e.target.value)}
+          maxLength={1500}
+          rows={6}
+          className="input-base resize-none"
+          placeholder="Descripción técnica del estado del edificio, patologías detectadas, intervenciones necesarias…"
+        />
+        <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/1500</p>
+      </section>
 
       {/* Observaciones */}
       <section className="card p-6">

@@ -476,6 +476,7 @@ export function PresupuestoPDFPage({
   const tieneExtras = serviciosExtra.length > 0 || materialesExtra.length > 0
   const tieneDescuento = !!presupuesto.descuento_tipo && descuentoMonto > 0
   const tieneIva = Number(presupuesto.iva_pct) > 0
+  const tieneDiagnostico = !!presupuesto.diagnostico_tecnico
   const tieneObs = !!presupuesto.observaciones
   const mostrarVigencia  = presupuesto.estado === 'emitido' && !!presupuesto.fecha_creacion
   const mostrarMarcaAgua = presupuesto.estado === 'aprobado' || presupuesto.estado === 'finalizado' || presupuesto.estado === 'rechazado'
@@ -641,6 +642,15 @@ export function PresupuestoPDFPage({
         <View style={[s.section, { marginTop: 14 }]}>
           <Text style={s.sectionTitle}>Opciones de financiamiento</Text>
           <TablaFinanciamiento total={total} planSeleccionado={presupuesto.plan_pago} />
+        </View>
+      )}
+
+      {tieneDiagnostico && (
+        <View style={[s.section, { marginTop: 14 }]}>
+          <Text style={s.sectionTitle}>Diagnóstico Técnico</Text>
+          <View style={s.obsBox}>
+            <Text style={s.obsText}>{presupuesto.diagnostico_tecnico}</Text>
+          </View>
         </View>
       )}
 
