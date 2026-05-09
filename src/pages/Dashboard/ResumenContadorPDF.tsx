@@ -136,7 +136,7 @@ export function ResumenContadorPDF({ data }: { data: ResumenContadorData }) {
         {/* Header */}
         <View style={s.headerRow}>
           <View>
-            <Text style={s.company}>Los Limones Creativos</Text>
+            <Text style={s.company}>Limones - Rope Access</Text>
             <Text style={s.periodLabel}>{PERIODO_LABEL[periodo]} · {rangoLabel}</Text>
           </View>
           <View>
@@ -269,7 +269,7 @@ export function ResumenContadorPDF({ data }: { data: ResumenContadorData }) {
 
         {/* Footer */}
         <View style={s.footer} fixed>
-          <Text style={s.footerTxt}>Los Limones Creativos · Sistema de gestión</Text>
+          <Text style={s.footerTxt}>Limones - Rope Access · Sistema de gestión</Text>
           <Text style={s.footerTxt} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
 

@@ -112,7 +112,7 @@ export default function RegistroPage() {
             <span className="font-light text-sys-500">/</span>
             <span className="font-medium text-ink-100">root</span>
           </span>
-          <p className="mt-2 text-sm text-ink-400">Los Limones Creativos</p>
+          <p className="mt-2 text-sm text-ink-400">Limones - Rope Access</p>
         </div>
 
         <div className="rounded-xl border border-ink-700 bg-ink-900 p-6 shadow-2xl">

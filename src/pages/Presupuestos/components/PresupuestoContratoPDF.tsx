@@ -22,7 +22,7 @@ export function PresupuestoContratoPDFDocument({
   return (
     <Document
       title={`${presupuesto.numero ?? 'Presupuesto'} · Contrato`}
-      author="Los Limones Creativos"
+      author="Limones - Rope Access"
     >
       <PresupuestoPDFPage presupuesto={presupuesto} logoUrl={logoUrl} />
       {presupuesto.fotos?.length > 0 && (

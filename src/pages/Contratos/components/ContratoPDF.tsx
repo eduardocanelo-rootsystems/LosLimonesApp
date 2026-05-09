@@ -244,7 +244,7 @@ export function ContratoPDFPage({
       <View style={s.contratoHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {logoUrl && <Image src={logoUrl} style={s.logoImg} />}
-          <Text style={s.contratoHeaderLabel}>Los Limones Creativos · Contrato de Locación de Obra</Text>
+          <Text style={s.contratoHeaderLabel}>Limones - Rope Access · Contrato de Locación de Obra</Text>
         </View>
         <Text style={s.contratoHeaderLabel}>Ref. Presupuesto {presupuesto.numero ?? '—'}</Text>
       </View>
@@ -510,7 +510,7 @@ export function ContratoPDFPage({
       {/* Footer */}
       <View style={s.footer} fixed>
         <Text style={s.footerText}>
-          Los Limones Creativos · Contrato de Locación de Obra · Ref. {presupuesto.numero ?? '—'}
+          Limones - Rope Access · Contrato de Locación de Obra · Ref. {presupuesto.numero ?? '—'}
         </Text>
         <Text
           style={s.pageNumber}
@@ -539,7 +539,7 @@ export function ContratoPDFDocument({
   logoUrl?: string | null
 }) {
   return (
-    <Document title={`Contrato · ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
+    <Document title={`Contrato · ${presupuesto.numero ?? ''}`} author="Limones - Rope Access">
       <ContratoPDFPage
         presupuesto={presupuesto}
         form={form}

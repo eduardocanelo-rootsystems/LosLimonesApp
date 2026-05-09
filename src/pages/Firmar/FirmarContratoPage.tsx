@@ -118,7 +118,7 @@ export default function FirmarContratoPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-sky-500">
-                Los Limones Creativos
+                Limones - Rope Access
               </p>
               <h1 className="mt-1 text-xl font-bold text-gray-900">
                 Contrato de Locación de Obra
@@ -233,7 +233,7 @@ export default function FirmarContratoPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-400">
-          Los Limones Creativos · Trabajos en altura y fachadas
+          Limones - Rope Access · Trabajos en altura y fachadas
         </p>
       </div>
     </div>

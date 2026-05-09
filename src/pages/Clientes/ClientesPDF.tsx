@@ -95,13 +95,13 @@ export function ClientesPDFDoc({ clientes, fecha }: Props) {
   const totalPresup   = clientes.reduce((acc, c) => acc + c.presupuestos.length, 0)
 
   return (
-    <Document title="Listado de Clientes" author="Los Limones Creativos">
+    <Document title="Listado de Clientes" author="Limones - Rope Access">
       <Page size="A4" orientation="landscape" style={ps.page}>
 
         <View style={ps.band} fixed>
           <View style={ps.bandTop}>
             <View>
-              <Text style={ps.company}>Los Limones Creativos</Text>
+              <Text style={ps.company}>Limones - Rope Access</Text>
               <Text style={ps.companySlug}>TRABAJOS EN ALTURA · FACHADAS · IMPERMEABILIZACIONES</Text>
             </View>
             <View>
@@ -152,7 +152,7 @@ export function ClientesPDFDoc({ clientes, fecha }: Props) {
         </View>
 
         <View style={ps.footer} fixed>
-          <Text style={ps.footerText}>Los Limones Creativos · Listado de Clientes</Text>
+          <Text style={ps.footerText}>Limones - Rope Access · Listado de Clientes</Text>
           <Text style={ps.footerText} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
       </Page>

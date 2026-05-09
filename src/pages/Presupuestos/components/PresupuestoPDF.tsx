@@ -497,7 +497,7 @@ export function PresupuestoPDFPage({
         <View style={s.headerLeft}>
           {logoUrl
             ? <Image src={logoUrl} style={s.logoImg} />
-            : <Text style={s.companyName}>Los Limones Creativos</Text>
+            : <Text style={s.companyName}>Limones - Rope Access</Text>
           }
           <Text style={s.companySlug}>Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
         </View>
@@ -665,7 +665,7 @@ export function PresupuestoPDFPage({
 
       <View style={s.footer} fixed>
         <View style={s.footerTop}>
-          <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
+          <Text style={s.footerText}>Limones - Rope Access · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
           <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
         <Text style={s.footerCredit}>Generado con Root Systems · Desarrollado por Eduardo Canelo</Text>
@@ -696,7 +696,7 @@ export function PaginaFotos({
         <View style={s.headerLeft}>
           {logoUrl
             ? <Image src={logoUrl} style={s.logoImg} />
-            : <Text style={s.companyName}>Los Limones Creativos</Text>
+            : <Text style={s.companyName}>Limones - Rope Access</Text>
           }
           <Text style={s.companySlug}>Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
         </View>
@@ -720,7 +720,7 @@ export function PaginaFotos({
 
       <View style={s.footer} fixed>
         <View style={s.footerTop}>
-          <Text style={s.footerText}>Los Limones Creativos · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
+          <Text style={s.footerText}>Limones - Rope Access · Trabajos en altura - Fachadas - Impermeabilizaciones</Text>
           <Text style={s.pageNumber} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
         <Text style={s.footerCredit}>Generado con Root Systems · Desarrollado por Eduardo Canelo</Text>
@@ -739,7 +739,7 @@ export function PresupuestoPDFDocument({
   logoUrl?: string | null
 }) {
   return (
-    <Document title={`Presupuesto ${presupuesto.numero ?? ''}`} author="Los Limones Creativos">
+    <Document title={`Presupuesto ${presupuesto.numero ?? ''}`} author="Limones - Rope Access">
       <PresupuestoPDFPage presupuesto={presupuesto} logoUrl={logoUrl} />
       {presupuesto.fotos?.length > 0 && (
         <PaginaFotos presupuesto={presupuesto} fotos={presupuesto.fotos} logoUrl={logoUrl} />
