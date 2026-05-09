@@ -647,7 +647,7 @@ export function PresupuestoPDFPage({
 
       {tieneDiagnostico && (
         <View style={[s.section, { marginTop: 14 }]}>
-          <Text style={s.sectionTitle}>Diagnóstico Técnico</Text>
+          <Text style={[s.sectionTitle, { textTransform: 'none' }]}>Diagnóstico Técnico - Procedimientos</Text>
           <View style={s.obsBox}>
             <Text style={s.obsText}>{presupuesto.diagnostico_tecnico}</Text>
           </View>

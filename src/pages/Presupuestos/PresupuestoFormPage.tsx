@@ -607,10 +607,10 @@ export default function PresupuestoFormPage() {
         onChange={handleField}
       />
 
-      {/* Diagnóstico Técnico */}
+      {/* Diagnóstico Técnico - Procedimientos */}
       <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-400">
-          Diagnóstico Técnico
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
+          Diagnóstico Técnico - Procedimientos
         </h2>
         <textarea
           value={diagnosticoTecnico}
