@@ -23,7 +23,7 @@ export interface ContratoFormValues {
 export const PLANES_PAGO = {
   contado:  { label: 'Contado (50/50)',        recargo: 0,    cuotasLabel: '' },
   '60dias': { label: 'Financiado a 60 días',   recargo: 0.10, cuotasLabel: '+10%' },
-  '90dias': { label: 'Financiado a 90 días',   recargo: 0.35, cuotasLabel: '+35%' },
+  '90dias': { label: 'Financiado a 90 días',   recargo: 0.20, cuotasLabel: '+20%' },
 } as const
 
 export function contratoToFormValues(
@@ -67,12 +67,12 @@ export function calcTotalPresupuesto(p: PresupuestoCompleto): number {
 }
 
 export function calcFinanciamiento(baseTotal: number, plan: PlanPago) {
-  const recargo       = plan === '60dias' ? 0.10 : plan === '90dias' ? 0.35 : 0
-  const totalFinal    = baseTotal * (1 + recargo)
-  const anticipo      = baseTotal * 0.5
-  const saldo         = totalFinal - anticipo
+  const recargo         = plan === '60dias' ? 0.10 : plan === '90dias' ? 0.20 : 0
+  const anticipo        = baseTotal * 0.5
+  const saldo           = anticipo * (1 + recargo)   // recargo solo sobre el 50% financiado
+  const totalFinal      = anticipo + saldo
   const numInstallments = plan === '60dias' || plan === '90dias' ? 2 : 0
-  const montoCuota    = numInstallments > 0 ? saldo / numInstallments : saldo
+  const montoCuota      = numInstallments > 0 ? saldo / numInstallments : saldo
   return { totalFinal, anticipo, saldo, numInstallments, montoCuota }
 }
 

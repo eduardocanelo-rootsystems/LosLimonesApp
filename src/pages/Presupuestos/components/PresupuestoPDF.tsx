@@ -390,7 +390,7 @@ function TablaMateriales({ items, esExtra }: { items: PresupuestoCompleto['mater
 const PLANES_FIN = [
   { value: 'contado', label: 'Contado (50/50)', recargo: 0 },
   { value: '60dias', label: 'Financiado a 60 días', recargo: 0.10 },
-  { value: '90dias', label: 'Financiado a 90 días', recargo: 0.35 },
+  { value: '90dias', label: 'Financiado a 90 días', recargo: 0.20 },
 ]
 
 function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planSeleccionado?: string | null }) {
@@ -407,8 +407,8 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
       {PLANES_FIN.filter(({ value }) =>
         value === 'contado' || value === planSeleccionado
       ).map(({ label, recargo, value }) => {
-        const totalFinal = total * (1 + recargo)
-        const saldo = totalFinal - anticipo
+        const saldo = anticipo * (1 + recargo)   // recargo solo sobre el 50% financiado
+        const totalFinal = anticipo + saldo
         const cuotasLabel = recargo === 0 ? fmt(saldo) : `2 × ${fmt(saldo / 2)}`
         const isSelected = planSeleccionado === value
         return (

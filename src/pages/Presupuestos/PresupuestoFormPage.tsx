@@ -382,12 +382,13 @@ export default function PresupuestoFormPage() {
   // importe_total = total real al cliente incluyendo mano de obra (para que el ratio en cobros sea correcto)
   // importe_servicios = solo la parte de servicios de lista (sin mano de obra), base de distribución entre socios
   const { importeTotal, importeServicios } = useMemo(() => {
-    const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.35 : 0
+    const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
     const brutoBase = subtotalServicios + subtotalMateriales
-    const totalSinMO = totalCliente * (1 + recargo)
-    // Aplicar el mismo factor descuento+IVA de servicios/materiales a la mano de obra
+    // recargo aplica solo sobre el 50% financiado: total_con_fin = base × (1 + recargo / 2)
+    const factorFin = 1 + recargo / 2
+    const totalSinMO = totalCliente * factorFin
     const factor = brutoBase > 0 ? totalCliente / brutoBase : 1
-    const total = totalSinMO + costoManoObra * factor * (1 + recargo)
+    const total = totalSinMO + costoManoObra * factor * factorFin
     const ratio = brutoBase > 0 ? subtotalServicios / brutoBase : 1
     return { importeTotal: total, importeServicios: totalSinMO * ratio }
   }, [totalCliente, planPago, subtotalServicios, subtotalMateriales, costoManoObra])
