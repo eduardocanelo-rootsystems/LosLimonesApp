@@ -263,7 +263,11 @@ export default function PresupuestoFormPage() {
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     } catch (err) {
-      if (!reloadOnStaleChunk(err)) toast.error('Error al generar el PDF.')
+      if (!reloadOnStaleChunk(err)) {
+        console.error('[PDF]', err)
+        const msg = err instanceof Error ? err.message : String(err)
+        toast.error(`Error al generar el PDF: ${msg}`)
+      }
     } finally {
       setDescargandoPDF(false)
     }
