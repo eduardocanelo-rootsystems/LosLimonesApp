@@ -477,6 +477,8 @@ export function PresupuestoPDFPage({
   const tieneDescuento = !!presupuesto.descuento_tipo && descuentoMonto > 0
   const tieneIva = Number(presupuesto.iva_pct) > 0
   const tieneDiagnostico = !!presupuesto.diagnostico_tecnico
+  const tieneAlcance = !!presupuesto.alcance_obra
+  const tieneExenciones = !!presupuesto.exenciones
   const tieneObs = !!presupuesto.observaciones
   const mostrarVigencia  = presupuesto.estado === 'emitido' && !!presupuesto.fecha_creacion
   const mostrarMarcaAgua = presupuesto.estado === 'aprobado' || presupuesto.estado === 'finalizado' || presupuesto.estado === 'rechazado'
@@ -650,6 +652,24 @@ export function PresupuestoPDFPage({
           <Text style={[s.sectionTitle, { textTransform: 'none' }]}>Diagnóstico Técnico - Procedimientos</Text>
           <View style={s.obsBox}>
             <Text style={s.obsText}>{presupuesto.diagnostico_tecnico}</Text>
+          </View>
+        </View>
+      )}
+
+      {tieneAlcance && (
+        <View style={[s.section, { marginTop: 14 }]}>
+          <Text style={[s.sectionTitle, { textTransform: 'none' }]}>Alcance de la Obra</Text>
+          <View style={s.obsBox}>
+            <Text style={s.obsText}>{presupuesto.alcance_obra}</Text>
+          </View>
+        </View>
+      )}
+
+      {tieneExenciones && (
+        <View style={[s.section, { marginTop: 14 }]}>
+          <Text style={[s.sectionTitle, { textTransform: 'none' }]}>Exenciones</Text>
+          <View style={s.obsBox}>
+            <Text style={s.obsText}>{presupuesto.exenciones}</Text>
           </View>
         </View>
       )}

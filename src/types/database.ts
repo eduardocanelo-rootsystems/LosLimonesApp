@@ -232,6 +232,8 @@ export type Database = {
           coef_k: number | null
           observaciones: string | null
           diagnostico_tecnico: string | null
+          alcance_obra: string | null
+          exenciones: string | null
           descuento_tipo: 'fijo' | 'porcentaje' | null
           descuento_valor: number | null
           iva_pct: number
@@ -269,6 +271,8 @@ export type Database = {
           coef_k?: number | null
           observaciones?: string | null
           diagnostico_tecnico?: string | null
+          alcance_obra?: string | null
+          exenciones?: string | null
           descuento_tipo?: 'fijo' | 'porcentaje' | null
           descuento_valor?: number | null
           iva_pct?: number
@@ -306,6 +310,8 @@ export type Database = {
           coef_k?: number | null
           observaciones?: string | null
           diagnostico_tecnico?: string | null
+          alcance_obra?: string | null
+          exenciones?: string | null
           descuento_tipo?: 'fijo' | 'porcentaje' | null
           descuento_valor?: number | null
           iva_pct?: number

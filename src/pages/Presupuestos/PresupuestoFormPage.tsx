@@ -92,6 +92,8 @@ export default function PresupuestoFormPage() {
 
   // Textos libres
   const [diagnosticoTecnico, setDiagnosticoTecnico] = useState('')
+  const [alcanceObra, setAlcanceObra] = useState('')
+  const [exenciones, setExenciones] = useState('')
   const [observaciones, setObservaciones] = useState('')
 
   // Ítems
@@ -141,6 +143,8 @@ export default function PresupuestoFormPage() {
     setEdifProteccion(presupuesto.edif_proteccion ?? '')
     setCoefK(presupuesto.coef_k?.toString() ?? '')
     setDiagnosticoTecnico(presupuesto.diagnostico_tecnico ?? '')
+    setAlcanceObra(presupuesto.alcance_obra ?? '')
+    setExenciones(presupuesto.exenciones ?? '')
     setObservaciones(presupuesto.observaciones ?? '')
     setDescuentoTipo((presupuesto.descuento_tipo ?? 'porcentaje') as 'fijo' | 'porcentaje')
     setDescuentoValor(presupuesto.descuento_valor?.toString() ?? '')
@@ -432,6 +436,8 @@ export default function PresupuestoFormPage() {
         edif_proteccion: edifProteccion,
         coef_k: coefK ? parseFloat(coefK) : null,
         diagnostico_tecnico: diagnosticoTecnico || null,
+        alcance_obra: alcanceObra || null,
+        exenciones: exenciones || null,
         observaciones,
         descuento_tipo: tieneDescuento ? descuentoTipo : null,
         descuento_valor: tieneDescuento && descuentoValor ? parseFloat(descuentoValor) : null,
@@ -621,6 +627,38 @@ export default function PresupuestoFormPage() {
           placeholder="Descripción técnica del estado del edificio, patologías detectadas, intervenciones necesarias…"
         />
         <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/1500</p>
+      </section>
+
+      {/* Alcance de la Obra */}
+      <section className="card p-6">
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
+          Alcance de la Obra
+        </h2>
+        <textarea
+          value={alcanceObra}
+          onChange={(e) => setAlcanceObra(e.target.value)}
+          maxLength={1500}
+          rows={6}
+          className="input-base resize-none"
+          placeholder="Descripción de los trabajos incluidos en el alcance de la obra…"
+        />
+        <p className="mt-1 text-right text-xs text-ink-500">{alcanceObra.length}/1500</p>
+      </section>
+
+      {/* Exenciones */}
+      <section className="card p-6">
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
+          Exenciones
+        </h2>
+        <textarea
+          value={exenciones}
+          onChange={(e) => setExenciones(e.target.value)}
+          maxLength={1500}
+          rows={6}
+          className="input-base resize-none"
+          placeholder="Trabajos o situaciones no incluidos en el presupuesto…"
+        />
+        <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/1500</p>
       </section>
 
       {/* Observaciones */}

@@ -88,6 +88,8 @@ export interface GuardarPresupuestoInput {
   // Otros
   observaciones: string
   diagnostico_tecnico: string | null
+  alcance_obra: string | null
+  exenciones: string | null
   descuento_tipo: 'fijo' | 'porcentaje' | null
   descuento_valor: number | null
   iva_pct: number
@@ -140,6 +142,8 @@ export function useGuardarPresupuesto() {
         coef_k: input.coef_k,
         observaciones: input.observaciones || null,
         diagnostico_tecnico: input.diagnostico_tecnico || null,
+        alcance_obra: input.alcance_obra || null,
+        exenciones: input.exenciones || null,
         descuento_tipo: input.descuento_tipo,
         descuento_valor: input.descuento_valor,
         iva_pct: input.iva_pct,
