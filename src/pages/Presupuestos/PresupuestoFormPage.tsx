@@ -96,6 +96,10 @@ export default function PresupuestoFormPage() {
   const [exenciones, setExenciones] = useState('')
   const [observaciones, setObservaciones] = useState('')
 
+  // Garantía
+  const [tieneGarantia, setTieneGarantia] = useState<boolean | null>(null)
+  const [garantiaVencimiento, setGarantiaVencimiento] = useState('')
+
   // Ítems
   const [servicios, setServicios] = useState<FormServicioItem[]>([])
   const [materiales, setMateriales] = useState<FormMaterialItem[]>([])
@@ -146,6 +150,8 @@ export default function PresupuestoFormPage() {
     setAlcanceObra(presupuesto.alcance_obra ?? '')
     setExenciones(presupuesto.exenciones ?? '')
     setObservaciones(presupuesto.observaciones ?? '')
+    setTieneGarantia(presupuesto.tiene_garantia ?? null)
+    setGarantiaVencimiento(presupuesto.garantia_vencimiento ?? '')
     setDescuentoTipo((presupuesto.descuento_tipo ?? 'porcentaje') as 'fijo' | 'porcentaje')
     setDescuentoValor(presupuesto.descuento_valor?.toString() ?? '')
     setTieneDescuento(!!presupuesto.descuento_tipo)
@@ -402,6 +408,26 @@ export default function PresupuestoFormPage() {
   const esAprobado = estado === 'aprobado'
 
   const handleGuardar = async () => {
+    if (!diagnosticoTecnico.trim()) {
+      toast.error('El Diagnóstico Técnico - Procedimientos es obligatorio.')
+      return
+    }
+    if (!alcanceObra.trim()) {
+      toast.error('El Alcance de la Obra es obligatorio.')
+      return
+    }
+    if (!exenciones.trim()) {
+      toast.error('Las Exenciones son obligatorias.')
+      return
+    }
+    if (tieneGarantia === null) {
+      toast.error('Debés indicar si el presupuesto tiene garantía o no.')
+      return
+    }
+    if (tieneGarantia && !garantiaVencimiento) {
+      toast.error('Ingresá la fecha de vencimiento de la garantía.')
+      return
+    }
     if (esAprobado && !fechaAprobacion) {
       toast.error('Ingresá la fecha de aprobación antes de guardar.')
       return
@@ -438,6 +464,8 @@ export default function PresupuestoFormPage() {
         diagnostico_tecnico: diagnosticoTecnico || null,
         alcance_obra: alcanceObra || null,
         exenciones: exenciones || null,
+        tiene_garantia: tieneGarantia,
+        garantia_vencimiento: tieneGarantia && garantiaVencimiento ? garantiaVencimiento : null,
         observaciones,
         descuento_tipo: tieneDescuento ? descuentoTipo : null,
         descuento_valor: tieneDescuento && descuentoValor ? parseFloat(descuentoValor) : null,
@@ -659,6 +687,56 @@ export default function PresupuestoFormPage() {
           placeholder="Trabajos o situaciones no incluidos en el presupuesto…"
         />
         <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/1500</p>
+      </section>
+
+      {/* Garantía */}
+      <section className="card p-6">
+        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
+          Garantía
+          {tieneGarantia === null && (
+            <span className="ml-2 text-xs font-normal text-danger">* obligatorio</span>
+          )}
+        </h2>
+        <div className="flex gap-3 mb-4">
+          <button
+            type="button"
+            onClick={() => { setTieneGarantia(false); setGarantiaVencimiento('') }}
+            className={cn(
+              'flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
+              tieneGarantia === false
+                ? 'border-accent-500 bg-accent-500/10 text-accent-300'
+                : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+            )}
+          >
+            Sin garantía
+          </button>
+          <button
+            type="button"
+            onClick={() => setTieneGarantia(true)}
+            className={cn(
+              'flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
+              tieneGarantia === true
+                ? 'border-accent-500 bg-accent-500/10 text-accent-300'
+                : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+            )}
+          >
+            Con garantía
+          </button>
+        </div>
+        {tieneGarantia === true && (
+          <div className="flex items-center gap-3">
+            <label className="text-sm text-ink-400 whitespace-nowrap">Vencimiento:</label>
+            <input
+              type="date"
+              value={garantiaVencimiento}
+              onChange={(e) => setGarantiaVencimiento(e.target.value)}
+              className={cn(
+                'input-base font-mono',
+                !garantiaVencimiento && 'border-danger/60 focus:border-danger'
+              )}
+            />
+          </div>
+        )}
       </section>
 
       {/* Observaciones */}

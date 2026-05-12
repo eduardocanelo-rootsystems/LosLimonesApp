@@ -90,6 +90,8 @@ export interface GuardarPresupuestoInput {
   diagnostico_tecnico: string | null
   alcance_obra: string | null
   exenciones: string | null
+  tiene_garantia: boolean | null
+  garantia_vencimiento: string | null
   descuento_tipo: 'fijo' | 'porcentaje' | null
   descuento_valor: number | null
   iva_pct: number
@@ -144,6 +146,8 @@ export function useGuardarPresupuesto() {
         diagnostico_tecnico: input.diagnostico_tecnico || null,
         alcance_obra: input.alcance_obra || null,
         exenciones: input.exenciones || null,
+        tiene_garantia: input.tiene_garantia,
+        garantia_vencimiento: input.garantia_vencimiento || null,
         descuento_tipo: input.descuento_tipo,
         descuento_valor: input.descuento_valor,
         iva_pct: input.iva_pct,

@@ -234,6 +234,8 @@ export type Database = {
           diagnostico_tecnico: string | null
           alcance_obra: string | null
           exenciones: string | null
+          tiene_garantia: boolean | null
+          garantia_vencimiento: string | null
           descuento_tipo: 'fijo' | 'porcentaje' | null
           descuento_valor: number | null
           iva_pct: number
@@ -273,6 +275,8 @@ export type Database = {
           diagnostico_tecnico?: string | null
           alcance_obra?: string | null
           exenciones?: string | null
+          tiene_garantia?: boolean | null
+          garantia_vencimiento?: string | null
           descuento_tipo?: 'fijo' | 'porcentaje' | null
           descuento_valor?: number | null
           iva_pct?: number
@@ -312,6 +316,8 @@ export type Database = {
           diagnostico_tecnico?: string | null
           alcance_obra?: string | null
           exenciones?: string | null
+          tiene_garantia?: boolean | null
+          garantia_vencimiento?: string | null
           descuento_tipo?: 'fijo' | 'porcentaje' | null
           descuento_valor?: number | null
           iva_pct?: number

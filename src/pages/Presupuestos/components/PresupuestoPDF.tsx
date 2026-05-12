@@ -480,6 +480,11 @@ export function PresupuestoPDFPage({
   const tieneAlcance = !!presupuesto.alcance_obra
   const tieneExenciones = !!presupuesto.exenciones
   const tieneObs = !!presupuesto.observaciones
+  const garantiaLabel = presupuesto.tiene_garantia === true
+    ? `Con garantía · Vence el ${fmtDate(presupuesto.garantia_vencimiento)}`
+    : presupuesto.tiene_garantia === false
+      ? 'Sin garantía'
+      : null
   const mostrarVigencia  = presupuesto.estado === 'emitido' && !!presupuesto.fecha_creacion
   const mostrarMarcaAgua = presupuesto.estado === 'aprobado' || presupuesto.estado === 'finalizado' || presupuesto.estado === 'rechazado'
 
@@ -644,6 +649,15 @@ export function PresupuestoPDFPage({
         <View style={[s.section, { marginTop: 14 }]}>
           <Text style={s.sectionTitle}>Opciones de financiamiento</Text>
           <TablaFinanciamiento total={total} planSeleccionado={presupuesto.plan_pago} />
+        </View>
+      )}
+
+      {garantiaLabel && (
+        <View style={[s.section, { marginTop: 14 }]}>
+          <Text style={[s.sectionTitle, { textTransform: 'none' }]}>Garantía</Text>
+          <View style={s.obsBox}>
+            <Text style={s.obsText}>{garantiaLabel}</Text>
+          </View>
         </View>
       )}
 
