@@ -13,7 +13,7 @@ import {
 export type { PlanPago, ContratoFormValues }
 export { PLANES_PAGO, contratoToFormValues, calcTotalPresupuesto, calcFinanciamiento, addWorkingDays }
 
-// ─── Helpers de fecha (PDF-specific) ─────────────────────────────────────────
+// ─── Helpers de fecha ─────────────────────────────────────────────────────────
 
 const MESES = [
   'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
@@ -74,7 +74,6 @@ const s = StyleSheet.create({
     backgroundColor: C.white,
   },
 
-  // Encabezado de página de contrato (en documento combinado, actúa como separador)
   contratoHeader: {
     marginBottom: 4,
     paddingBottom: 10,
@@ -93,20 +92,21 @@ const s = StyleSheet.create({
     textAlign: 'center',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 3,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: C.gray500,
     textAlign: 'center',
-    letterSpacing: 1,
-    marginBottom: 20,
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   lugar: {
     fontSize: 10,
     textAlign: 'right',
     color: C.gray700,
     marginBottom: 14,
+    marginTop: 14,
   },
 
   preamble: {
@@ -119,10 +119,10 @@ const s = StyleSheet.create({
   divider: {
     borderBottomWidth: 0.5,
     borderBottomColor: C.gray300,
-    marginVertical: 12,
+    marginVertical: 10,
   },
 
-  clausula: { marginBottom: 9 },
+  clausula: { marginBottom: 8 },
   clausulaTitulo: {
     fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
@@ -140,15 +140,15 @@ const s = StyleSheet.create({
 
   lista: { marginTop: 3 },
   listaItem: { flexDirection: 'row', paddingLeft: 8, marginTop: 2 },
-  listaBullet: { width: 14, fontSize: 10, color: C.black },
+  listaBullet: { width: 18, fontSize: 10, color: C.black },
   listaTexto: { flex: 1, fontSize: 10, lineHeight: 1.55, textAlign: 'justify' },
 
   cierre: {
     fontSize: 10,
     lineHeight: 1.55,
     textAlign: 'center',
-    marginTop: 14,
-    marginBottom: 28,
+    marginTop: 12,
+    marginBottom: 24,
   },
 
   firmaSection: {
@@ -198,7 +198,7 @@ const s = StyleSheet.create({
   b: { fontFamily: 'Helvetica-Bold' },
 })
 
-// ─── Página del contrato (exportada para uso en documento combinado) ──────────
+// ─── Página del contrato ──────────────────────────────────────────────────────
 
 export function ContratoPDFPage({
   presupuesto,
@@ -218,40 +218,47 @@ export function ContratoPDFPage({
   const b = s.b
   const baseTotal = calcTotalPresupuesto(presupuesto)
   const plan = (form.plan_pago || 'contado') as PlanPago
-  const { totalFinal, anticipo, montoCuota } = calcFinanciamiento(baseTotal, plan)
+  const { totalFinal, anticipo, saldo, montoCuota } = calcFinanciamiento(baseTotal, plan)
 
-  const comitente = form.nombre_comitente || presupuesto.cliente_razon_social || '___________'
+  const comitente  = form.nombre_comitente     || presupuesto.cliente_razon_social    || '___________'
   const comitenteCuit = presupuesto.cliente_cuit || '___________'
-  const dirObra = form.direccion_obra || presupuesto.cliente_direccion || '___________'
-  const admin = form.nombre_administrador || presupuesto.cliente_administrador || '___________'
-  const dni = form.administrador_dni || '___________'
-  const sector = form.sector_obra || '___________'
-  const dirLegal = form.direccion_legal || presupuesto.cliente_direccion || '___________'
+  const dirObra    = form.direccion_obra        || presupuesto.cliente_direccion       || '___________'
+  const admin      = form.nombre_administrador  || presupuesto.cliente_administrador   || '___________'
+  const dni        = form.administrador_dni     || '___________'
+  const dirLegal   = form.direccion_legal       || presupuesto.cliente_direccion       || '___________'
   const diasEstimados = presupuesto.dias_estimados_obra ?? 0
-  const esFinanciado = plan === '60dias' || plan === '90dias'
-  const fechaFin = form.fecha_inicio_obra && diasEstimados > 0
+  const esFinanciado  = plan === '60dias' || plan === '90dias'
+  const fechaFin   = form.fecha_inicio_obra && diasEstimados > 0
     ? addWorkingDays(form.fecha_inicio_obra, diasEstimados)
     : null
-  const serviciosNombres = presupuesto.servicios
-    .filter((sv) => !sv.es_adicional)
-    .map((sv) => sv.nombre_snapshot)
-    .join('; ')
+  const tasaInteres = form.tasa_interes ? `${form.tasa_interes}%` : '_____%'
+
+  // Campos del presupuesto
+  const alcanceObra       = presupuesto.alcance_obra       || ''
+  const exenciones        = presupuesto.exenciones         || ''
+  const diagnosticoTec    = presupuesto.diagnostico_tecnico || ''
+  const tieneGarantia     = presupuesto.tiene_garantia
+  const garantiaVenc      = presupuesto.garantia_vencimiento
 
   return (
     <Page size="A4" style={s.page}>
 
-      {/* Encabezado con referencia al presupuesto */}
+      {/* Encabezado */}
       <View style={s.contratoHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {logoUrl && <Image src={logoUrl} style={s.logoImg} />}
-          <Text style={s.contratoHeaderLabel}>Limones - Rope Access · Contrato de Locación de Obra</Text>
+          <Text style={s.contratoHeaderLabel}>Limones - Rope Access · Contrato de Obra</Text>
         </View>
         <Text style={s.contratoHeaderLabel}>Ref. Presupuesto {presupuesto.numero ?? '—'}</Text>
       </View>
 
       {/* Título */}
-      <Text style={[s.title, { marginTop: 12 }]}>Contrato de Locación de Obra</Text>
-      <Text style={s.subtitle}>{dirObra.toUpperCase()}</Text>
+      <Text style={[s.title, { marginTop: 12 }]}>Contrato de Obra</Text>
+      <Text style={s.subtitle}>
+        Restauración, Reparación e Impermeabilización de superficies en altura{'\n'}
+        mediante sistemas de acceso por cuerdas
+      </Text>
+      <Text style={[s.subtitle, { color: C.gray700 }]}>{dirObra}</Text>
 
       {/* Lugar y fecha */}
       <Text style={s.lugar}>
@@ -270,44 +277,92 @@ export function ContratoPDFPage({
         <Text style={b}>{comitente}</Text>
         {', CUIT N.º '}
         <Text style={b}>{comitenteCuit}</Text>
-        {', sito en '}
-        <Text style={b}>{dirObra}</Text>
-        {', representado en este acto por el Sr. '}
+        {', representado en este acto por el/la Sr./Sra. '}
         <Text style={b}>{admin}</Text>
         {', DNI '}
         <Text style={b}>{dni}</Text>
         {', en adelante denominado '}
         <Text style={b}>"EL COMITENTE"</Text>
-        {', convienen lo siguiente:'}
+        {', acuerdan celebrar el presente Contrato de Obra conforme a las siguientes cláusulas y condiciones:'}
       </Text>
 
       <View style={s.divider} />
 
-      {/* PRIMERA */}
+      {/* ── PRIMERA ─────────────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Primera: Objeto y Detalle Técnico</Text>
-        <Text style={s.clausulaTexto}>
-          {'EL COMITENTE encomienda al CONTRATISTA la ejecución de la obra detallada en el presupuesto '}
+        <Text style={s.clausulaTitulo}>Primera – Objeto y documentación integrante</Text>
+        <Text style={[s.clausulaTexto, { marginBottom: 4 }]}>
+          {'El presente Contrato tiene por objeto la ejecución de la obra detallada en el Presupuesto '}
           <Text style={b}>N.º {presupuesto.numero ?? '—'}</Text>
           {' de fecha '}
           <Text style={b}>{fmtShort(presupuesto.fecha_creacion)}</Text>
-          {', a realizarse en el sector de '}
-          <Text style={b}>{sector}</Text>
-          {' del edificio mencionado en el encabezado. Los trabajos incluyen: '}
-          <Text style={b}>{serviciosNombres || 'los detallados en el presupuesto adjunto'}</Text>
-          {'. Comprenden la preparación de superficies, reparaciones de mampostería, tratamiento de grietas y terminación con productos de primera calidad.'}
+          {', el que integra este instrumento como Anexo I. En caso de divergencia, prevalecerá el texto del Contrato.'}
+        </Text>
+        {alcanceObra ? (
+          <Text style={[s.clausulaTexto, { marginBottom: 4 }]}>
+            <Text style={b}>Alcance de la obra: </Text>
+            {alcanceObra}
+          </Text>
+        ) : null}
+        {exenciones ? (
+          <Text style={[s.clausulaTexto, { marginBottom: 4 }]}>
+            <Text style={b}>Exclusiones: </Text>
+            {exenciones}
+          </Text>
+        ) : null}
+        {diagnosticoTec ? (
+          <Text style={s.clausulaTexto}>
+            <Text style={b}>Diagnóstico técnico - Procedimientos: </Text>
+            {diagnosticoTec}
+          </Text>
+        ) : null}
+      </View>
+
+      {/* ── SEGUNDA ─────────────────────────────────────────────────────── */}
+      <View style={s.clausula}>
+        <Text style={s.clausulaTitulo}>Segunda – Alcance técnico</Text>
+        <Text style={s.clausulaTexto}>
+          Los trabajos se ejecutarán mediante el sistema de acceso por cuerdas (rope access), metodología certificada para intervenciones en altura que permite actuar sobre fachadas, contrafrentes, pozos de luz y áreas de difícil acceso sin necesidad de andamios. EL CONTRATISTA se compromete a emplear materiales de primera calidad, seleccionados según las especificaciones técnicas del fabricante y las características del edificio, aplicados conforme a las normas vigentes para sistemas de impermeabilización y restauración de superficies expuestas.
         </Text>
       </View>
 
-      {/* SEGUNDA — varía según el plan */}
+      {/* ── TERCERA ─────────────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Segunda: Precio y Forma de Pago</Text>
-        <Text style={[s.clausulaTexto, { marginBottom: 3 }]}>
-          {'El precio total de la obra se fija en la suma de '}
+        <Text style={s.clausulaTitulo}>Tercera – Obligaciones del comitente</Text>
+        <Text style={[s.clausulaTexto, { marginBottom: 3 }]}>EL COMITENTE se obliga a:</Text>
+        <View style={s.lista}>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>a)</Text>
+            <Text style={s.listaTexto}>Garantizar el libre y seguro acceso al inmueble y a todas las áreas donde se ejecutarán los trabajos, incluyendo terrazas, azoteas y espacios comunes.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>b)</Text>
+            <Text style={s.listaTexto}>Notificar a propietarios y ocupantes sobre las tareas programadas con la debida antelación.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>c)</Text>
+            <Text style={s.listaTexto}>Retirar o custodiar —antes del inicio de los trabajos— elementos de valor (macetas, toldos, equipos de aire acondicionado, objetos de decoración u otros) de las áreas de intervención.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>d)</Text>
+            <Text style={s.listaTexto}>Designar un referente de contacto disponible durante la ejecución de la obra.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>e)</Text>
+            <Text style={s.listaTexto}>Abonar los importes convenidos en las condiciones y plazos establecidos en la Cláusula Cuarta.</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* ── CUARTA ──────────────────────────────────────────────────────── */}
+      <View style={s.clausula}>
+        <Text style={s.clausulaTitulo}>Cuarta – Precio y forma de pago</Text>
+        <Text style={[s.clausulaTexto, { marginBottom: 4 }]}>
+          {'El precio total de la obra se fija en '}
           <Text style={b}>{fmt(totalFinal)}</Text>
           {esFinanciado
-            ? ` (financiamiento a ${plan === '60dias' ? '60' : '90'} días, incluye ${plan === '60dias' ? '10' : '35'}% de recargo sobre el valor de contado de ${fmt(baseTotal)}).`
-            : '.'}
+            ? ` (financiamiento a ${plan === '60dias' ? '60' : '90'} días, con un recargo del ${plan === '60dias' ? '10' : '20'}% sobre el 50% financiado; valor de contado: ${fmt(baseTotal)}).`
+            : ', abonado de la siguiente manera:'}
         </Text>
         <View style={s.lista}>
           <View style={s.listaItem}>
@@ -315,17 +370,16 @@ export function ContratoPDFPage({
             <Text style={s.listaTexto}>
               <Text style={b}>Anticipo: </Text>
               <Text style={b}>{form.adelanto ? fmt(parseFloat(form.adelanto)) : fmt(anticipo)}</Text>
-              {' a la firma del presente contrato.'}
+              {' a la firma del presente Contrato.'}
             </Text>
           </View>
-          {plan === 'contado' || plan === '' ? (
+          {!esFinanciado ? (
             <View style={s.listaItem}>
               <Text style={s.listaBullet}>•</Text>
               <Text style={s.listaTexto}>
                 <Text style={b}>Saldo: </Text>
-                {'La suma restante de '}
                 <Text style={b}>{fmt(totalFinal - (form.adelanto ? parseFloat(form.adelanto) : anticipo))}</Text>
-                {' será abonada a la recepción provisoria de la obra.'}
+                {' a la Recepción Provisoria de la obra.'}
               </Text>
             </View>
           ) : (
@@ -333,24 +387,25 @@ export function ContratoPDFPage({
               <View style={s.listaItem}>
                 <Text style={s.listaBullet}>•</Text>
                 <Text style={s.listaTexto}>
-                  <Text style={b}>Cuota 1: </Text>
-                  <Text style={b}>{form.monto_cuota ? fmt(parseFloat(form.monto_cuota)) : fmtOrBlank(String(montoCuota), true)}</Text>
-                  {form.fecha_cuota_1 ? `, a abonar el ${fmtShort(form.fecha_cuota_1)}.` : '.'}
+                  <Text style={b}>Saldo financiado: </Text>
+                  <Text style={b}>{fmt(saldo)}</Text>
+                  {', en dos (2) cuotas iguales:'}
                 </Text>
               </View>
               <View style={s.listaItem}>
-                <Text style={s.listaBullet}>•</Text>
+                <Text style={s.listaBullet}> </Text>
                 <Text style={s.listaTexto}>
-                  <Text style={b}>Cuota 2: </Text>
+                  {'– Cuota 1: '}
                   <Text style={b}>{form.monto_cuota ? fmt(parseFloat(form.monto_cuota)) : fmtOrBlank(String(montoCuota), true)}</Text>
-                  {form.fecha_cuota_2 ? `, a abonar el ${fmtShort(form.fecha_cuota_2)}.` : '.'}
+                  {form.fecha_cuota_1 ? `, con vencimiento el ${fmtShort(form.fecha_cuota_1)}.` : '.'}
                 </Text>
               </View>
               <View style={s.listaItem}>
-                <Text style={s.listaBullet}>•</Text>
+                <Text style={s.listaBullet}> </Text>
                 <Text style={s.listaTexto}>
-                  <Text style={b}>Cláusula de Ajuste: </Text>
-                  {'Las cuotas del saldo se ajustarán por el índice de la Cámara Argentina de la Construcción (C.A.C.), tomando como base la fecha del presupuesto.'}
+                  {'– Cuota 2: '}
+                  <Text style={b}>{form.monto_cuota ? fmt(parseFloat(form.monto_cuota)) : fmtOrBlank(String(montoCuota), true)}</Text>
+                  {form.fecha_cuota_2 ? `, con vencimiento el ${fmtShort(form.fecha_cuota_2)}.` : '.'}
                 </Text>
               </View>
             </>
@@ -358,13 +413,13 @@ export function ContratoPDFPage({
         </View>
       </View>
 
-      {/* TERCERA */}
+      {/* ── QUINTA ──────────────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Tercera: Plazos y Condiciones Climáticas</Text>
+        <Text style={s.clausulaTitulo}>Quinta – Plazo de ejecución</Text>
         <Text style={s.clausulaTexto}>
-          {'La obra comenzará el día '}
+          {'La obra comenzará el '}
           <Text style={b}>{fmtLong(form.fecha_inicio_obra)}</Text>
-          {fechaFin ? ' y finalizará estimativamente el ' : ' y tendrá una duración estimada de '}
+          {fechaFin ? ' y finalizará estimativamente el ' : '. La duración estimada es de '}
           {fechaFin
             ? <Text style={b}>{fmtLong(fechaFin)}</Text>
             : <Text style={b}>{diasEstimados > 0 ? `${diasEstimados} días hábiles` : '_____ días hábiles'}</Text>
@@ -372,82 +427,125 @@ export function ContratoPDFPage({
           {fechaFin && diasEstimados > 0
             ? ` (${diasEstimados} días hábiles de trabajo efectivo a cielo abierto).`
             : ' de trabajo efectivo a cielo abierto.'}
-          {' El plazo se extenderá por días de lluvia o condiciones climáticas que impidan técnicamente las tareas. Por cada día de retraso injustificado, se establece una multa de '}
+          {' El plazo se prorrogará automáticamente por los días en que las condiciones climáticas o causas de fuerza mayor impidan técnicamente la realización de las tareas. Por cada día de retraso injustificado imputable a EL CONTRATISTA, se establece una multa de '}
           <Text style={b}>{fmtOrBlank(form.monto_multa, true)}</Text>
           {'.'}
         </Text>
       </View>
 
-      {/* CUARTA */}
+      {/* ── SEXTA ───────────────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Cuarta: Seguros y Responsabilidad</Text>
-        <Text style={s.clausulaTexto}>
-          EL CONTRATISTA presentará, previo al inicio, seguros de Accidentes Personales (con Cláusula de No Repetición a favor del COMITENTE) y de Responsabilidad Civil. Es único responsable por su personal y subcontratistas.
-        </Text>
-      </View>
-
-      {/* QUINTA */}
-      <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Quinta: Interferencias y Elementos de Terceros</Text>
-        <Text style={s.clausulaTexto}>
-          EL CONTRATISTA no se responsabiliza por el movimiento de equipos de aire acondicionado ni por daños accidentales o terminaciones defectuosas en áreas donde no se hayan retirado redes de protección, objetos de valor o mobiliario por parte de los propietarios.
-        </Text>
-      </View>
-
-      {/* SEXTA */}
-      <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Sexta: Limitación de Responsabilidad por Materiales</Text>
+        <Text style={s.clausulaTitulo}>Sexta – Seguridad, seguros y responsabilidad</Text>
         <Text style={[s.clausulaTexto, { marginBottom: 3 }]}>
-          EL CONTRATISTA queda eximido de responsabilidad y la garantía de obra no tendrá efecto en los siguientes casos:
+          Con anterioridad al inicio de los trabajos, EL CONTRATISTA presentará:
         </Text>
         <View style={s.lista}>
           <View style={s.listaItem}>
-            <Text style={s.listaBullet}>1.</Text>
-            <Text style={s.listaTexto}>
-              <Text style={b}>Materiales provistos por el cliente: </Text>
-              Si EL COMITENTE optara por adquirir los materiales, EL CONTRATISTA no responderá por su rendimiento, durabilidad o fallas de calidad, limitándose su garantía únicamente a la ejecución de la mano de obra.
-            </Text>
+            <Text style={s.listaBullet}>a)</Text>
+            <Text style={s.listaTexto}>Póliza de Seguro de Accidentes del Trabajo (ART) vigente, con Cláusula de No Repetición a favor de EL COMITENTE.</Text>
           </View>
           <View style={s.listaItem}>
-            <Text style={s.listaBullet}>2.</Text>
-            <Text style={s.listaTexto}>
-              <Text style={b}>Defectos de fabricación: </Text>
-              EL CONTRATISTA no será responsable por vicios propios o fallas de fabricación de los insumos (pinturas, selladores, etc.), independientemente de quién los adquiera, siempre que hayan sido aplicados según las especificaciones del fabricante.
-            </Text>
+            <Text style={s.listaBullet}>b)</Text>
+            <Text style={s.listaTexto}>Póliza de Seguro de Responsabilidad Civil, que cubra daños a terceros y a bienes de EL COMITENTE derivados de la ejecución de los trabajos.</Text>
+          </View>
+        </View>
+        <Text style={[s.clausulaTexto, { marginTop: 4 }]}>
+          EL CONTRATISTA es el único responsable frente a su personal y a los subcontratistas que intervengan en la obra. EL COMITENTE no asumirá responsabilidad por accidentes, enfermedades profesionales ni cualquier otra contingencia que afecte al personal afectado a los trabajos.
+        </Text>
+      </View>
+
+      {/* ── SÉPTIMA ─────────────────────────────────────────────────────── */}
+      <View style={s.clausula}>
+        <Text style={s.clausulaTitulo}>Séptima – Limitaciones y trabajos excluidos</Text>
+        <Text style={[s.clausulaTexto, { marginBottom: 3 }]}>EL CONTRATISTA no asumirá responsabilidad por:</Text>
+        <View style={s.lista}>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>a)</Text>
+            <Text style={s.listaTexto}>Daños producidos durante el traslado necesario de equipos de aire acondicionado, antenas u otros artefactos instalados en fachadas o terrazas, cuando dicho movimiento sea imprescindible para la ejecución de los trabajos y no hubiera sido contratado expresamente.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>b)</Text>
+            <Text style={s.listaTexto}>Defectos de terminación en áreas donde no se hayan retirado previamente redes de protección, lonas, objetos de valor, mobiliario u otros elementos por parte de los propietarios u ocupantes.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>c)</Text>
+            <Text style={s.listaTexto}>Vicios propios o fallas de fabricación de materiales —pinturas, selladores, membranas u otros— independientemente de quién los adquiera, siempre que hayan sido aplicados conforme a las especificaciones del fabricante.</Text>
+          </View>
+          <View style={s.listaItem}>
+            <Text style={s.listaBullet}>d)</Text>
+            <Text style={s.listaTexto}>Trabajos adicionales no contemplados en el Presupuesto (reparaciones de profundidad mayor a la prevista, recambio de aberturas, sectores no incluidos u otras intervenciones ajenas al objeto pactado). Dichos adicionales serán comunicados a EL COMITENTE y presupuestados por separado antes de su ejecución.</Text>
           </View>
         </View>
       </View>
 
-      {/* SÉPTIMA */}
+      {/* ── OCTAVA ──────────────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Séptima: Adicionales</Text>
+        <Text style={s.clausulaTitulo}>Octava – Recepción de obra</Text>
         <Text style={s.clausulaTexto}>
-          Se cobrarán adicionales por reparaciones fuera de lo previsto (desmoronamientos profundos, frentines degradados, etc.), los cuales serán comunicados y presupuestados previo a su ejecución.
+          A la finalización de los trabajos, las partes suscribirán conjuntamente un Acta de Recepción Provisoria, a partir de la cual comenzará un período de observación de <Text style={b}>treinta (30) días corridos</Text>. Transcurrido dicho plazo sin que EL COMITENTE hubiera formulado observaciones por escrito, se operará la Recepción Definitiva, dando por cumplidas las obligaciones de EL CONTRATISTA salvo las de garantía que correspondan conforme a la Cláusula Novena.
         </Text>
       </View>
 
-      {/* OCTAVA */}
+      {/* ── NOVENA ──────────────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Octava: Recepción y Garantía</Text>
+        <Text style={s.clausulaTitulo}>Novena – Garantía</Text>
+        {tieneGarantia === true ? (
+          <Text style={s.clausulaTexto}>
+            {'Los trabajos ejecutados cuentan con una garantía de '}
+            <Text style={b}>dos (2) años</Text>
+            {' contados desde la Recepción Provisoria'}
+            {garantiaVenc ? `, con fecha de vencimiento el ${fmtLong(garantiaVenc)},` : ''}
+            {' sobre los sistemas de impermeabilización aplicados. La garantía queda condicionada al cumplimiento de las obligaciones de EL COMITENTE establecidas en la Cláusula Tercera y a las limitaciones previstas en la Cláusula Séptima.'}
+          </Text>
+        ) : tieneGarantia === false ? (
+          <Text style={s.clausulaTexto}>
+            Los trabajos objeto del presente Contrato no incluyen garantía. Las partes acuerdan expresamente esta condición al momento de la celebración del Contrato.
+          </Text>
+        ) : (
+          <Text style={s.clausulaTexto}>
+            {'Las condiciones de garantía serán las establecidas en el Presupuesto N.º '}
+            <Text style={b}>{presupuesto.numero ?? '—'}</Text>
+            {' y sus anexos.'}
+          </Text>
+        )}
+      </View>
+
+      {/* ── DÉCIMA ──────────────────────────────────────────────────────── */}
+      <View style={s.clausula}>
+        <Text style={s.clausulaTitulo}>Décima – Imprevisión</Text>
         <Text style={s.clausulaTexto}>
-          {'Al finalizar se firmará un Acta de Recepción Provisoria y, a los 30 días, la Recepción Final. Los trabajos cuentan con una garantía de '}
-          <Text style={b}>2 años</Text>
-          {' sobre la impermeabilización, condicionada a lo expuesto en la cláusula sexta.'}
+          Si circunstancias extraordinarias e imprevisibles al momento de la celebración de este Contrato —incluyendo variaciones significativas en los costos de materiales, mano de obra o insumos— tornaran excesivamente onerosa la prestación a cargo de EL CONTRATISTA, las partes se obligan a renegociar de buena fe las condiciones económicas en un plazo no mayor de quince (15) días hábiles desde la notificación fehaciente de la situación. En caso de no arribar a un acuerdo, cualquiera de las partes podrá invocar la rescisión del Contrato sin penalidad, reconociéndose los trabajos efectivamente ejecutados hasta esa fecha.
         </Text>
       </View>
 
-      {/* NOVENA */}
+      {/* ── DÉCIMA PRIMERA ──────────────────────────────────────────────── */}
       <View style={s.clausula}>
-        <Text style={s.clausulaTitulo}>Novena: Jurisdicción y Domicilios</Text>
+        <Text style={s.clausulaTitulo}>Décima Primera – Rescisión</Text>
+        <Text style={s.clausulaTexto}>
+          Cualquiera de las partes podrá rescindir el presente Contrato mediante notificación fehaciente con una antelación mínima de cinco (5) días hábiles. En caso de rescisión por causa imputable a EL COMITENTE, este abonará los trabajos ejecutados más una indemnización equivalente al veinte por ciento (20%) del saldo pendiente. En caso de rescisión por causa imputable a EL CONTRATISTA, este reintegrará los anticipos recibidos por trabajos no ejecutados. Las sumas adeudadas en cualquier supuesto devengarán un interés del <Text style={b}>{tasaInteres}</Text> mensual desde su vencimiento hasta el efectivo pago.
+        </Text>
+      </View>
+
+      {/* ── DÉCIMA SEGUNDA ──────────────────────────────────────────────── */}
+      <View style={s.clausula}>
+        <Text style={s.clausulaTitulo}>Décima Segunda – Jurisdicción</Text>
+        <Text style={s.clausulaTexto}>
+          Para todos los efectos legales derivados del presente Contrato, las partes se someten a la jurisdicción exclusiva de los Tribunales Ordinarios de la Ciudad Autónoma de Buenos Aires, renunciando a cualquier otro fuero o jurisdicción que pudiera corresponderles.
+        </Text>
+      </View>
+
+      {/* ── DÉCIMA TERCERA ──────────────────────────────────────────────── */}
+      <View style={s.clausula}>
+        <Text style={s.clausulaTitulo}>Décima Tercera – Domicilios</Text>
         <Text style={[s.clausulaTexto, { marginBottom: 3 }]}>
-          Las partes constituyen domicilios en:
+          Las partes constituyen los siguientes domicilios especiales a todos los efectos del presente Contrato:
         </Text>
         <View style={s.lista}>
           <View style={s.listaItem}>
             <Text style={s.listaBullet}>•</Text>
             <Text style={s.listaTexto}>
               <Text style={b}>EL CONTRATISTA: </Text>
-              Albarracín 2050, PH3, CABA.
+              Albarracín 2050, PH3, Ciudad Autónoma de Buenos Aires.
             </Text>
           </View>
           <View style={s.listaItem}>
@@ -459,13 +557,13 @@ export function ContratoPDFPage({
           </View>
         </View>
         <Text style={[s.clausulaTexto, { marginTop: 4 }]}>
-          Se someten a los Tribunales Ordinarios de la Capital Federal ante cualquier divergencia.
+          Las notificaciones cursadas a los domicilios precedentes se tendrán por válidamente efectuadas.
         </Text>
       </View>
 
       {/* Cierre */}
       <Text style={s.cierre}>
-        {'En prueba de conformidad, se firman dos ejemplares de un mismo tenor a los '}
+        {'En prueba de conformidad, se firman dos (2) ejemplares de igual tenor en la Ciudad Autónoma de Buenos Aires, a los '}
         <Text style={b}>{form.fecha_firma ? String(parseLocalDate(form.fecha_firma).getDate()) : '___'}</Text>
         {' días del mes de '}
         <Text style={b}>{form.fecha_firma ? MESES[parseLocalDate(form.fecha_firma).getMonth()] : '__________'}</Text>
@@ -474,19 +572,8 @@ export function ContratoPDFPage({
         {'.'}
       </Text>
 
-      {/* Firmas */}
+      {/* Firmas — COMITENTE primero, luego CONTRATISTA */}
       <View style={s.firmaSection}>
-        <View style={s.firmaCol}>
-          {firmaContratista ? (
-            <Image src={firmaContratista} style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
-          ) : (
-            <View style={{ height: 44 }} />
-          )}
-          <View style={s.firmaLinea} />
-          <Text style={s.firmaTitulo}>EL CONTRATISTA</Text>
-          <Text style={s.firmaSubtitulo}>Luis Alfonzo</Text>
-          <Text style={s.firmaSubtitulo}>CUIT 27-96416229-3</Text>
-        </View>
         <View style={s.firmaCol}>
           {firmaCliente ? (
             <Image src={firmaCliente} style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
@@ -497,6 +584,17 @@ export function ContratoPDFPage({
           <Text style={s.firmaTitulo}>EL COMITENTE</Text>
           <Text style={s.firmaSubtitulo}>{admin}</Text>
           <Text style={s.firmaSubtitulo}>DNI {dni}</Text>
+        </View>
+        <View style={s.firmaCol}>
+          {firmaContratista ? (
+            <Image src={firmaContratista} style={{ height: 44, width: 'auto', objectFit: 'contain' }} />
+          ) : (
+            <View style={{ height: 44 }} />
+          )}
+          <View style={s.firmaLinea} />
+          <Text style={s.firmaTitulo}>EL CONTRATISTA</Text>
+          <Text style={s.firmaSubtitulo}>Luis Alfonzo</Text>
+          <Text style={s.firmaSubtitulo}>CUIT 27-96416229-3</Text>
         </View>
       </View>
 
@@ -510,7 +608,7 @@ export function ContratoPDFPage({
       {/* Footer */}
       <View style={s.footer} fixed>
         <Text style={s.footerText}>
-          Limones - Rope Access · Contrato de Locación de Obra · Ref. {presupuesto.numero ?? '—'}
+          Limones - Rope Access · Contrato de Obra · Ref. {presupuesto.numero ?? '—'}
         </Text>
         <Text
           style={s.pageNumber}

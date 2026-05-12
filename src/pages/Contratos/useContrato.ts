@@ -20,6 +20,7 @@ export type ContratoInput = Omit<
   'id' | 'created_at' | 'updated_at'
 > & {
   firma_contratista_base64?: string | null
+  tasa_interes?: number | null
 }
 
 export function useContrato(presupuestoId: string | undefined) {

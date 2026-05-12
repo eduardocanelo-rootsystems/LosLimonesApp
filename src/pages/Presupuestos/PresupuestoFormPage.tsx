@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
+import { ArrowLeft, ClipboardCheck, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
 import { toast } from 'sonner'
 import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { supabase } from '@/lib/supabase'
@@ -560,14 +560,24 @@ export default function PresupuestoFormPage() {
               </div>
             )}
             {!esNuevo && (estado === 'aprobado' || estado === 'finalizado') && (
-              <button
-                type="button"
-                onClick={() => navigate(`/presupuestos/${id}/contrato`)}
-                className="btn-secondary"
-              >
-                <ScrollText className="h-4 w-4" />
-                Contrato
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/presupuestos/${id}/contrato`)}
+                  className="btn-secondary"
+                >
+                  <ScrollText className="h-4 w-4" />
+                  Contrato
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/presupuestos/${id}/acta`)}
+                  className="btn-secondary"
+                >
+                  <ClipboardCheck className="h-4 w-4" />
+                  Acta
+                </button>
+              </>
             )}
             {!esNuevo && presupuesto && (
               <button

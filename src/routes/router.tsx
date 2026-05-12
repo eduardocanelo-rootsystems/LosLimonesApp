@@ -6,9 +6,10 @@ import { RequiereRol } from './RequiereRol'
 import { isStaleChunkError } from '@/lib/chunkReload'
 
 // Eager — pequeños, necesarios en el primer render
-import LoginPage    from '@/pages/Auth/LoginPage'
-import RegistroPage from '@/pages/Auth/RegistroPage'
+import LoginPage          from '@/pages/Auth/LoginPage'
+import RegistroPage       from '@/pages/Auth/RegistroPage'
 import FirmarContratoPage from '@/pages/Firmar/FirmarContratoPage'
+import FirmarActaPage     from '@/pages/Firmar/FirmarActaPage'
 
 // Cuando un chunk no se encuentra (deploy nuevo mientras el usuario tenía la app abierta),
 // recargamos la página para que cargue el index.html actualizado.
@@ -38,7 +39,8 @@ function lazyWithReload<T extends React.ComponentType<unknown>>(
 const DashboardPage           = lazyWithReload(() => import('@/pages/Dashboard/DashboardPage'))
 const PresupuestosPage        = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestosPage'))
 const PresupuestoFormPage     = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestoFormPage'))
-const ContratoFormPage        = lazyWithReload(() => import('@/pages/Contratos/ContratoFormPage'))
+const ContratoFormPage          = lazyWithReload(() => import('@/pages/Contratos/ContratoFormPage'))
+const ActaRecepcionFormPage     = lazyWithReload(() => import('@/pages/ActaRecepcion/ActaRecepcionFormPage'))
 const ClientesPage            = lazyWithReload(() => import('@/pages/Clientes/ClientesPage'))
 const ServiciosPage           = lazyWithReload(() => import('@/pages/Servicios/ServiciosPage'))
 const MaterialesPage          = lazyWithReload(() => import('@/pages/Materiales/MaterialesPage'))
@@ -79,6 +81,10 @@ export const router = createBrowserRouter([
     element: <FirmarContratoPage />,
   },
   {
+    path: '/firmar-acta/:token',
+    element: <FirmarActaPage />,
+  },
+  {
     path: '/',
     element: (
       <ProtectedRoute>
@@ -109,6 +115,10 @@ export const router = createBrowserRouter([
       {
         path: 'presupuestos/:id/contrato',
         element: <RequiereRol roles={[...TODOS]}><Suspense fallback={<PageLoader />}><ContratoFormPage /></Suspense></RequiereRol>,
+      },
+      {
+        path: 'presupuestos/:id/acta',
+        element: <RequiereRol roles={[...TODOS]}><Suspense fallback={<PageLoader />}><ActaRecepcionFormPage /></Suspense></RequiereRol>,
       },
       {
         path: 'servicios',

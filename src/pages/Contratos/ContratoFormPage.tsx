@@ -97,6 +97,7 @@ export default function ContratoFormPage() {
   const [fechaCuota1, setFechaCuota1] = useState('')
   const [fechaCuota2, setFechaCuota2] = useState('')
   const [montoMulta, setMontoMulta] = useState('')
+  const [tasaInteres, setTasaInteres] = useState('')
   const [direccionLegal, setDireccionLegal] = useState('')
   const [fechaInicioObra, setFechaInicioObra] = useState('')
   const [fechaFirma, setFechaFirma] = useState('')
@@ -134,6 +135,8 @@ export default function ContratoFormPage() {
       setFechaCuota1(contrato.fecha_cuota_1 ?? '')
       setFechaCuota2(contrato.fecha_cuota_2 ?? '')
       setMontoMulta(contrato.monto_multa?.toString() ?? '')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setTasaInteres((contrato as any).tasa_interes?.toString() ?? '')
       setDireccionLegal(contrato.direccion_legal ?? presupuesto.cliente_direccion ?? '')
       setFechaInicioObra(contrato.fecha_inicio_obra ?? '')
       setFechaFirma(contrato.fecha_firma ?? fechaFirmaDefault)
@@ -199,6 +202,7 @@ export default function ContratoFormPage() {
         fecha_cuota_1: fechaCuota1 || null,
         fecha_cuota_2: fechaCuota2 || null,
         monto_multa: montoMulta ? parseFloat(montoMulta) : null,
+        tasa_interes: tasaInteres ? parseFloat(tasaInteres) : null,
         direccion_legal: direccionLegal || null,
         fecha_inicio_obra: fechaInicioObra || null,
         fecha_firma: fechaFirma || null,
@@ -274,6 +278,7 @@ export default function ContratoFormPage() {
     fecha_cuota_1: fechaCuota1,
     fecha_cuota_2: fechaCuota2,
     monto_multa: montoMulta,
+    tasa_interes: tasaInteres,
     direccion_legal: direccionLegal,
     fecha_inicio_obra: fechaInicioObra,
     fecha_firma: fechaFirma,
@@ -349,7 +354,7 @@ export default function ContratoFormPage() {
                 <span className="font-mono text-sm font-semibold text-accent-400">
                   {presupuesto.numero ?? '—'}
                 </span>
-                <span className="text-xs text-ink-500">· Contrato de Locación de Obra</span>
+                <span className="text-xs text-ink-500">· Contrato de Obra</span>
               </div>
               {presupuesto.cliente_razon_social && (
                 <p className="text-xs text-ink-500">{presupuesto.cliente_razon_social}</p>
@@ -638,6 +643,17 @@ export default function ContratoFormPage() {
               step="0.01"
               value={montoMulta}
               onChange={(e) => setMontoMulta(e.target.value)}
+              className="input-base font-mono"
+              placeholder="0.00"
+            />
+          </Field>
+          <Field label="Tasa de interés por mora (% mensual)" hint="Cláusula Décima Primera · Ej: 3">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={tasaInteres}
+              onChange={(e) => setTasaInteres(e.target.value)}
               className="input-base font-mono"
               placeholder="0.00"
             />

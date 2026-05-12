@@ -15,6 +15,7 @@ export interface ContratoFormValues {
   fecha_cuota_1: string
   fecha_cuota_2: string
   monto_multa: string
+  tasa_interes: string
   direccion_legal: string
   fecha_inicio_obra: string
   fecha_firma: string
@@ -46,6 +47,8 @@ export function contratoToFormValues(
     fecha_cuota_1:         contrato?.fecha_cuota_1         ?? '',
     fecha_cuota_2:         contrato?.fecha_cuota_2         ?? '',
     monto_multa:           contrato?.monto_multa?.toString() ?? '',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tasa_interes:          (contrato as any)?.tasa_interes?.toString() ?? '',
     direccion_legal:       contrato?.direccion_legal       ?? presupuesto.cliente_direccion ?? '',
     fecha_inicio_obra:     contrato?.fecha_inicio_obra     ?? '',
     fecha_firma:           contrato?.fecha_firma           ?? fechaFirmaDefault,

@@ -121,7 +121,7 @@ export default function FirmarContratoPage() {
                 Limones - Rope Access
               </p>
               <h1 className="mt-1 text-xl font-bold text-gray-900">
-                Contrato de Locación de Obra
+                Contrato de Obra
               </h1>
               <p className="mt-0.5 text-sm text-gray-500">
                 Ref. {contrato.presupuesto_numero} · {fmtDate(contrato.presupuesto_fecha).split(',')[0]}
