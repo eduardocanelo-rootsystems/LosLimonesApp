@@ -651,118 +651,128 @@ export default function PresupuestoFormPage() {
         onChange={handleField}
       />
 
-      {/* Diagnóstico Técnico - Procedimientos */}
-      <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
-          Diagnóstico Técnico - Procedimientos
-        </h2>
-        <textarea
-          value={diagnosticoTecnico}
-          onChange={(e) => setDiagnosticoTecnico(e.target.value)}
-          maxLength={1500}
-          rows={6}
-          className="input-base resize-none"
-          placeholder="Descripción técnica del estado del edificio, patologías detectadas, intervenciones necesarias…"
-        />
-        <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/1500</p>
-      </section>
-
-      {/* Alcance de la Obra */}
-      <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
-          Alcance de la Obra
-        </h2>
-        <textarea
-          value={alcanceObra}
-          onChange={(e) => setAlcanceObra(e.target.value)}
-          maxLength={1500}
-          rows={6}
-          className="input-base resize-none"
-          placeholder="Descripción de los trabajos incluidos en el alcance de la obra…"
-        />
-        <p className="mt-1 text-right text-xs text-ink-500">{alcanceObra.length}/1500</p>
-      </section>
-
-      {/* Exenciones */}
-      <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
-          Exenciones
-        </h2>
-        <textarea
-          value={exenciones}
-          onChange={(e) => setExenciones(e.target.value)}
-          maxLength={1500}
-          rows={6}
-          className="input-base resize-none"
-          placeholder="Trabajos o situaciones no incluidos en el presupuesto…"
-        />
-        <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/1500</p>
-      </section>
-
-      {/* Garantía */}
-      <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold tracking-wide text-ink-400">
-          Garantía
-          {tieneGarantia === null && (
-            <span className="ml-2 text-xs font-normal text-danger">* obligatorio</span>
-          )}
-        </h2>
-        <div className="flex gap-3 mb-4">
-          <button
-            type="button"
-            onClick={() => { setTieneGarantia(false); setGarantiaVencimiento('') }}
-            className={cn(
-              'flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
-              tieneGarantia === false
-                ? 'border-accent-500 bg-accent-500/10 text-accent-300'
-                : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
-            )}
-          >
-            Sin garantía
-          </button>
-          <button
-            type="button"
-            onClick={() => setTieneGarantia(true)}
-            className={cn(
-              'flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
-              tieneGarantia === true
-                ? 'border-accent-500 bg-accent-500/10 text-accent-300'
-                : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
-            )}
-          >
-            Con garantía
-          </button>
+      {/* Textos del presupuesto */}
+      <section className="card divide-y divide-ink-800 overflow-hidden">
+        <div className="p-6">
+          <h2 className="mb-1 text-sm font-semibold tracking-wide text-ink-300">
+            Textos del presupuesto
+          </h2>
+          <p className="text-xs text-ink-500">Diagnóstico, alcance, exenciones, garantía y observaciones</p>
         </div>
-        {tieneGarantia === true && (
-          <div className="flex items-center gap-3">
-            <label className="text-sm text-ink-400 whitespace-nowrap">Vencimiento:</label>
-            <input
-              type="date"
-              value={garantiaVencimiento}
-              onChange={(e) => setGarantiaVencimiento(e.target.value)}
-              className={cn(
-                'input-base font-mono',
-                !garantiaVencimiento && 'border-danger/60 focus:border-danger'
-              )}
-            />
-          </div>
-        )}
-      </section>
 
-      {/* Observaciones */}
-      <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-ink-400">
-          Observaciones
-        </h2>
-        <textarea
-          value={observaciones}
-          onChange={(e) => setObservaciones(e.target.value)}
-          maxLength={1500}
-          rows={6}
-          className="input-base resize-none"
-          placeholder="Notas sobre el estado del edificio, condiciones especiales de acceso, requerimientos del cliente…"
-        />
-        <p className="mt-1 text-right text-xs text-ink-500">{observaciones.length}/1500</p>
+        {/* Diagnóstico Técnico */}
+        <div className="p-6">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+            Diagnóstico Técnico - Procedimientos
+          </h3>
+          <textarea
+            value={diagnosticoTecnico}
+            onChange={(e) => setDiagnosticoTecnico(e.target.value)}
+            maxLength={3000}
+            rows={6}
+            className="input-base resize-y"
+            placeholder="Descripción técnica del estado del edificio, patologías detectadas, intervenciones necesarias…"
+          />
+          <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/3000</p>
+        </div>
+
+        {/* Alcance de la Obra */}
+        <div className="p-6">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+            Alcance de la Obra
+          </h3>
+          <textarea
+            value={alcanceObra}
+            onChange={(e) => setAlcanceObra(e.target.value)}
+            maxLength={3000}
+            rows={6}
+            className="input-base resize-y"
+            placeholder="Descripción de los trabajos incluidos en el alcance de la obra…"
+          />
+          <p className="mt-1 text-right text-xs text-ink-500">{alcanceObra.length}/3000</p>
+        </div>
+
+        {/* Exenciones */}
+        <div className="p-6">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+            Exenciones
+          </h3>
+          <textarea
+            value={exenciones}
+            onChange={(e) => setExenciones(e.target.value)}
+            maxLength={3000}
+            rows={6}
+            className="input-base resize-y"
+            placeholder="Trabajos o situaciones no incluidos en el presupuesto…"
+          />
+          <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/3000</p>
+        </div>
+
+        {/* Garantía */}
+        <div className="p-6">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+            Garantía
+            {tieneGarantia === null && (
+              <span className="ml-2 font-normal normal-case text-danger">* obligatorio</span>
+            )}
+          </h3>
+          <div className="flex gap-3 mb-4">
+            <button
+              type="button"
+              onClick={() => { setTieneGarantia(false); setGarantiaVencimiento('') }}
+              className={cn(
+                'flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
+                tieneGarantia === false
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-300'
+                  : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+              )}
+            >
+              Sin garantía
+            </button>
+            <button
+              type="button"
+              onClick={() => setTieneGarantia(true)}
+              className={cn(
+                'flex-1 rounded-lg border px-4 py-3 text-sm font-medium transition-colors',
+                tieneGarantia === true
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-300'
+                  : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+              )}
+            >
+              Con garantía
+            </button>
+          </div>
+          {tieneGarantia === true && (
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-ink-400 whitespace-nowrap">Vencimiento:</label>
+              <input
+                type="date"
+                value={garantiaVencimiento}
+                onChange={(e) => setGarantiaVencimiento(e.target.value)}
+                className={cn(
+                  'input-base font-mono',
+                  !garantiaVencimiento && 'border-danger/60 focus:border-danger'
+                )}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Observaciones */}
+        <div className="p-6">
+          <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
+            Observaciones
+          </h3>
+          <textarea
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            maxLength={3000}
+            rows={5}
+            className="input-base resize-y"
+            placeholder="Notas sobre el estado del edificio, condiciones especiales de acceso, requerimientos del cliente…"
+          />
+          <p className="mt-1 text-right text-xs text-ink-500">{observaciones.length}/3000</p>
+        </div>
       </section>
 
       <SeccionServicios
