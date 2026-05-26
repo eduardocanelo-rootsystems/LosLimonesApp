@@ -333,10 +333,12 @@ function TablaServicios({
   items,
   esExtra,
   totalManoObra = 0,
+  totalMateriales = 0,
 }: {
   items: PresupuestoCompleto['servicios']
   esExtra?: boolean
   totalManoObra?: number
+  totalMateriales?: number
 }) {
   if (items.length === 0) return null
   const th = esExtra ? s.thTextExtra : s.thText
@@ -351,8 +353,7 @@ function TablaServicios({
       </View>
       {items.map((sv, i) => {
         const proporcion = totalSubtotalItems > 0 ? Number(sv.subtotal) / totalSubtotalItems : 0
-        const extraServicio = proporcion * totalManoObra
-        const subtotalDisplay = Number(sv.subtotal) + extraServicio
+        const subtotalDisplay = Number(sv.subtotal) + proporcion * (totalManoObra + totalMateriales)
         return (
           <View key={sv.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
             <Text style={[s.tdText, s.colNombre]}>{sv.nombre_snapshot}</Text>
@@ -365,27 +366,6 @@ function TablaServicios({
   )
 }
 
-function TablaMateriales({ items, esExtra }: { items: PresupuestoCompleto['materiales']; esExtra?: boolean }) {
-  if (items.length === 0) return null
-  const th = esExtra ? s.thTextExtra : s.thText
-  const header = esExtra ? s.tableHeaderExtra : s.tableHeader
-  return (
-    <View style={s.table}>
-      <View style={header}>
-        <Text style={[th, s.colMatNombre]}>MATERIAL</Text>
-        <Text style={[th, s.colUnidad]}>UNIDAD</Text>
-        <Text style={[th, s.colCantidad]}>CANT.</Text>
-      </View>
-      {items.map((mat, i) => (
-        <View key={mat.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-          <Text style={[s.tdText, s.colMatNombre]}>{mat.nombre_snapshot}</Text>
-          <Text style={[s.tdMono, s.colUnidad, s.tdRight]}>{mat.unidad_snapshot}</Text>
-          <Text style={[s.tdMono, s.colCantidad, s.tdRight]}>{mat.cantidad}</Text>
-        </View>
-      ))}
-    </View>
-  )
-}
 
 const PLANES_FIN = [
   { value: 'contado', label: 'Contado (50/50)', recargo: 0 },
@@ -577,25 +557,15 @@ export function PresupuestoPDFPage({
       {serviciosOrig.length > 0 && (
         <View style={s.section}>
           <Text style={s.sectionTitle}>Servicios</Text>
-          <TablaServicios items={serviciosOrig} totalManoObra={subtotalManoObra} />
-        </View>
-      )}
-
-      {materialesOrig.length > 0 && (
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Materiales</Text>
-          <TablaMateriales items={materialesOrig} />
+          <TablaServicios items={serviciosOrig} totalManoObra={subtotalManoObra} totalMateriales={subtotalMaterialesOrig} />
         </View>
       )}
 
       {tieneExtras && (
         <View style={s.section}>
           <Text style={s.sectionTitleExtra}>Trabajos adicionales</Text>
-          {serviciosExtra.length > 0 && <TablaServicios items={serviciosExtra} esExtra />}
-          {materialesExtra.length > 0 && (
-            <View style={{ marginTop: serviciosExtra.length > 0 ? 6 : 0 }}>
-              <TablaMateriales items={materialesExtra} esExtra />
-            </View>
+          {serviciosExtra.length > 0 && (
+            <TablaServicios items={serviciosExtra} esExtra totalMateriales={subtotalMaterialesExtra} />
           )}
         </View>
       )}
@@ -604,13 +574,7 @@ export function PresupuestoPDFPage({
         {serviciosOrig.length > 0 && (
           <View style={s.totalRow}>
             <Text style={s.totalLabel}>Subtotal servicios</Text>
-            <Text style={s.totalValue}>{fmt(subtotalServiciosOrig + subtotalManoObra)}</Text>
-          </View>
-        )}
-        {materialesOrig.length > 0 && (
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>Subtotal materiales</Text>
-            <Text style={s.totalValue}>{fmt(subtotalMaterialesOrig)}</Text>
+            <Text style={s.totalValue}>{fmt(subtotalServiciosOrig + subtotalManoObra + subtotalMaterialesOrig)}</Text>
           </View>
         )}
         {tieneExtras && (
@@ -627,7 +591,7 @@ export function PresupuestoPDFPage({
             <Text style={s.descuentoValue}>− {fmt(descuentoMonto)}</Text>
           </View>
         )}
-        {(tieneDescuento || tieneExtras || (serviciosOrig.length > 0 && materialesOrig.length > 0)) && (
+        {(tieneDescuento || tieneExtras) && (
           <View style={s.totalRow}>
             <Text style={s.totalLabel}>Neto</Text>
             <Text style={s.totalValue}>{fmt(neto)}</Text>
