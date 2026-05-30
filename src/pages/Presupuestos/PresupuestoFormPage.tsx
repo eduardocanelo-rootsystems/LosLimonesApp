@@ -1,7 +1,5 @@
-import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
-
-const ObraMenorFormPage = lazy(() => import('./ObraMenorFormPage'))
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ClipboardCheck, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
 import { toast } from 'sonner'
 import { reloadOnStaleChunk } from '@/lib/chunkReload'
@@ -54,30 +52,7 @@ const ESTADO_COLOR: Record<EstadoPresupuesto, string> = {
 export default function PresupuestoFormPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
   const esNuevo = !id
-
-  // Nuevo: delegación por tipo
-  const tipoParam = searchParams.get('tipo')
-  const { data: presupuestoDetectado, isLoading: detectando } = usePresupuesto(id)
-
-  const tipoEfectivo = presupuestoDetectado?.tipo ?? (tipoParam === 'obra_menor' ? 'obra_menor' : null)
-
-  if (id && detectando) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-accent-500" />
-      </div>
-    )
-  }
-
-  if (tipoEfectivo === 'obra_menor') {
-    return (
-      <Suspense fallback={<div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-accent-500" /></div>}>
-        <ObraMenorFormPage />
-      </Suspense>
-    )
-  }
 
   const { data: presupuesto, isLoading: loadingPresupuesto, isFetching: fetchingPresupuesto } = usePresupuesto(id)
   const { data: contrato, isFetching: fetchingContrato } = useContrato(id)

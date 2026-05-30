@@ -38,7 +38,7 @@ function lazyWithReload<T extends React.ComponentType<unknown>>(
 // Lazy — se cargan solo cuando el usuario navega a esa ruta
 const DashboardPage           = lazyWithReload(() => import('@/pages/Dashboard/DashboardPage'))
 const PresupuestosPage        = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestosPage'))
-const PresupuestoFormPage     = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestoFormPage'))
+const PresupuestoFormPage     = lazyWithReload(() => import('@/pages/Presupuestos/PresupuestoDispatcher'))
 const ContratoFormPage          = lazyWithReload(() => import('@/pages/Contratos/ContratoFormPage'))
 const ActaRecepcionFormPage     = lazyWithReload(() => import('@/pages/ActaRecepcion/ActaRecepcionFormPage'))
 const ClientesPage            = lazyWithReload(() => import('@/pages/Clientes/ClientesPage'))
