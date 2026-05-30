@@ -191,6 +191,7 @@ export default function PresupuestoFormPage() {
         tipo: mo.tipo_snapshot,
         costo_diario: mo.costo_diario_snapshot,
         cantidad_empleados: mo.cantidad_empleados,
+        dias: mo.dias ?? null,
         es_adicional: mo.es_adicional,
       }))
     )
@@ -370,7 +371,7 @@ export default function PresupuestoFormPage() {
   const { subtotalServicios, subtotalMateriales, costoManoObra, extrasMonto } = useMemo(() => {
     const ss = servicios.reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0)
     const sm = materiales.reduce((acc, m) => acc + m.precio * m.cantidad, 0)
-    const cmo = manoDeObra.reduce((acc, mo) => acc + mo.costo_diario * mo.cantidad_empleados * dias, 0)
+    const cmo = manoDeObra.reduce((acc, mo) => acc + mo.costo_diario * mo.cantidad_empleados * (mo.dias ?? dias), 0)
     const ext =
       servicios.filter((s) => s.es_adicional).reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0) +
       materiales.filter((m) => m.es_adicional).reduce((acc, m) => acc + m.precio * m.cantidad, 0)

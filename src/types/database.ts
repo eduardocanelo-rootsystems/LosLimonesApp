@@ -435,6 +435,7 @@ export type Database = {
           tipo_snapshot: string
           costo_diario_snapshot: number
           cantidad_empleados: number
+          dias: number | null
           es_adicional: boolean
           created_at: string
         }
@@ -445,6 +446,7 @@ export type Database = {
           tipo_snapshot: string
           costo_diario_snapshot: number
           cantidad_empleados?: number
+          dias?: number | null
           es_adicional?: boolean
           created_at?: string
         }
@@ -455,6 +457,7 @@ export type Database = {
           tipo_snapshot?: string
           costo_diario_snapshot?: number
           cantidad_empleados?: number
+          dias?: number | null
           es_adicional?: boolean
           created_at?: string
         }
@@ -669,6 +672,7 @@ export interface FormManoObraItem {
   tipo: string
   costo_diario: number
   cantidad_empleados: number
+  dias: number | null
   es_adicional?: boolean
 }
 

@@ -229,6 +229,7 @@ export function useGuardarPresupuesto() {
             tipo_snapshot: mo.tipo,
             costo_diario_snapshot: mo.costo_diario,
             cantidad_empleados: mo.cantidad_empleados,
+            dias: mo.dias ?? null,
             es_adicional: mo.es_adicional ?? false,
           }))
         )

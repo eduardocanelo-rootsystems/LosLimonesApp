@@ -434,9 +434,9 @@ export function PresupuestoPDFPage({
   const subtotalMaterialesExtra = materialesExtra.reduce((acc, m) => acc + Number(m.subtotal), 0)
   const extrasMonto = subtotalServiciosExtra + subtotalMaterialesExtra
 
-  const dias = Number(presupuesto.dias_estimados_obra ?? 0)
+  const diasGlobales = Number(presupuesto.dias_estimados_obra ?? 0)
   const subtotalManoObra = presupuesto.mano_obra.reduce(
-    (acc, mo) => acc + mo.costo_diario_snapshot * mo.cantidad_empleados * dias,
+    (acc, mo) => acc + mo.costo_diario_snapshot * mo.cantidad_empleados * (mo.dias ?? diasGlobales),
     0,
   )
 
