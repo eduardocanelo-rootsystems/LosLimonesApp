@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Plus, Pencil, Check, X, AlertTriangle, UserX } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import {
@@ -455,13 +455,9 @@ export default function SettingsPage() {
   const [mostrarFormSocio, setMostrarFormSocio] = useState(false)
   const [mostrarCanvas, setMostrarCanvas]   = useState(false)
 
-  // Sincronizar input de monto mínimo cuando carga el dato
-  const montoMinimoStr = montoMinimo != null ? String(montoMinimo) : ''
-  const [_montoMinimoSynced, setMontoMinimoSynced] = useState(false)
-  if (!_montoMinimoSynced && montoMinimo != null) {
-    setMontoMinimoInput(montoMinimoStr)
-    setMontoMinimoSynced(true)
-  }
+  useEffect(() => {
+    if (montoMinimo != null) setMontoMinimoInput(String(montoMinimo))
+  }, [montoMinimo])
 
   const sumaPct        = socios.filter((s) => s.activo).reduce((s, socio) => s + socio.porcentaje, 0)
   const pctDesequilibrado = Math.abs(sumaPct - 100) > 0.01 && socios.some((s) => s.activo)
