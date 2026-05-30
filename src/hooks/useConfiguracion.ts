@@ -36,3 +36,22 @@ export function useGuardarFirmaContratista() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [...QK, 'firma_contratista'] }),
   })
 }
+
+export function useMontoMinimoObraMenor() {
+  return useQuery({
+    queryKey: [...QK, 'monto_minimo_obra_menor'],
+    queryFn: async () => {
+      const val = await getConfig('monto_minimo_obra_menor')
+      return val ? parseFloat(val) : null
+    },
+  })
+}
+
+export function useGuardarMontoMinimoObraMenor() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (monto: number | null) =>
+      setConfig('monto_minimo_obra_menor', monto !== null ? String(monto) : ''),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [...QK, 'monto_minimo_obra_menor'] }),
+  })
+}

@@ -248,6 +248,7 @@ export type Database = {
           plan_pago: 'contado' | '60dias' | '90dias' | null
           importe_servicios: number | null
           importe_total: number | null
+          tipo: 'obra_mayor' | 'obra_menor'
         }
         Insert: {
           id?: string
@@ -289,6 +290,7 @@ export type Database = {
           plan_pago?: 'contado' | '60dias' | '90dias' | null
           importe_servicios?: number | null
           importe_total?: number | null
+          tipo?: 'obra_mayor' | 'obra_menor'
         }
         Update: {
           id?: string
@@ -330,6 +332,46 @@ export type Database = {
           plan_pago?: 'contado' | '60dias' | '90dias' | null
           importe_servicios?: number | null
           importe_total?: number | null
+          tipo?: 'obra_mayor' | 'obra_menor'
+        }
+        Relationships: []
+      }
+      presupuesto_items: {
+        Row: {
+          id: string
+          presupuesto_id: string
+          servicio_id: string | null
+          nombre_snapshot: string
+          precio_unitario: number
+          cantidad: number
+          subtotal: number
+          es_adicional: boolean
+          orden: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          presupuesto_id: string
+          servicio_id?: string | null
+          nombre_snapshot: string
+          precio_unitario: number
+          cantidad?: number
+          subtotal: number
+          es_adicional?: boolean
+          orden?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          presupuesto_id?: string
+          servicio_id?: string | null
+          nombre_snapshot?: string
+          precio_unitario?: number
+          cantidad?: number
+          subtotal?: number
+          es_adicional?: boolean
+          orden?: number
+          created_at?: string
         }
         Relationships: []
       }
@@ -638,12 +680,14 @@ export type PresupuestoMaterialItem = Database['public']['Tables']['presupuesto_
 export type PresupuestoManoObraItem = Database['public']['Tables']['presupuesto_mano_obra']['Row']
 
 export type PresupuestoFoto = Database['public']['Tables']['presupuesto_fotos']['Row']
+export type PresupuestoItemRow = Database['public']['Tables']['presupuesto_items']['Row']
 
 export interface PresupuestoCompleto extends Presupuesto {
   servicios: PresupuestoServicioItem[]
   materiales: PresupuestoMaterialItem[]
   mano_obra: PresupuestoManoObraItem[]
   fotos: PresupuestoFoto[]
+  items: PresupuestoItemRow[]
 }
 
 // ─── Tipos de formulario (frontend only) ─────────────────────────────────────
@@ -673,6 +717,15 @@ export interface FormManoObraItem {
   costo_diario: number
   cantidad_empleados: number
   dias: number | null
+  es_adicional?: boolean
+}
+
+export interface FormPresupuestoItem {
+  _key: string
+  servicio_id: string
+  nombre: string
+  precio_unitario: number
+  cantidad: number
   es_adicional?: boolean
 }
 

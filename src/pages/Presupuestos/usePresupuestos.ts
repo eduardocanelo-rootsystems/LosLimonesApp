@@ -4,6 +4,7 @@ import type {
   EstadoPresupuesto,
   FormManoObraItem,
   FormMaterialItem,
+  FormPresupuestoItem,
   FormServicioItem,
   Presupuesto,
   PresupuestoCompleto,
@@ -43,18 +44,22 @@ export function usePresupuesto(id: string | undefined) {
           presupuesto_servicios (*),
           presupuesto_materiales (*),
           presupuesto_mano_obra (*),
-          presupuesto_fotos (*)
+          presupuesto_fotos (*),
+          presupuesto_items (*)
         `)
         .eq('id', id!)
         .single()
 
       if (error) throw error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const d = data as any
       return {
-        ...data,
-        servicios: data.presupuesto_servicios ?? [],
-        materiales: data.presupuesto_materiales ?? [],
-        mano_obra: data.presupuesto_mano_obra ?? [],
-        fotos: (data.presupuesto_fotos ?? []).sort((a: { orden: number }, b: { orden: number }) => a.orden - b.orden),
+        ...d,
+        servicios: d.presupuesto_servicios ?? [],
+        materiales: d.presupuesto_materiales ?? [],
+        mano_obra: d.presupuesto_mano_obra ?? [],
+        fotos: (d.presupuesto_fotos ?? []).sort((a: { orden: number }, b: { orden: number }) => a.orden - b.orden),
+        items: (d.presupuesto_items ?? []).sort((a: { orden: number }, b: { orden: number }) => a.orden - b.orden),
       } as PresupuestoCompleto
     },
   })
@@ -64,6 +69,7 @@ export function usePresupuesto(id: string | undefined) {
 
 export interface GuardarPresupuestoInput {
   id?: string
+  tipo?: 'obra_mayor' | 'obra_menor'
   estado: EstadoPresupuesto
   // Cliente
   cliente_razon_social: string
@@ -73,7 +79,7 @@ export interface GuardarPresupuestoInput {
   cliente_administrador: string
   cliente_administrador_cuit: string
   cliente_email: string
-  // Edificación
+  // Edificación (solo Obra Mayor)
   edif_anios: number | null
   edif_altura: number | null
   edif_color: string
@@ -85,7 +91,7 @@ export interface GuardarPresupuestoInput {
   edif_valor_patrimonial: boolean
   edif_proteccion: string
   coef_k: number | null
-  // Otros
+  // Textos
   observaciones: string
   diagnostico_tecnico: string | null
   alcance_obra: string | null
@@ -98,12 +104,13 @@ export interface GuardarPresupuestoInput {
   dias_estimados_obra: number | null
   fecha_aprobacion: string | null
   plan_pago: 'contado' | '60dias' | '90dias' | null
-  importe_servicios: number | null  // servicios netos con IVA y recargo (snapshot al guardar)
-  importe_total: number | null      // total al cliente con IVA y recargo (snapshot al guardar)
+  importe_servicios: number | null
+  importe_total: number | null
   // Ítems
   servicios: FormServicioItem[]
   materiales: FormMaterialItem[]
   mano_obra: FormManoObraItem[]
+  items: FormPresupuestoItem[]  // Obra Menor
 }
 
 export function useGuardarPresupuesto() {
@@ -113,7 +120,6 @@ export function useGuardarPresupuesto() {
     mutationFn: async (input: GuardarPresupuestoInput) => {
       const esNuevo = !input.id
 
-      // 1. Obtener número si es nuevo
       let numero: string | undefined
       if (esNuevo) {
         const { data: numData, error: numError } = await supabase.rpc('next_presupuesto_numero')
@@ -122,8 +128,9 @@ export function useGuardarPresupuesto() {
       }
 
       const presupuestoData = {
-        numero: numero,
+        numero,
         estado: input.estado,
+        tipo: input.tipo ?? 'obra_mayor',
         cliente_razon_social: input.cliente_razon_social || null,
         cliente_cuit: input.cliente_cuit || null,
         cliente_telefono: input.cliente_telefono || null,
@@ -177,16 +184,15 @@ export function useGuardarPresupuesto() {
         if (error) throw error
         presupuestoId = input.id!
 
-        // Eliminar ítems existentes para re-insertar
         await supabase.from('presupuesto_servicios').delete().eq('presupuesto_id', presupuestoId)
         await supabase.from('presupuesto_materiales').delete().eq('presupuesto_id', presupuestoId)
         await supabase.from('presupuesto_mano_obra').delete().eq('presupuesto_id', presupuestoId)
+        await supabase.from('presupuesto_items').delete().eq('presupuesto_id', presupuestoId)
       }
 
       const m2 = input.edif_m2 ?? 0
       const k = input.coef_k ?? 1
 
-      // Insertar servicios
       if (input.servicios.length > 0) {
         const { error } = await supabase.from('presupuesto_servicios').insert(
           input.servicios.map((s) => ({
@@ -203,7 +209,6 @@ export function useGuardarPresupuesto() {
         if (error) throw error
       }
 
-      // Insertar materiales
       if (input.materiales.length > 0) {
         const { error } = await supabase.from('presupuesto_materiales').insert(
           input.materiales.map((m) => ({
@@ -220,7 +225,6 @@ export function useGuardarPresupuesto() {
         if (error) throw error
       }
 
-      // Insertar mano de obra
       if (input.mano_obra.length > 0) {
         const { error } = await supabase.from('presupuesto_mano_obra').insert(
           input.mano_obra.map((mo) => ({
@@ -231,6 +235,22 @@ export function useGuardarPresupuesto() {
             cantidad_empleados: mo.cantidad_empleados,
             dias: mo.dias ?? null,
             es_adicional: mo.es_adicional ?? false,
+          }))
+        )
+        if (error) throw error
+      }
+
+      if (input.items.length > 0) {
+        const { error } = await supabase.from('presupuesto_items').insert(
+          input.items.map((it, idx) => ({
+            presupuesto_id: presupuestoId,
+            servicio_id: it.servicio_id || null,
+            nombre_snapshot: it.nombre,
+            precio_unitario: it.precio_unitario,
+            cantidad: it.cantidad,
+            subtotal: it.precio_unitario * it.cantidad,
+            es_adicional: it.es_adicional ?? false,
+            orden: idx,
           }))
         )
         if (error) throw error

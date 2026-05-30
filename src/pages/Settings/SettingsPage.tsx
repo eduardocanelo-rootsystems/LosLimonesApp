@@ -8,7 +8,7 @@ import {
   type CuentaArca,
 } from '@/hooks/useVentas'
 import { SignatureCanvas } from '@/components/SignatureCanvas'
-import { useFirmaContratista, useGuardarFirmaContratista } from '@/hooks/useConfiguracion'
+import { useFirmaContratista, useGuardarFirmaContratista, useMontoMinimoObraMenor, useGuardarMontoMinimoObraMenor } from '@/hooks/useConfiguracion'
 import { useSocios, useGuardarSocio, type Socio } from '@/hooks/useSocios'
 import {
   useUsuarios, useInvitacionesPendientes, useCrearInvitacion,
@@ -448,9 +448,20 @@ export default function SettingsPage() {
   const { data: usuarios = [] }           = useUsuarios()
   const { data: firmaGuardada }           = useFirmaContratista()
   const guardarFirma                      = useGuardarFirmaContratista()
+  const { data: montoMinimo }             = useMontoMinimoObraMenor()
+  const guardarMontoMinimo                = useGuardarMontoMinimoObraMenor()
+  const [montoMinimoInput, setMontoMinimoInput] = useState('')
   const [mostrarForm, setMostrarForm]       = useState(false)
   const [mostrarFormSocio, setMostrarFormSocio] = useState(false)
   const [mostrarCanvas, setMostrarCanvas]   = useState(false)
+
+  // Sincronizar input de monto mínimo cuando carga el dato
+  const montoMinimoStr = montoMinimo != null ? String(montoMinimo) : ''
+  const [_montoMinimoSynced, setMontoMinimoSynced] = useState(false)
+  if (!_montoMinimoSynced && montoMinimo != null) {
+    setMontoMinimoInput(montoMinimoStr)
+    setMontoMinimoSynced(true)
+  }
 
   const sumaPct        = socios.filter((s) => s.activo).reduce((s, socio) => s + socio.porcentaje, 0)
   const pctDesequilibrado = Math.abs(sumaPct - 100) > 0.01 && socios.some((s) => s.activo)
@@ -615,6 +626,41 @@ export default function SettingsPage() {
           )}
         </div>
       </section>}
+
+      {/* Monto mínimo Obra Menor */}
+      <section>
+        <div className="mb-3">
+          <h2 className="text-base font-medium text-ink-100">Monto mínimo — Obra Menor</h2>
+          <p className="text-xs text-ink-500 mt-0.5">
+            Si el total calculado de un presupuesto de Obra Menor es menor a este valor, se factura este monto.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            min="0"
+            step="100"
+            value={montoMinimoInput}
+            onChange={(e) => setMontoMinimoInput(e.target.value)}
+            placeholder="Ej: 50000"
+            className="input-base w-48 font-mono"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const v = montoMinimoInput ? parseFloat(montoMinimoInput) : null
+              guardarMontoMinimo.mutate(v)
+            }}
+            disabled={guardarMontoMinimo.isPending}
+            className="btn-secondary"
+          >
+            {guardarMontoMinimo.isPending ? 'Guardando…' : 'Guardar'}
+          </button>
+          {guardarMontoMinimo.isSuccess && (
+            <span className="text-xs text-success">Guardado</span>
+          )}
+        </div>
+      </section>
 
       {/* Firma del contratista */}
       <section>
