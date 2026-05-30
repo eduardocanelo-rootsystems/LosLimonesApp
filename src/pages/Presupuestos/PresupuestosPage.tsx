@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Building2, ChevronDown, FileText, Link, Loader2, Plus, Search, Unlink, Wrench } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { cn, formatDate, diasHastaVencimiento } from '@/lib/utils'
+import { cn, formatDate, diasHastaVencimiento, toNombrePropio } from '@/lib/utils'
 import type { EstadoPresupuesto, Presupuesto } from '@/types/database'
 import { usePresupuestos, useAsociarFacturaPresupuesto } from './usePresupuestos'
 import { useContratosResumen } from '@/pages/Contratos/useContrato'
@@ -316,10 +316,10 @@ function PresupuestoRow({ presupuesto: p, facturas, firmadoCliente, onClick }: {
       </td>
       <td className="px-4 py-3">
         <div className="font-medium text-ink-100">
-          {p.cliente_razon_social || <span className="text-ink-500">Sin cliente</span>}
+          {p.cliente_razon_social ? toNombrePropio(p.cliente_razon_social) : <span className="text-ink-500">Sin cliente</span>}
         </div>
         {p.cliente_direccion && (
-          <div className="text-xs text-ink-500">{p.cliente_direccion}</div>
+          <div className="text-xs text-ink-500">{toNombrePropio(p.cliente_direccion)}</div>
         )}
       </td>
       <td className="px-4 py-3">

@@ -66,6 +66,31 @@ export function diasHastaVencimiento(fechaCreacion: string): number {
   return Math.round((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24))
 }
 
+// Palabras que van en minúscula en nombres de entidades (excepto al inicio)
+const MINUSCULAS = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'a', 'en', 'con', 'por', 'al'])
+
+/**
+ * Aplica formato nombre propio (title case en español) a un string.
+ * "consorcio de propietarios GUALEGUAYCHU" → "Consorcio de Propietarios Gualeguaychú"
+ * Preserva siglas (≥3 chars en mayúscula) tal cual.
+ */
+export function toNombrePropio(str: string | null | undefined): string {
+  if (!str) return ''
+  return str
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word, idx) => {
+      if (!word) return word
+      // Números y signos: dejar igual
+      if (/^\d/.test(word)) return word
+      // Minúsculas de enlace (excepto primera palabra)
+      if (idx > 0 && MINUSCULAS.has(word)) return word
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    })
+    .join(' ')
+}
+
 /**
  * Slugifica una cadena para usar como ID.
  */
