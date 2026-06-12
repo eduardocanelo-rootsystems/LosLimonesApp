@@ -11,31 +11,33 @@ const QK_RENT = ['presupuestos_rentabilidad'] as const
 // ─── Movimientos ──────────────────────────────────────────────────────────────
 
 export interface Movimiento {
-  id:            string
-  fecha:         string
-  descripcion:   string
-  tipo:          'ingreso' | 'egreso' | 'retiro'
-  subtipo:       'compra_sf' | 'venta_sf' | null
-  monto:         number
-  socio_id:      string | null
-  categoria:     string | null
-  contraparte:   string | null
-  observaciones: string | null
-  metodo_cobro:  string | null
-  created_at:    string
+  id:              string
+  fecha:           string
+  descripcion:     string
+  tipo:            'ingreso' | 'egreso' | 'retiro'
+  subtipo:         'compra_sf' | 'venta_sf' | null
+  monto:           number
+  socio_id:        string | null
+  categoria:       string | null
+  contraparte:     string | null
+  observaciones:   string | null
+  metodo_cobro:    string | null
+  presupuesto_id:  string | null
+  created_at:      string
 }
 
 export interface MovimientoInput {
-  fecha:         string
-  descripcion:   string
-  tipo:          'ingreso' | 'egreso' | 'retiro'
-  subtipo:       'compra_sf' | 'venta_sf' | null
-  monto:         number
-  socio_id:      string | null
-  categoria:     string | null
-  contraparte:   string | null
-  observaciones: string | null
-  metodo_cobro?: string | null
+  fecha:           string
+  descripcion:     string
+  tipo:            'ingreso' | 'egreso' | 'retiro'
+  subtipo:         'compra_sf' | 'venta_sf' | null
+  monto:           number
+  socio_id:        string | null
+  categoria:       string | null
+  contraparte:     string | null
+  observaciones:   string | null
+  metodo_cobro?:   string | null
+  presupuesto_id?: string | null
 }
 
 export function useMovimientos(rango: RangoFechas) {
@@ -44,7 +46,7 @@ export function useMovimientos(rango: RangoFechas) {
     queryFn: async () => {
       const { data, error } = await db
         .from('movimientos')
-        .select('id,fecha,descripcion,tipo,subtipo,monto,socio_id,categoria,contraparte,observaciones,metodo_cobro,created_at')
+        .select('id,fecha,descripcion,tipo,subtipo,monto,socio_id,categoria,contraparte,observaciones,metodo_cobro,presupuesto_id,created_at')
         .gte('fecha', rango.desde)
         .lte('fecha', rango.hasta)
         .order('fecha', { ascending: false })
@@ -197,5 +199,47 @@ export function usePresupuestosRentabilidad(rango: RangoFechas) {
         importe_total:        p.importe_total     ? Number(p.importe_total)     : null,
       })) as PresupuestoRent[]
     },
+  })
+}
+
+// Hook para el selector de presupuestos aprobados (sin filtro de fecha)
+export function usePresupuestosAprobados() {
+  return useQuery({
+    queryKey: ['presupuestos_aprobados_selector'],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from('presupuestos')
+        .select('id, numero, cliente_razon_social')
+        .in('estado', ['aprobado', 'finalizado'])
+        .order('fecha_creacion', { ascending: false })
+      if (error) throw error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (data ?? []) as { id: string; numero: string | null; cliente_razon_social: string | null }[]
+    },
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+// Devuelve mapa presupuesto_id → total de gastos asociados
+export function useGastosAsociadosPorPresupuesto() {
+  return useQuery({
+    queryKey: ['gastos_asociados'],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from('movimientos')
+        .select('presupuesto_id, monto')
+        .not('presupuesto_id', 'is', null)
+        .in('tipo', ['egreso', 'ingreso'])
+      if (error) throw error
+      const mapa = new Map<string, number>()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      for (const row of (data ?? []) as any[]) {
+        const prev = mapa.get(row.presupuesto_id) ?? 0
+        // egresos suman al costo, ingresos restan (reintegros)
+        mapa.set(row.presupuesto_id, prev + Number(row.monto))
+      }
+      return mapa
+    },
+    staleTime: 2 * 60 * 1000,
   })
 }

@@ -7,6 +7,8 @@ import {
   useCrearMovimiento,
   useEliminarMovimiento,
   usePresupuestosRentabilidad,
+  usePresupuestosAprobados,
+  useGastosAsociadosPorPresupuesto,
   type Movimiento,
   type MovimientoInput,
 } from '@/hooks/useMovimientos'
@@ -28,7 +30,8 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
   socios:      Socio[]
   movimientos: Movimiento[]
 }) {
-  const { data: presupuestos = [] } = usePresupuestosRentabilidad(rango)
+  const { data: presupuestos = [] }   = usePresupuestosRentabilidad(rango)
+  const { data: gastosMap = new Map() } = useGastosAsociadosPorPresupuesto()
 
   const totalServicios   = presupuestos.reduce((s, p) => s + (p.importe_servicios ?? 0), 0)
   const ingresosExtra    = movimientos.filter((m) => m.tipo === 'ingreso').reduce((s, m) => s + m.monto, 0)
@@ -110,18 +113,43 @@ function PanelRentabilidad({ rango, socios, movimientos }: {
           <summary className="cursor-pointer px-4 py-2 text-xs text-ink-500 hover:text-ink-300">
             {presupuestos.length} presupuesto{presupuestos.length !== 1 ? 's' : ''} incluido{presupuestos.length !== 1 ? 's' : ''} · ${fmtImporte(totalServicios)} en servicios
           </summary>
-          <table className="w-full text-xs border-t border-ink-800">
+          <div className="overflow-x-auto">
+          <table className="w-full text-xs border-t border-ink-800 min-w-[520px]">
+            <thead className="bg-ink-800/60 text-ink-500 uppercase tracking-wider">
+              <tr>
+                <th className="px-4 py-2 text-left">Número</th>
+                <th className="px-4 py-2 text-left">Cliente</th>
+                <th className="px-4 py-2 text-right">Importe</th>
+                <th className="px-4 py-2 text-right">Gastos asociados</th>
+                <th className="px-4 py-2 text-right">Ganancia real</th>
+              </tr>
+            </thead>
             <tbody className="divide-y divide-ink-800">
-              {presupuestos.map((p) => (
-                <tr key={p.id} className="text-ink-400">
-                  <td className="px-4 py-2 font-mono text-accent-400/70">{p.numero}</td>
-                  <td className="px-4 py-2 truncate max-w-[200px]">{p.cliente_razon_social}</td>
-                  <td className="px-4 py-2 capitalize">{p.estado}</td>
-                  <td className="px-4 py-2 text-right font-mono">${fmtImporte(p.importe_servicios ?? 0)}</td>
-                </tr>
-              ))}
+              {presupuestos.map((p) => {
+                const importe = p.importe_total ?? p.importe_servicios ?? 0
+                const gastos  = gastosMap.get(p.id) ?? 0
+                const ganancia = importe - gastos
+                const rentPct  = importe > 0 ? (ganancia / importe) * 100 : null
+                return (
+                  <tr key={p.id} className="text-ink-400">
+                    <td className="px-4 py-2 font-mono text-accent-400/70">{p.numero}</td>
+                    <td className="px-4 py-2 truncate max-w-[180px]">{p.cliente_razon_social}</td>
+                    <td className="px-4 py-2 text-right font-mono">${fmtImporte(importe)}</td>
+                    <td className="px-4 py-2 text-right font-mono text-red-400/80">
+                      {gastos > 0 ? `−$${fmtImporte(gastos)}` : <span className="text-ink-600">—</span>}
+                    </td>
+                    <td className={`px-4 py-2 text-right font-mono font-semibold ${ganancia >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      ${fmtImporte(ganancia)}
+                      {rentPct !== null && (
+                        <span className="ml-1 text-ink-500 font-normal">({rentPct.toFixed(0)}%)</span>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
+          </div>
         </details>
       )}
     </div>
@@ -143,18 +171,20 @@ const TIPO_COLOR = { ingreso: 'text-green-400', egreso: 'text-red-400', retiro: 
 type ModoTipo = 'egreso' | 'retiro' | 'ingreso' | 'compra_sf' | 'venta_sf'
 
 function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: () => void }) {
-  const crear = useCrearMovimiento()
-  const hoy   = new Date().toISOString().split('T')[0]
+  const crear  = useCrearMovimiento()
+  const { data: presupuestosAprobados = [] } = usePresupuestosAprobados()
+  const hoy    = new Date().toISOString().split('T')[0]
 
-  const [fecha,        setFecha]        = useState(hoy)
-  const [modo,         setModo]         = useState<ModoTipo>('egreso')
-  const [descripcion,  setDescripcion]  = useState('')
-  const [monto,        setMonto]        = useState('')
-  const [socioId,      setSocioId]      = useState('')
-  const [categoria,    setCategoria]    = useState('')
-  const [contraparte,  setContraparte]  = useState('')
-  const [metodoCobro,  setMetodoCobro]  = useState<MetodoCobro>('transferencia')
-  const [error,        setError]        = useState('')
+  const [fecha,          setFecha]          = useState(hoy)
+  const [modo,           setModo]           = useState<ModoTipo>('egreso')
+  const [descripcion,    setDescripcion]    = useState('')
+  const [monto,          setMonto]          = useState('')
+  const [socioId,        setSocioId]        = useState('')
+  const [categoria,      setCategoria]      = useState('')
+  const [contraparte,    setContraparte]    = useState('')
+  const [metodoCobro,    setMetodoCobro]    = useState<MetodoCobro>('transferencia')
+  const [presupuestoId,  setPresupuestoId]  = useState('')
+  const [error,          setError]          = useState('')
 
   const GRUPOS = [
     {
@@ -194,17 +224,19 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
       modo === 'compra_sf' ? 'compra_sf' :
       modo === 'venta_sf'  ? 'venta_sf'  : null
 
+    const esGasto = modo === 'egreso' || modo === 'compra_sf'
     await crear.mutateAsync({
       fecha,
-      descripcion:   descripcion.trim(),
+      descripcion:    descripcion.trim(),
       tipo,
       subtipo,
-      monto:         montoNum,
-      socio_id:      modo === 'retiro' ? socioId : null,
-      categoria:     categoria.trim() || null,
-      contraparte:   contraparte.trim() || null,
-      observaciones: null,
-      metodo_cobro:  modo === 'venta_sf' ? metodoCobro : null,
+      monto:          montoNum,
+      socio_id:       modo === 'retiro' ? socioId : null,
+      categoria:      categoria.trim() || null,
+      contraparte:    contraparte.trim() || null,
+      observaciones:  null,
+      metodo_cobro:   modo === 'venta_sf' ? metodoCobro : null,
+      presupuesto_id: esGasto && presupuestoId ? presupuestoId : null,
     })
     onClose()
   }
@@ -309,6 +341,25 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
             </div>
           )}
 
+          {(modo === 'egreso' || modo === 'compra_sf') && (
+            <div className="space-y-1">
+              <label className="text-xs text-ink-400">Presupuesto asociado (opcional)</label>
+              <select
+                aria-label="Presupuesto"
+                className="input w-full"
+                value={presupuestoId}
+                onChange={(e) => setPresupuestoId(e.target.value)}
+              >
+                <option value="">— sin asociar —</option>
+                {presupuestosAprobados.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.numero} · {p.cliente_razon_social ?? 'Sin cliente'}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {(modo === 'egreso') && (
             <div className="space-y-1">
               <label className="text-xs text-ink-400">Categoría (opcional)</label>
@@ -332,14 +383,19 @@ function NuevoMovimientoModal({ socios, onClose }: { socios: Socio[]; onClose: (
 
 // ─── Lista de movimientos ─────────────────────────────────────────────────────
 
-function FilaMovimiento({ mov, socios }: { mov: Movimiento; socios: Socio[] }) {
-  const eliminar  = useEliminarMovimiento()
-  const labelKey  = mov.subtipo ?? mov.tipo
-  const Icon      = TIPO_ICON[labelKey as keyof typeof TIPO_ICON] ?? TIPO_ICON[mov.tipo]
-  const color     = TIPO_COLOR[labelKey as keyof typeof TIPO_COLOR] ?? TIPO_COLOR[mov.tipo]
-  const label     = TIPO_LABEL[labelKey as keyof typeof TIPO_LABEL] ?? TIPO_LABEL[mov.tipo]
-  const socio     = socios.find((s) => s.id === mov.socio_id)
-  const esIngreso = mov.tipo === 'ingreso'
+function FilaMovimiento({ mov, socios, presupuestosMap }: {
+  mov: Movimiento
+  socios: Socio[]
+  presupuestosMap: Map<string, string>
+}) {
+  const eliminar   = useEliminarMovimiento()
+  const labelKey   = mov.subtipo ?? mov.tipo
+  const Icon       = TIPO_ICON[labelKey as keyof typeof TIPO_ICON] ?? TIPO_ICON[mov.tipo]
+  const color      = TIPO_COLOR[labelKey as keyof typeof TIPO_COLOR] ?? TIPO_COLOR[mov.tipo]
+  const label      = TIPO_LABEL[labelKey as keyof typeof TIPO_LABEL] ?? TIPO_LABEL[mov.tipo]
+  const socio      = socios.find((s) => s.id === mov.socio_id)
+  const esIngreso  = mov.tipo === 'ingreso'
+  const nroPresu   = mov.presupuesto_id ? presupuestosMap.get(mov.presupuesto_id) : null
 
   return (
     <tr className="text-ink-300 hover:bg-ink-800/30">
@@ -355,6 +411,7 @@ function FilaMovimiento({ mov, socios }: { mov: Movimiento; socios: Socio[] }) {
         {mov.contraparte && <div className="text-xs text-ink-400 mt-0.5">{mov.contraparte}</div>}
         {mov.categoria   && <div className="text-xs text-ink-500">{mov.categoria}</div>}
         {socio           && <div className="text-xs text-amber-400/70">{socio.nombre}</div>}
+        {nroPresu        && <div className="text-xs text-accent-400/70 mt-0.5">↳ {nroPresu}</div>}
       </td>
       <td className={`px-4 py-3 text-right font-mono font-medium ${esIngreso ? 'text-green-400' : 'text-red-400'}`}>
         {esIngreso ? '+' : '−'}${fmtImporte(mov.monto)}
@@ -375,12 +432,17 @@ function FilaMovimiento({ mov, socios }: { mov: Movimiento; socios: Socio[] }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MovimientosPage() {
-  const [periodo, setPeriodo]   = useState<Periodo>('mes_actual')
-  const [rango, setRango]       = useState<RangoFechas>(() => getRangoFechas('mes_actual'))
+  const [periodo, setPeriodo]     = useState<Periodo>('mes_actual')
+  const [rango, setRango]         = useState<RangoFechas>(() => getRangoFechas('mes_actual'))
   const [modalOpen, setModalOpen] = useState(false)
 
-  const { data: socios      = [] } = useSocios()
-  const { data: movimientos = [] } = useMovimientos(rango)
+  const { data: socios               = [] } = useSocios()
+  const { data: movimientos          = [] } = useMovimientos(rango)
+  const { data: presupuestosAprobados = [] } = usePresupuestosAprobados()
+
+  const presupuestosMap = new Map(
+    presupuestosAprobados.map((p) => [p.id, p.numero ?? p.id])
+  )
 
   return (
     <>
@@ -428,7 +490,7 @@ export default function MovimientosPage() {
               </thead>
               <tbody className="divide-y divide-ink-800">
                 {movimientos.map((m) => (
-                  <FilaMovimiento key={m.id} mov={m} socios={socios} />
+                  <FilaMovimiento key={m.id} mov={m} socios={socios} presupuestosMap={presupuestosMap} />
                 ))}
               </tbody>
             </table>
