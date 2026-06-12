@@ -7,7 +7,6 @@ interface PanelTotalesProps {
   costoManoObra: number
   clientePagaMateriales: boolean
   rentabilidadPct: number
-  rentabilidadEfectivaPct: number
   onRentabilidadChange: (val: string) => void
   totalCliente: number
   // Fórmula vieja
@@ -26,7 +25,6 @@ export function PanelTotales({
   costoManoObra,
   clientePagaMateriales,
   rentabilidadPct,
-  rentabilidadEfectivaPct,
   onRentabilidadChange,
   totalCliente,
   subtotalServicios,
@@ -43,7 +41,6 @@ export function PanelTotales({
       costoManoObra={costoManoObra}
       clientePagaMateriales={clientePagaMateriales}
       rentabilidadPct={rentabilidadPct}
-      rentabilidadEfectivaPct={rentabilidadEfectivaPct}
       onRentabilidadChange={onRentabilidadChange}
       totalCliente={totalCliente}
     />
@@ -142,7 +139,6 @@ function PanelNuevoFormula({
   costoManoObra,
   clientePagaMateriales,
   rentabilidadPct,
-  rentabilidadEfectivaPct,
   onRentabilidadChange,
   totalCliente,
 }: {
@@ -150,7 +146,6 @@ function PanelNuevoFormula({
   costoManoObra: number
   clientePagaMateriales: boolean
   rentabilidadPct: number
-  rentabilidadEfectivaPct: number
   onRentabilidadChange: (val: string) => void
   totalCliente: number
 }) {
@@ -159,8 +154,7 @@ function PanelNuevoFormula({
     : subtotalMateriales + costoManoObra
 
   const ganancia = costoBase * (rentabilidadPct / 100)
-  const costoTotal = subtotalMateriales + costoManoObra
-  const mostrarEfectiva = clientePagaMateriales && costoManoObra > 0
+  const costoRealEmpresa = clientePagaMateriales ? costoManoObra : subtotalMateriales + costoManoObra
 
   return (
     <section className="card p-6">
@@ -221,12 +215,16 @@ function PanelNuevoFormula({
           </p>
 
           <Row label="Total cobrado al cliente" value={totalCliente} />
-          <Row label="Costo total real" value={-costoTotal} className="text-ink-400" />
+          <Row
+            label={clientePagaMateriales ? 'Costo real empresa (solo MO)' : 'Costo total real'}
+            value={-costoRealEmpresa}
+            className="text-ink-400"
+          />
 
           <div className="border-t border-ink-800 pt-2">
             <Row
               label="Ganancia bruta"
-              value={totalCliente - costoTotal}
+              value={totalCliente - costoRealEmpresa}
               bold
               className={rentabilidadPct >= 30 ? 'text-success' : rentabilidadPct >= 10 ? 'text-warning' : 'text-danger'}
             />
@@ -235,11 +233,11 @@ function PanelNuevoFormula({
           {totalCliente > 0 && (
             <div className="text-right">
               <p className={`font-mono text-lg font-bold ${rentabilidadPct >= 30 ? 'text-success' : rentabilidadPct >= 10 ? 'text-warning' : 'text-danger'}`}>
-                {rentabilidadPct.toFixed(1)}% configurado
+                {rentabilidadPct.toFixed(1)}%
               </p>
-              {mostrarEfectiva && (
-                <p className="mt-0.5 font-mono text-sm font-semibold text-accent-400">
-                  {rentabilidadEfectivaPct.toFixed(1)}% efectivo sobre MO
+              {clientePagaMateriales && (
+                <p className="mt-0.5 text-xs text-ink-500">
+                  materiales: ${new Intl.NumberFormat('es-AR').format(subtotalMateriales)} a cargo del cliente
                 </p>
               )}
             </div>

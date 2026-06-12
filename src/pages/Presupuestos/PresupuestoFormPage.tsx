@@ -402,7 +402,6 @@ export default function PresupuestoFormPage() {
     totalCliente,
     importeTotal,
     importeServicios,
-    rentabilidadEfectivaPct,
   } = useMemo(() => {
     if (usaNuevaFormula) {
       const rent = parseFloat(rentabilidadPct) / 100 || 0
@@ -423,19 +422,10 @@ export default function PresupuestoFormPage() {
       const factorFin = 1 + recargo / 2
       const total = netoConDesc * factorFin
 
-      // Si el cliente paga materiales, la inversión real de la empresa es solo MO
-      // → la rentabilidad efectiva = ganancia / MO
-      const ganancia = total - (subtotalMateriales + costoManoObra)
-      const inversionReal = costoManoObra > 0 ? costoManoObra : 1
-      const rentEfectiva = clientePagaMateriales && costoManoObra > 0
-        ? (ganancia / inversionReal) * 100
-        : parseFloat(rentabilidadPct) || 0
-
       return {
         totalCliente: total,
         importeTotal: total,
         importeServicios: null,
-        rentabilidadEfectivaPct: rentEfectiva,
       }
     }
 
@@ -463,7 +453,6 @@ export default function PresupuestoFormPage() {
       totalCliente: total,
       importeTotal: importeTotalViejo,
       importeServicios: totalSinMO * ratio,
-      rentabilidadEfectivaPct: 0,
     }
   }, [
     usaNuevaFormula,
@@ -802,7 +791,6 @@ export default function PresupuestoFormPage() {
         costoManoObra={costoManoObra}
         clientePagaMateriales={clientePagaMateriales}
         rentabilidadPct={parseFloat(rentabilidadPct) || 0}
-        rentabilidadEfectivaPct={rentabilidadEfectivaPct}
         onRentabilidadChange={setRentabilidadPct}
         // Fórmula vieja
         subtotalServicios={useMemo(() => {
