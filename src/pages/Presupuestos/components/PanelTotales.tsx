@@ -149,12 +149,13 @@ function PanelNuevoFormula({
   onRentabilidadChange: (val: string) => void
   totalCliente: number
 }) {
-  const costoBase = clientePagaMateriales
-    ? costoManoObra
-    : subtotalMateriales + costoManoObra
-
-  const ganancia = costoBase * (rentabilidadPct / 100)
-  const costoRealEmpresa = clientePagaMateriales ? costoManoObra : subtotalMateriales + costoManoObra
+  // Siempre aplicar margen sobre Mat+MO; si el cliente paga, se resta Mat del precio
+  const costoBaseTotal = subtotalMateriales + costoManoObra
+  const gananciaTarget = costoBaseTotal * (rentabilidadPct / 100)
+  const costoRealEmpresa = clientePagaMateriales ? costoManoObra : costoBaseTotal
+  const gananciaReal = totalCliente - costoRealEmpresa
+  const rentabilidadEfectiva = costoRealEmpresa > 0 ? (gananciaReal / costoRealEmpresa) * 100 : 0
+  const colorEfectiva = rentabilidadEfectiva >= 30 ? 'text-success' : rentabilidadEfectiva >= 10 ? 'text-warning' : 'text-danger'
 
   return (
     <section className="card p-6">
@@ -172,20 +173,8 @@ function PanelNuevoFormula({
           <Row label="Costo materiales" value={subtotalMateriales} />
           <Row label="Costo mano de obra" value={costoManoObra} />
 
-          {clientePagaMateriales && (
-            <div className="rounded-md bg-sky-500/10 border border-sky-500/20 px-3 py-2">
-              <p className="text-xs text-sky-400">
-                Cliente provee materiales — excluidos del precio cobrado
-              </p>
-            </div>
-          )}
-
           <div className="border-t border-ink-800 pt-2">
-            <Row
-              label={clientePagaMateriales ? 'Costo base (solo MO)' : 'Costo base'}
-              value={costoBase}
-              bold
-            />
+            <Row label="Costo base (Mat + MO)" value={costoBaseTotal} bold />
           </div>
 
           {/* Rentabilidad editable */}
@@ -200,8 +189,15 @@ function PanelNuevoFormula({
               />
               %
             </span>
-            <span className="font-mono text-sm text-ink-300">+ {formatCurrency(ganancia)}</span>
+            <span className="font-mono text-sm text-ink-300">+ {formatCurrency(gananciaTarget)}</span>
           </div>
+
+          {clientePagaMateriales && (
+            <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-3 py-2">
+              <span className="text-xs text-sky-400">Materiales a cargo del cliente</span>
+              <span className="font-mono text-xs text-sky-400">− {formatCurrency(subtotalMateriales)}</span>
+            </div>
+          )}
 
           <div className="border-t border-ink-700 pt-2">
             <Row label="Total al cliente" value={totalCliente} bold accent />
@@ -224,20 +220,20 @@ function PanelNuevoFormula({
           <div className="border-t border-ink-800 pt-2">
             <Row
               label="Ganancia bruta"
-              value={totalCliente - costoRealEmpresa}
+              value={gananciaReal}
               bold
-              className={rentabilidadPct >= 30 ? 'text-success' : rentabilidadPct >= 10 ? 'text-warning' : 'text-danger'}
+              className={colorEfectiva}
             />
           </div>
 
           {totalCliente > 0 && (
             <div className="text-right">
-              <p className={`font-mono text-lg font-bold ${rentabilidadPct >= 30 ? 'text-success' : rentabilidadPct >= 10 ? 'text-warning' : 'text-danger'}`}>
-                {rentabilidadPct.toFixed(1)}%
+              <p className={`font-mono text-lg font-bold ${colorEfectiva}`}>
+                {rentabilidadEfectiva.toFixed(1)}%
               </p>
               {clientePagaMateriales && (
                 <p className="mt-0.5 text-xs text-ink-500">
-                  materiales: ${new Intl.NumberFormat('es-AR').format(subtotalMateriales)} a cargo del cliente
+                  rentabilidad configurada: {rentabilidadPct.toFixed(1)}% sobre costo total
                 </p>
               )}
             </div>

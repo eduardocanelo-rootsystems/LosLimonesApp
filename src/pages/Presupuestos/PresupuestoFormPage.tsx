@@ -405,11 +405,10 @@ export default function PresupuestoFormPage() {
   } = useMemo(() => {
     if (usaNuevaFormula) {
       const rent = parseFloat(rentabilidadPct) / 100 || 0
-      const costoBase = clientePagaMateriales
-        ? costoManoObra
-        : subtotalMateriales + costoManoObra
-
-      const neto = costoBase * (1 + rent)
+      // Siempre aplicar margen sobre Mat+MO; si el cliente paga materiales, descontar Mat del precio final
+      const costoBaseTotal = subtotalMateriales + costoManoObra
+      const precioConMargen = costoBaseTotal * (1 + rent)
+      const neto = clientePagaMateriales ? precioConMargen - subtotalMateriales : precioConMargen
 
       const descMonto = tieneDescuento
         ? descuentoTipo === 'fijo'
