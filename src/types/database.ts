@@ -628,6 +628,7 @@ export type Database = {
         Row: {
           id: string
           nombre: string
+          nombre_propio: string | null
           estado: 'activo' | 'inactivo'
           precio_m2_actual: number | null
           fecha_creacion: string

@@ -30,7 +30,7 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, soloD
     const item: FormServicioItem = {
       _key: crypto.randomUUID(),
       servicio_id: servicio.id,
-      nombre: servicio.nombre,
+      nombre: servicio.nombre_propio || servicio.nombre,
       precio_m2: servicio.precio_m2_actual ?? 0,
       es_adicional: esAprobado ?? false,
     }
@@ -42,7 +42,7 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, soloD
     const nuevos: FormServicioItem[] = disponibles.map((s) => ({
       _key: crypto.randomUUID(),
       servicio_id: s.id,
-      nombre: s.nombre,
+      nombre: s.nombre_propio || s.nombre,
       precio_m2: s.precio_m2_actual ?? 0,
       es_adicional: false,
     }))

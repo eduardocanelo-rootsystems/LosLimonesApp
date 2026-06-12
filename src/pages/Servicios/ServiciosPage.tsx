@@ -229,8 +229,13 @@ export default function ServiciosPage() {
                     key={s.id}
                     className="transition-colors hover:bg-ink-900/30"
                   >
-                    <td className="px-4 py-3 font-medium text-ink-100">
-                      {s.nombre}
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-ink-100">
+                        {s.nombre_propio || s.nombre}
+                      </p>
+                      {s.nombre_propio && (
+                        <p className="text-xs text-ink-500">{s.nombre}</p>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right font-mono tabular text-ink-100">
                       {s.precio_m2_actual !== null
