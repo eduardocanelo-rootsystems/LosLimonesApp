@@ -141,7 +141,7 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, soloD
             <option value="">Seleccionar servicio…</option>
             {disponibles.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.nombre} — {s.precio_m2_actual !== null ? formatCurrency(s.precio_m2_actual) + '/m²' : 'sin precio'}
+                {toNombrePropio(s.nombre)} — {s.precio_m2_actual !== null ? formatCurrency(s.precio_m2_actual) + '/m²' : 'sin precio'}
               </option>
             ))}
           </select>

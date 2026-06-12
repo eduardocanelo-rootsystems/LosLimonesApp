@@ -14,7 +14,7 @@ import {
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, toNombrePropio } from '@/lib/utils'
 import {
   useServicios,
   useToggleEstadoServicio,
@@ -230,7 +230,7 @@ export default function ServiciosPage() {
                     className="transition-colors hover:bg-ink-900/30"
                   >
                     <td className="px-4 py-3 font-medium text-ink-100">
-                      {s.nombre}
+                      {toNombrePropio(s.nombre)}
                     </td>
                     <td className="px-4 py-3 text-right font-mono tabular text-ink-100">
                       {s.precio_m2_actual !== null
