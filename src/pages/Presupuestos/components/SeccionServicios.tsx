@@ -9,10 +9,11 @@ interface SeccionServiciosProps {
   m2: number
   coefK: number
   esAprobado?: boolean
+  soloDescriptivo?: boolean
   onChange: (items: FormServicioItem[]) => void
 }
 
-export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onChange }: SeccionServiciosProps) {
+export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, soloDescriptivo, onChange }: SeccionServiciosProps) {
   const [seleccionado, setSeleccionado] = useState('')
 
   const disponibles = catalogo.filter(
@@ -59,12 +60,16 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
       {items.length > 0 && (
         <div className="mb-4 overflow-hidden rounded-lg border border-ink-800">
           <div className="overflow-x-auto">
-          <table className="w-full text-sm min-w-[480px]">
+          <table className="w-full text-sm min-w-[320px]">
             <thead>
               <tr className="border-b border-ink-800 bg-ink-900/50">
                 <th className="px-4 py-2.5 text-left text-xs font-medium uppercase tracking-wider text-ink-400">Servicio</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-ink-400">Precio/m²</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-ink-400">Subtotal</th>
+                {!soloDescriptivo && (
+                  <>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-ink-400">Precio/m²</th>
+                    <th className="px-4 py-2.5 text-right text-xs font-medium uppercase tracking-wider text-ink-400">Subtotal</th>
+                  </>
+                )}
                 <th className="w-10" />
               </tr>
             </thead>
@@ -97,12 +102,16 @@ export function SeccionServicios({ items, catalogo, m2, coefK, esAprobado, onCha
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-right font-mono text-ink-300">
-                      {formatCurrency(item.precio_m2 * coefK)}
-                    </td>
-                    <td className="px-4 py-2.5 text-right font-mono font-medium text-ink-100">
-                      {m2 && coefK ? formatCurrency(subtotal) : '—'}
-                    </td>
+                    {!soloDescriptivo && (
+                      <>
+                        <td className="px-4 py-2.5 text-right font-mono text-ink-300">
+                          {formatCurrency(item.precio_m2 * coefK)}
+                        </td>
+                        <td className="px-4 py-2.5 text-right font-mono font-medium text-ink-100">
+                          {m2 && coefK ? formatCurrency(subtotal) : '—'}
+                        </td>
+                      </>
+                    )}
                     <td className="px-4 py-2.5 text-center">
                       <button
                         type="button"

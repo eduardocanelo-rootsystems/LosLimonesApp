@@ -263,6 +263,14 @@ export default function DashboardPage() {
   const presupFinalizados = presupPeriodo.filter((p) => p.estado === 'finalizado').length
   const sinFactura       = presupPeriodo.filter((p) => !p.factura_asociada_id && p.estado !== 'emitido').length
 
+  // Rentabilidad promedio de presupuestos aprobados en el período (nueva fórmula)
+  const aprobadosConRent = presupPeriodo.filter(
+    (p) => (p.estado === 'aprobado' || p.estado === 'finalizado') && (p as any).rentabilidad_pct !== null && (p as any).rentabilidad_pct !== undefined
+  )
+  const rentabilidadPromedio = aprobadosConRent.length > 0
+    ? aprobadosConRent.reduce((s, p) => s + Number((p as any).rentabilidad_pct), 0) / aprobadosConRent.length
+    : null
+
   // Rentabilidad
   // Pool = sum of (cobro.monto × services_ratio) — only services portion counts as profit
   const poolCobros = cobros.reduce((s, c) => {
@@ -451,6 +459,36 @@ export default function DashboardPage() {
           color={sinFactura > 0 ? 'text-amber-400' : 'text-ink-600'}
         />
       </div>
+
+      {/* Rentabilidad de presupuestos aprobados */}
+      {rentabilidadPromedio !== null && (
+        <>
+          <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Rentabilidad — presupuestos aprobados/finalizados</p>
+          <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+            <KpiCard
+              label="Rentabilidad promedio"
+              value={`${rentabilidadPromedio.toFixed(1)}%`}
+              sub={`${aprobadosConRent.length} presupuesto${aprobadosConRent.length !== 1 ? 's' : ''} con nueva fórmula`}
+              icon={TrendingDown}
+              color={rentabilidadPromedio >= 30 ? 'text-green-400' : rentabilidadPromedio >= 10 ? 'text-amber-400' : 'text-red-400'}
+            />
+            <KpiCard
+              label="Mayor rentabilidad"
+              value={`${Math.max(...aprobadosConRent.map((p) => Number((p as any).rentabilidad_pct))).toFixed(1)}%`}
+              sub="en el período"
+              icon={CheckCircle}
+              color="text-accent-400"
+            />
+            <KpiCard
+              label="Menor rentabilidad"
+              value={`${Math.min(...aprobadosConRent.map((p) => Number((p as any).rentabilidad_pct))).toFixed(1)}%`}
+              sub="en el período"
+              icon={AlertTriangle}
+              color="text-amber-400"
+            />
+          </div>
+        </>
+      )}
 
       {/* Contratos pendientes de firma */}
       <ContratosPendientesFirma contratos={contratosResumen} presupuestos={presupuestos} />

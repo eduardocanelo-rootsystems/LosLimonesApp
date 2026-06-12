@@ -46,6 +46,7 @@ interface SeccionEdificacionProps {
   valorPatrimonial: boolean
   proteccion: string
   coefK: string
+  soloInformativo?: boolean
   onChange: (field: string, value: unknown) => void
 }
 
@@ -61,6 +62,7 @@ export function SeccionEdificacion({
   anios, altura, color, acabado, m2,
   condicionEstructural, tipologia,
   valorPatrimonial, proteccion, coefK,
+  soloInformativo,
   onChange,
 }: SeccionEdificacionProps) {
 
@@ -223,7 +225,11 @@ export function SeccionEdificacion({
       {/* Coeficiente K — tarjetas */}
       <div className="mt-4">
         <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-ink-400">
-          Coeficiente de complejidad K <span className="text-danger">*</span>
+          Coeficiente de complejidad K
+          {soloInformativo && (
+            <span className="ml-2 font-normal normal-case text-ink-500">(solo informativo — no afecta el precio)</span>
+          )}
+          {!soloInformativo && <span className="text-danger"> *</span>}
         </label>
         <div className="grid gap-2 sm:grid-cols-2">
           {COEF_K.map((k) => (

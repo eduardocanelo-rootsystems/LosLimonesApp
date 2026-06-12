@@ -64,6 +64,11 @@ export default function PresupuestoFormPage() {
   const { data: catalogoManoDeObra = [] } = useManoDeObra()
   const guardar = useGuardarPresupuesto()
 
+  // ─── Detección de fórmula nueva ────────────────────────────────────────────
+  // presupuestos existentes tienen rentabilidad_pct = null → usan fórmula vieja
+  // presupuestos nuevos siempre usan fórmula nueva
+  const usaNuevaFormula = esNuevo || (presupuesto !== undefined && (presupuesto as any).rentabilidad_pct !== null)
+
   // ─── Estado del formulario ──────────────────────────────────────────────────
 
   const [estado, setEstado] = useState<EstadoPresupuesto>('emitido')
@@ -90,6 +95,10 @@ export default function PresupuestoFormPage() {
   const [edifProteccion, setEdifProteccion] = useState('')
   const [coefK, setCoefK] = useState('')
 
+  // Fechas de obra (nuevos campos)
+  const [fechaInicioObra, setFechaInicioObra] = useState('')
+  const [fechaFinObra, setFechaFinObra] = useState('')
+
   // Textos libres
   const [diagnosticoTecnico, setDiagnosticoTecnico] = useState('')
   const [alcanceObra, setAlcanceObra] = useState('')
@@ -113,7 +122,11 @@ export default function PresupuestoFormPage() {
   // MO
   const [diasEstimados, setDiasEstimados] = useState('')
 
-  // IVA
+  // Rentabilidad (solo nueva fórmula)
+  const [rentabilidadPct, setRentabilidadPct] = useState('30')
+  const [clientePagaMateriales, setClientePagaMateriales] = useState(false)
+
+  // IVA (fórmula vieja)
   const [ivaPct, setIvaPct] = useState('0')
 
   // Aprobación
@@ -163,6 +176,15 @@ export default function PresupuestoFormPage() {
         : ''
     )
     setPlanPago((presupuesto.plan_pago as PlanFinanciamiento) ?? null)
+
+    // Nuevos campos
+    const p = presupuesto as any
+    if (p.rentabilidad_pct !== null && p.rentabilidad_pct !== undefined) {
+      setRentabilidadPct(p.rentabilidad_pct.toString())
+    }
+    setClientePagaMateriales(p.cliente_paga_materiales ?? false)
+    setFechaInicioObra(p.fecha_inicio_obra ?? '')
+    setFechaFinObra(p.fecha_fin_obra ?? '')
 
     setServicios(
       presupuesto.servicios.map((s) => ({
@@ -364,22 +386,64 @@ export default function PresupuestoFormPage() {
 
   // ─── Cálculos ────────────────────────────────────────────────────────────────
 
-  const m2 = parseFloat(edifM2) || 0
-  const k = parseFloat(coefK) || 1
   const dias = parseFloat(diasEstimados) || 0
 
-  const { subtotalServicios, subtotalMateriales, costoManoObra, extrasMonto } = useMemo(() => {
-    const ss = servicios.reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0)
+  const { subtotalMateriales, costoManoObra } = useMemo(() => {
     const sm = materiales.reduce((acc, m) => acc + m.precio * m.cantidad, 0)
-    const cmo = manoDeObra.reduce((acc, mo) => acc + mo.costo_diario * mo.cantidad_empleados * (mo.dias ?? dias), 0)
-    const ext =
-      servicios.filter((s) => s.es_adicional).reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0) +
-      materiales.filter((m) => m.es_adicional).reduce((acc, m) => acc + m.precio * m.cantidad, 0)
-    return { subtotalServicios: ss, subtotalMateriales: sm, costoManoObra: cmo, extrasMonto: ext }
-  }, [servicios, materiales, manoDeObra, m2, k, dias])
+    const cmo = manoDeObra.reduce(
+      (acc, mo) => acc + mo.costo_diario * mo.cantidad_empleados * (mo.dias ?? dias),
+      0
+    )
+    return { subtotalMateriales: sm, costoManoObra: cmo }
+  }, [materiales, manoDeObra, dias])
 
-  const totalCliente = useMemo(() => {
-    const bruto = subtotalServicios + subtotalMateriales
+  // ── Fórmula nueva: (Mat + MO) × (1 + rent%) ──────────────────────────────
+  const {
+    totalCliente,
+    importeTotal,
+    importeServicios,
+    rentabilidadEfectivaPct,
+  } = useMemo(() => {
+    if (usaNuevaFormula) {
+      const rent = parseFloat(rentabilidadPct) / 100 || 0
+      const costoBase = clientePagaMateriales
+        ? costoManoObra
+        : subtotalMateriales + costoManoObra
+
+      const neto = costoBase * (1 + rent)
+
+      const descMonto = tieneDescuento
+        ? descuentoTipo === 'fijo'
+          ? parseFloat(descuentoValor) || 0
+          : (neto * (parseFloat(descuentoValor) || 0)) / 100
+        : 0
+
+      const netoConDesc = neto - descMonto
+      const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
+      const factorFin = 1 + recargo / 2
+      const total = netoConDesc * factorFin
+
+      // Si el cliente paga materiales, la inversión real de la empresa es solo MO
+      // → la rentabilidad efectiva = ganancia / MO
+      const ganancia = total - (subtotalMateriales + costoManoObra)
+      const inversionReal = costoManoObra > 0 ? costoManoObra : 1
+      const rentEfectiva = clientePagaMateriales && costoManoObra > 0
+        ? (ganancia / inversionReal) * 100
+        : parseFloat(rentabilidadPct) || 0
+
+      return {
+        totalCliente: total,
+        importeTotal: total,
+        importeServicios: null,
+        rentabilidadEfectivaPct: rentEfectiva,
+      }
+    }
+
+    // ── Fórmula vieja (presupuestos existentes) ──
+    const m2 = parseFloat(edifM2) || 0
+    const k = parseFloat(coefK) || 1
+    const ss = servicios.reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0)
+    const bruto = ss + subtotalMateriales
     const descMonto = tieneDescuento
       ? descuentoTipo === 'fijo'
         ? parseFloat(descuentoValor) || 0
@@ -387,22 +451,27 @@ export default function PresupuestoFormPage() {
       : 0
     const neto = bruto - descMonto
     const iva = parseFloat(ivaPct) || 0
-    return neto + (neto * iva) / 100
-  }, [subtotalServicios, subtotalMateriales, tieneDescuento, descuentoTipo, descuentoValor, ivaPct])
-
-  // importe_total = total real al cliente incluyendo mano de obra (para que el ratio en cobros sea correcto)
-  // importe_servicios = solo la parte de servicios de lista (sin mano de obra), base de distribución entre socios
-  const { importeTotal, importeServicios } = useMemo(() => {
+    const totalSinMO = neto + (neto * iva) / 100
+    const factor = bruto > 0 ? totalSinMO / bruto : 1
+    const costoMOAjustado = costoManoObra * factor
+    const total = totalSinMO + costoMOAjustado
     const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
-    const brutoBase = subtotalServicios + subtotalMateriales
-    // recargo aplica solo sobre el 50% financiado: total_con_fin = base × (1 + recargo / 2)
     const factorFin = 1 + recargo / 2
-    const totalSinMO = totalCliente * factorFin
-    const factor = brutoBase > 0 ? totalCliente / brutoBase : 1
-    const total = totalSinMO + costoManoObra * factor * factorFin
-    const ratio = brutoBase > 0 ? subtotalServicios / brutoBase : 1
-    return { importeTotal: total, importeServicios: totalSinMO * ratio }
-  }, [totalCliente, planPago, subtotalServicios, subtotalMateriales, costoManoObra])
+    const importeTotalViejo = total * factorFin
+    const ratio = bruto > 0 ? ss / bruto : 1
+    return {
+      totalCliente: total,
+      importeTotal: importeTotalViejo,
+      importeServicios: totalSinMO * ratio,
+      rentabilidadEfectivaPct: 0,
+    }
+  }, [
+    usaNuevaFormula,
+    rentabilidadPct, clientePagaMateriales,
+    subtotalMateriales, costoManoObra,
+    tieneDescuento, descuentoTipo, descuentoValor,
+    planPago, edifM2, coefK, servicios, ivaPct,
+  ])
 
   // ─── Guardar ─────────────────────────────────────────────────────────────────
 
@@ -475,8 +544,13 @@ export default function PresupuestoFormPage() {
         dias_estimados_obra: diasEstimados ? parseInt(diasEstimados) : null,
         fecha_aprobacion: fechaAprobacion ? new Date(fechaAprobacion).toISOString() : null,
         plan_pago: planPago,
-        importe_servicios: importeServicios > 0 ? importeServicios : null,
-        importe_total:     importeTotal     > 0 ? importeTotal     : null,
+        importe_servicios: importeServicios && importeServicios > 0 ? importeServicios : null,
+        importe_total: importeTotal > 0 ? importeTotal : null,
+        // Nuevos campos (solo se guardan en nuevos presupuestos)
+        rentabilidad_pct: usaNuevaFormula ? (parseFloat(rentabilidadPct) || 0) : undefined,
+        cliente_paga_materiales: usaNuevaFormula ? clientePagaMateriales : undefined,
+        fecha_inicio_obra: fechaInicioObra || null,
+        fecha_fin_obra: fechaFinObra || null,
         servicios,
         materiales,
         mano_obra: manoDeObra,
@@ -627,7 +701,7 @@ export default function PresupuestoFormPage() {
         </div>
       </div>
 
-      {/* Secciones */}
+      {/* 1. Cliente */}
       <SeccionCliente
         razonSocial={clienteRazonSocial}
         cuit={clienteCuit}
@@ -640,6 +714,7 @@ export default function PresupuestoFormPage() {
         onChange={handleField}
       />
 
+      {/* 2. Edificación */}
       <SeccionEdificacion
         anios={edifAnios}
         altura={edifAltura}
@@ -651,10 +726,122 @@ export default function PresupuestoFormPage() {
         valorPatrimonial={edifValorPatrimonial}
         proteccion={edifProteccion}
         coefK={coefK}
+        soloInformativo={usaNuevaFormula}
         onChange={handleField}
       />
 
-      {/* Textos del presupuesto */}
+      {/* 3. Servicios */}
+      <SeccionServicios
+        items={servicios}
+        catalogo={catalogoServicios}
+        esAprobado={esAprobado}
+        soloDescriptivo={usaNuevaFormula}
+        onChange={setServicios}
+        // props legacy (no usados en nueva fórmula pero requeridos por el tipo)
+        m2={parseFloat(edifM2) || 0}
+        coefK={parseFloat(coefK) || 1}
+      />
+
+      {/* 4. Fechas de obra */}
+      <section className="card p-6">
+        <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-ink-400">
+          Planificación de obra
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
+              Fecha estimada de inicio
+            </label>
+            <input
+              type="date"
+              value={fechaInicioObra}
+              onChange={(e) => setFechaInicioObra(e.target.value)}
+              className="input-base font-mono"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
+              Fecha estimada de fin
+            </label>
+            <input
+              type="date"
+              value={fechaFinObra}
+              min={fechaInicioObra || undefined}
+              onChange={(e) => setFechaFinObra(e.target.value)}
+              className="input-base font-mono"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* 5. Materiales */}
+      <SeccionMateriales
+        items={materiales}
+        catalogo={catalogoMateriales}
+        esAprobado={esAprobado}
+        clientePagaMateriales={usaNuevaFormula ? clientePagaMateriales : undefined}
+        onClientePagaMaterialesChange={usaNuevaFormula ? setClientePagaMateriales : undefined}
+        onChange={setMateriales}
+      />
+
+      {/* 6. Mano de Obra */}
+      <SeccionManoDeObra
+        items={manoDeObra}
+        diasEstimados={diasEstimados}
+        catalogo={catalogoManoDeObra}
+        esAprobado={esAprobado}
+        onChange={setManoDeObra}
+        onDiasChange={setDiasEstimados}
+      />
+
+      {/* 7. Rentabilidad y Totales */}
+      <PanelTotales
+        usaNuevaFormula={usaNuevaFormula}
+        // Nueva fórmula
+        subtotalMateriales={subtotalMateriales}
+        costoManoObra={costoManoObra}
+        clientePagaMateriales={clientePagaMateriales}
+        rentabilidadPct={parseFloat(rentabilidadPct) || 0}
+        rentabilidadEfectivaPct={rentabilidadEfectivaPct}
+        onRentabilidadChange={setRentabilidadPct}
+        // Fórmula vieja
+        subtotalServicios={useMemo(() => {
+          const m2 = parseFloat(edifM2) || 0
+          const k = parseFloat(coefK) || 1
+          return servicios.reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0)
+        }, [servicios, edifM2, coefK])}
+        extrasMonto={useMemo(() => {
+          const m2 = parseFloat(edifM2) || 0
+          const k = parseFloat(coefK) || 1
+          return (
+            servicios.filter((s) => s.es_adicional).reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0) +
+            materiales.filter((m) => m.es_adicional).reduce((acc, m) => acc + m.precio * m.cantidad, 0)
+          )
+        }, [servicios, materiales, edifM2, coefK])}
+        tieneDescuento={tieneDescuento}
+        descuentoTipo={descuentoTipo}
+        descuentoValor={parseFloat(descuentoValor) || 0}
+        ivaPct={parseFloat(ivaPct) || 0}
+        onIvaChange={setIvaPct}
+        totalCliente={totalCliente}
+      />
+
+      {/* 8. Descuento */}
+      <SeccionDescuento
+        tieneDescuento={tieneDescuento}
+        tipo={descuentoTipo}
+        valor={descuentoValor}
+        onChange={handleField}
+      />
+
+      {/* 9. Financiamiento */}
+      <SeccionFinanciamiento
+        total={totalCliente}
+        planSeleccionado={planPago}
+        onChange={setPlanPago}
+      />
+
+      {/* 10. Textos técnicos */}
       <section className="card divide-y divide-ink-800 overflow-hidden">
         <div className="p-6">
           <h2 className="mb-1 text-sm font-semibold tracking-wide text-ink-300">
@@ -663,7 +850,6 @@ export default function PresupuestoFormPage() {
           <p className="text-xs text-ink-500">Diagnóstico, alcance, exenciones, garantía y observaciones</p>
         </div>
 
-        {/* Diagnóstico Técnico */}
         <div className="p-6">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
             Diagnóstico Técnico - Procedimientos
@@ -679,7 +865,6 @@ export default function PresupuestoFormPage() {
           <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/3000</p>
         </div>
 
-        {/* Alcance de la Obra */}
         <div className="p-6">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
             Alcance de la Obra
@@ -695,7 +880,6 @@ export default function PresupuestoFormPage() {
           <p className="mt-1 text-right text-xs text-ink-500">{alcanceObra.length}/3000</p>
         </div>
 
-        {/* Exenciones */}
         <div className="p-6">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
             Exenciones
@@ -711,7 +895,6 @@ export default function PresupuestoFormPage() {
           <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/3000</p>
         </div>
 
-        {/* Garantía */}
         <div className="p-6">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
             Garantía
@@ -761,7 +944,6 @@ export default function PresupuestoFormPage() {
           )}
         </div>
 
-        {/* Observaciones */}
         <div className="p-6">
           <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-400">
             Observaciones
@@ -778,66 +960,17 @@ export default function PresupuestoFormPage() {
         </div>
       </section>
 
-      <SeccionServicios
-        items={servicios}
-        catalogo={catalogoServicios}
-        m2={m2}
-        coefK={k}
-        esAprobado={esAprobado}
-        onChange={setServicios}
-      />
-
-      <SeccionMateriales
-        items={materiales}
-        catalogo={catalogoMateriales}
-        esAprobado={esAprobado}
-        onChange={setMateriales}
-      />
-
-      <SeccionDescuento
-        tieneDescuento={tieneDescuento}
-        tipo={descuentoTipo}
-        valor={descuentoValor}
-        onChange={handleField}
-      />
-
-      <SeccionManoDeObra
-        items={manoDeObra}
-        diasEstimados={diasEstimados}
-        catalogo={catalogoManoDeObra}
-        esAprobado={esAprobado}
-        onChange={setManoDeObra}
-        onDiasChange={setDiasEstimados}
-      />
-
-      <PanelTotales
-        subtotalServicios={subtotalServicios}
-        subtotalMateriales={subtotalMateriales}
-        extrasMonto={extrasMonto}
-        tieneDescuento={tieneDescuento}
-        descuentoTipo={descuentoTipo}
-        descuentoValor={parseFloat(descuentoValor) || 0}
-        ivaPct={parseFloat(ivaPct) || 0}
-        costoManoObra={costoManoObra}
-        onIvaChange={setIvaPct}
-      />
-
-      <SeccionFinanciamiento
-        total={totalCliente}
-        planSeleccionado={planPago}
-        onChange={setPlanPago}
-      />
-
-      {/* Cobros: solo visible en presupuestos aprobados o finalizados */}
+      {/* 11. Cobros */}
       {id && (estado === 'aprobado' || estado === 'finalizado') && (
         <SeccionCobros
           presupuestoId={id}
           plan={planPago}
           importeTotal={importeTotal > 0 ? importeTotal : null}
-          importeServicios={importeServicios > 0 ? importeServicios : null}
+          importeServicios={importeServicios && importeServicios > 0 ? importeServicios : null}
         />
       )}
 
+      {/* 12. Fotos */}
       <SeccionFotos
         presupuestoId={id}
         fotos={presupuesto?.fotos ?? []}

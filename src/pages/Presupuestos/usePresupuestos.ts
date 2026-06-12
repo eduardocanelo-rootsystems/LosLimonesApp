@@ -106,6 +106,11 @@ export interface GuardarPresupuestoInput {
   plan_pago: 'contado' | '60dias' | '90dias' | null
   importe_servicios: number | null
   importe_total: number | null
+  // Nuevos campos (undefined = no guardar, solo para presupuestos nuevos)
+  rentabilidad_pct?: number
+  cliente_paga_materiales?: boolean
+  fecha_inicio_obra?: string | null
+  fecha_fin_obra?: string | null
   // Ítems
   servicios: FormServicioItem[]
   materiales: FormMaterialItem[]
@@ -163,15 +168,22 @@ export function useGuardarPresupuesto() {
         plan_pago: input.plan_pago,
         importe_servicios: input.importe_servicios,
         importe_total: input.importe_total,
+        ...(input.rentabilidad_pct !== undefined ? { rentabilidad_pct: input.rentabilidad_pct } : {}),
+        ...(input.cliente_paga_materiales !== undefined ? { cliente_paga_materiales: input.cliente_paga_materiales } : {}),
+        ...(input.fecha_inicio_obra !== undefined ? { fecha_inicio_obra: input.fecha_inicio_obra || null } : {}),
+        ...(input.fecha_fin_obra !== undefined ? { fecha_fin_obra: input.fecha_fin_obra || null } : {}),
         fecha_actualizacion: new Date().toISOString(),
       }
 
       let presupuestoId: string
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const presupuestoDataAny = presupuestoData as any
+
       if (esNuevo) {
         const { data, error } = await supabase
           .from('presupuestos')
-          .insert(presupuestoData)
+          .insert(presupuestoDataAny)
           .select()
           .single()
         if (error) throw error
@@ -179,7 +191,7 @@ export function useGuardarPresupuesto() {
       } else {
         const { error } = await supabase
           .from('presupuestos')
-          .update(presupuestoData)
+          .update(presupuestoDataAny)
           .eq('id', input.id!)
         if (error) throw error
         presupuestoId = input.id!

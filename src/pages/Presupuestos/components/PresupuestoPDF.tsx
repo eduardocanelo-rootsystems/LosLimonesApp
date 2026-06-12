@@ -332,11 +332,13 @@ function EstadoBadge({ estado }: { estado: string }) {
 function TablaServicios({
   items,
   esExtra,
+  soloDescriptivo,
   totalManoObra = 0,
   totalMateriales = 0,
 }: {
   items: PresupuestoCompleto['servicios']
   esExtra?: boolean
+  soloDescriptivo?: boolean
   totalManoObra?: number
   totalMateriales?: number
 }) {
@@ -344,6 +346,22 @@ function TablaServicios({
   const th = esExtra ? s.thTextExtra : s.thText
   const header = esExtra ? s.tableHeaderExtra : s.tableHeader
   const totalSubtotalItems = items.reduce((acc, sv) => acc + Number(sv.subtotal), 0)
+
+  if (soloDescriptivo) {
+    return (
+      <View style={s.table}>
+        <View style={header}>
+          <Text style={[th, s.colNombre]}>DESCRIPCIÓN</Text>
+        </View>
+        {items.map((sv, i) => (
+          <View key={sv.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+            <Text style={[s.tdText, s.colNombre]}>{sv.nombre_snapshot}</Text>
+          </View>
+        ))}
+      </View>
+    )
+  }
+
   return (
     <View style={s.table}>
       <View style={header}>
@@ -423,16 +441,18 @@ export function PresupuestoPDFPage({
   presupuesto: PresupuestoCompleto
   logoUrl?: string | null
 }) {
+  // Detectar nueva fórmula por presencia de rentabilidad_pct
+  const p = presupuesto as any
+  const usaNuevaFormula = p.rentabilidad_pct !== null && p.rentabilidad_pct !== undefined
+
   const serviciosOrig = presupuesto.servicios.filter((s) => !s.es_adicional)
   const serviciosExtra = presupuesto.servicios.filter((s) => s.es_adicional)
   const materialesOrig = presupuesto.materiales.filter((m) => !m.es_adicional)
   const materialesExtra = presupuesto.materiales.filter((m) => m.es_adicional)
 
-  const subtotalServiciosOrig = serviciosOrig.reduce((acc, s) => acc + Number(s.subtotal), 0)
   const subtotalMaterialesOrig = materialesOrig.reduce((acc, m) => acc + Number(m.subtotal), 0)
-  const subtotalServiciosExtra = serviciosExtra.reduce((acc, s) => acc + Number(s.subtotal), 0)
   const subtotalMaterialesExtra = materialesExtra.reduce((acc, m) => acc + Number(m.subtotal), 0)
-  const extrasMonto = subtotalServiciosExtra + subtotalMaterialesExtra
+  const extrasMonto = subtotalMaterialesExtra
 
   const diasGlobales = Number(presupuesto.dias_estimados_obra ?? 0)
   const subtotalManoObra = presupuesto.mano_obra.reduce(
@@ -440,22 +460,32 @@ export function PresupuestoPDFPage({
     0,
   )
 
-  const subtotalBruto =
-    subtotalServiciosOrig + subtotalMaterialesOrig + subtotalServiciosExtra + subtotalMaterialesExtra + subtotalManoObra
+  // Total según fórmula
+  const total = usaNuevaFormula
+    ? Number(presupuesto.importe_total ?? 0)
+    : (() => {
+        const subtotalServiciosOrig = serviciosOrig.reduce((acc, s) => acc + Number(s.subtotal), 0)
+        const subtotalServiciosExtra = serviciosExtra.reduce((acc, s) => acc + Number(s.subtotal), 0)
+        const subtotalBruto =
+          subtotalServiciosOrig + subtotalMaterialesOrig + subtotalServiciosExtra + subtotalMaterialesExtra + subtotalManoObra
+        const descMonto = presupuesto.descuento_tipo
+          ? presupuesto.descuento_tipo === 'fijo'
+            ? Number(presupuesto.descuento_valor ?? 0)
+            : (subtotalBruto * Number(presupuesto.descuento_valor ?? 0)) / 100
+          : 0
+        const neto = subtotalBruto - descMonto
+        const ivaMonto = (neto * Number(presupuesto.iva_pct)) / 100
+        return neto + ivaMonto
+      })()
 
-  const descuentoMonto = presupuesto.descuento_tipo
-    ? presupuesto.descuento_tipo === 'fijo'
-      ? Number(presupuesto.descuento_valor ?? 0)
-      : (subtotalBruto * Number(presupuesto.descuento_valor ?? 0)) / 100
-    : 0
+  const tieneExtras = (usaNuevaFormula ? materialesExtra.length > 0 : (serviciosExtra.length > 0 || materialesExtra.length > 0))
+  const tieneDescuento = !usaNuevaFormula && !!presupuesto.descuento_tipo
+  const tieneIva = !usaNuevaFormula && Number(presupuesto.iva_pct) > 0
 
-  const neto = subtotalBruto - descuentoMonto
-  const ivaMonto = (neto * Number(presupuesto.iva_pct)) / 100
-  const total = neto + ivaMonto
-
-  const tieneExtras = serviciosExtra.length > 0 || materialesExtra.length > 0
-  const tieneDescuento = !!presupuesto.descuento_tipo && descuentoMonto > 0
-  const tieneIva = Number(presupuesto.iva_pct) > 0
+  // Fechas de obra
+  const fechaInicioObra: string | null = p.fecha_inicio_obra ?? null
+  const fechaFinObra: string | null = p.fecha_fin_obra ?? null
+  const tieneFechasObra = !!(fechaInicioObra || fechaFinObra)
   const tieneDiagnostico = !!presupuesto.diagnostico_tecnico
   const tieneAlcance = !!presupuesto.alcance_obra
   const tieneExenciones = !!presupuesto.exenciones
@@ -557,7 +587,12 @@ export function PresupuestoPDFPage({
       {serviciosOrig.length > 0 && (
         <View style={s.section}>
           <Text style={s.sectionTitle}>Servicios</Text>
-          <TablaServicios items={serviciosOrig} totalManoObra={subtotalManoObra} totalMateriales={subtotalMaterialesOrig} />
+          <TablaServicios
+            items={serviciosOrig}
+            soloDescriptivo={usaNuevaFormula}
+            totalManoObra={usaNuevaFormula ? 0 : subtotalManoObra}
+            totalMateriales={usaNuevaFormula ? 0 : subtotalMaterialesOrig}
+          />
         </View>
       )}
 
@@ -565,18 +600,12 @@ export function PresupuestoPDFPage({
         <View style={s.section}>
           <Text style={s.sectionTitleExtra}>Trabajos adicionales</Text>
           {serviciosExtra.length > 0 && (
-            <TablaServicios items={serviciosExtra} esExtra totalMateriales={subtotalMaterialesExtra} />
+            <TablaServicios items={serviciosExtra} esExtra soloDescriptivo={usaNuevaFormula} totalMateriales={usaNuevaFormula ? 0 : subtotalMaterialesExtra} />
           )}
         </View>
       )}
 
       <View style={s.totalesBox} wrap={false}>
-        {serviciosOrig.length > 0 && (
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>Subtotal servicios</Text>
-            <Text style={s.totalValue}>{fmt(subtotalServiciosOrig + subtotalManoObra + subtotalMaterialesOrig)}</Text>
-          </View>
-        )}
         {tieneExtras && (
           <View style={s.totalRowExtra}>
             <Text style={s.totalLabelExtra}>Adicionales</Text>
@@ -588,19 +617,17 @@ export function PresupuestoPDFPage({
             <Text style={s.totalLabel}>
               Descuento{presupuesto.descuento_tipo === 'porcentaje' ? ` (${presupuesto.descuento_valor}%)` : ''}
             </Text>
-            <Text style={s.descuentoValue}>− {fmt(descuentoMonto)}</Text>
-          </View>
-        )}
-        {(tieneDescuento || tieneExtras) && (
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>Neto</Text>
-            <Text style={s.totalValue}>{fmt(neto)}</Text>
+            <Text style={s.descuentoValue}>− {fmt(
+              presupuesto.descuento_tipo === 'fijo'
+                ? Number(presupuesto.descuento_valor ?? 0)
+                : 0
+            )}</Text>
           </View>
         )}
         {tieneIva && (
           <View style={s.totalRow}>
             <Text style={s.totalLabel}>IVA ({presupuesto.iva_pct}%)</Text>
-            <Text style={s.totalValue}>{fmt(ivaMonto)}</Text>
+            <Text style={s.totalValue}>{fmt(0)}</Text>
           </View>
         )}
         <View style={s.totalRowFinal}>
@@ -613,6 +640,30 @@ export function PresupuestoPDFPage({
         <View style={[s.section, { marginTop: 14 }]}>
           <Text style={s.sectionTitle}>Opciones de financiamiento</Text>
           <TablaFinanciamiento total={total} planSeleccionado={presupuesto.plan_pago} />
+        </View>
+      )}
+
+      {tieneFechasObra && (
+        <View style={[s.section, { marginTop: 14 }]}>
+          <Text style={s.sectionTitle}>Planificación de obra</Text>
+          <View style={s.twoCol}>
+            {fechaInicioObra && (
+              <View style={s.col}>
+                <View style={s.fieldRow}>
+                  <Text style={s.fieldLabel}>Inicio estimado</Text>
+                  <Text style={s.fieldValueBold}>{fmtDate(fechaInicioObra)}</Text>
+                </View>
+              </View>
+            )}
+            {fechaFinObra && (
+              <View style={s.col}>
+                <View style={s.fieldRow}>
+                  <Text style={s.fieldLabel}>Fin estimado</Text>
+                  <Text style={s.fieldValueBold}>{fmtDate(fechaFinObra)}</Text>
+                </View>
+              </View>
+            )}
+          </View>
         </View>
       )}
 

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Building2, ChevronDown, FileText, Link, Loader2, Plus, Search, Unlink, Wrench } from 'lucide-react'
+import { FileText, Link, Loader2, Plus, Search, Unlink } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { cn, formatDate, diasHastaVencimiento, toNombrePropio } from '@/lib/utils'
@@ -140,7 +140,6 @@ export default function PresupuestosPage() {
   const [filtroEstado, setFiltroEstado] = useState<EstadoPresupuesto | 'todos'>('todos')
   const [periodo, setPeriodo]         = useState<Periodo>('mes_actual')
   const [rango, setRango]             = useState<RangoFechas>(() => getRangoFechas('mes_actual'))
-  const [menuNuevo, setMenuNuevo]     = useState(false)
   const menuRef                       = useRef<HTMLDivElement>(null)
 
   const { sorted, col, dir, toggle } = useSort(presupuestos as unknown as Record<string, unknown>[])
@@ -167,41 +166,14 @@ export default function PresupuestosPage() {
         title="Presupuestos"
         subtitle="Armado y gestión de presupuestos para obras"
         actions={
-          <div className="relative" ref={menuRef}>
+          <div ref={menuRef}>
             <button
-              onClick={() => setMenuNuevo((v) => !v)}
+              onClick={() => navigate('/presupuestos/nuevo')}
               className="btn-primary"
             >
               <Plus className="h-4 w-4" />
               Nuevo presupuesto
-              <ChevronDown className="h-3.5 w-3.5" />
             </button>
-            {menuNuevo && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-ink-700 bg-ink-900 py-1 shadow-xl">
-                <button
-                  type="button"
-                  onClick={() => { setMenuNuevo(false); navigate('/presupuestos/nuevo') }}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-ink-200 hover:bg-ink-800"
-                >
-                  <Building2 className="h-4 w-4 text-accent-400 shrink-0" />
-                  <div className="text-left">
-                    <p className="font-medium">Obra Mayor</p>
-                    <p className="text-xs text-ink-500">Presupuesto completo</p>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setMenuNuevo(false); navigate('/presupuestos/nuevo?tipo=obra_menor') }}
-                  className="flex w-full items-center gap-3 px-4 py-2.5 text-sm text-ink-200 hover:bg-ink-800"
-                >
-                  <Wrench className="h-4 w-4 text-sky-400 shrink-0" />
-                  <div className="text-left">
-                    <p className="font-medium">Obra Menor</p>
-                    <p className="text-xs text-ink-500">Rápido, precio fijo</p>
-                  </div>
-                </button>
-              </div>
-            )}
           </div>
         }
       />
@@ -308,11 +280,6 @@ function PresupuestoRow({ presupuesto: p, facturas, firmadoCliente, onClick }: {
     >
       <td className="px-4 py-3">
         <span className="font-mono text-sm font-medium text-accent-400">{p.numero ?? '—'}</span>
-        {(p as any).tipo === 'obra_menor' && (
-          <span className="ml-2 rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-sky-400">
-            menor
-          </span>
-        )}
       </td>
       <td className="px-4 py-3">
         <div className="font-medium text-ink-100">

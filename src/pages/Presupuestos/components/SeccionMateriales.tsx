@@ -7,10 +7,12 @@ interface SeccionMaterialesProps {
   items: FormMaterialItem[]
   catalogo: MaterialConPrecio[]
   esAprobado?: boolean
+  clientePagaMateriales?: boolean
+  onClientePagaMaterialesChange?: (val: boolean) => void
   onChange: (items: FormMaterialItem[]) => void
 }
 
-export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: SeccionMaterialesProps) {
+export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMateriales, onClientePagaMaterialesChange, onChange }: SeccionMaterialesProps) {
   const [seleccionado, setSeleccionado] = useState('')
   const [cantidad, setCantidad] = useState('1')
 
@@ -64,9 +66,22 @@ export function SeccionMateriales({ items, catalogo, esAprobado, onChange }: Sec
 
   return (
     <section className="card p-6">
-      <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-ink-400">
-        Materiales
-      </h2>
+      <div className="mb-5 flex items-center justify-between gap-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-ink-400">
+          Materiales
+        </h2>
+        {onClientePagaMaterialesChange !== undefined && (
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-300">
+            <input
+              type="checkbox"
+              checked={clientePagaMateriales ?? false}
+              onChange={(e) => onClientePagaMaterialesChange(e.target.checked)}
+              className="h-4 w-4 rounded border-ink-600 bg-ink-800 accent-accent-500"
+            />
+            El cliente provee los materiales
+          </label>
+        )}
+      </div>
 
       {items.length > 0 && (
         <div className="mb-4 overflow-hidden rounded-lg border border-ink-800">
