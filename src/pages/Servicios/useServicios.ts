@@ -15,7 +15,6 @@ export function useServicios() {
           `
           id,
           nombre,
-          nombre_propio,
           estado,
           fecha_creacion,
           fecha_actualizacion,
@@ -31,8 +30,7 @@ export function useServicios() {
       if (error) throw error
 
       // Mapear: tomar el precio donde fecha_hasta es null (vigente)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (data ?? []).map((s: any) => {
+      return (data ?? []).map((s) => {
         const precios = (s.servicios_precios ?? []) as Array<{
           precio_m2: number
           fecha_desde: string
@@ -42,7 +40,7 @@ export function useServicios() {
         return {
           id: s.id,
           nombre: s.nombre,
-          nombre_propio: s.nombre_propio ?? null,
+          nombre_propio: null,
           estado: s.estado,
           precio_m2_actual: vigente?.precio_m2 ?? null,
           fecha_creacion: s.fecha_creacion,
@@ -72,7 +70,6 @@ export function useHistorialPrecios(servicioId: string | null) {
 
 interface CrearServicioInput {
   nombre: string
-  nombre_propio?: string | null
   precio_m2: number
 }
 
@@ -80,12 +77,11 @@ export function useCrearServicio() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ nombre, nombre_propio, precio_m2 }: CrearServicioInput) => {
+    mutationFn: async ({ nombre, precio_m2 }: CrearServicioInput) => {
       // 1. Crear el servicio
       const { data: servicio, error: e1 } = await supabase
         .from('servicios')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .insert({ nombre, nombre_propio: nombre_propio || null, estado: 'activo' } as any)
+        .insert({ nombre, estado: 'activo' })
         .select()
         .single()
 
@@ -110,7 +106,6 @@ export function useCrearServicio() {
 interface ActualizarServicioInput {
   id: string
   nombre?: string
-  nombre_propio?: string | null
   nuevoPrecio?: number
 }
 
@@ -118,16 +113,12 @@ export function useActualizarServicio() {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ id, nombre, nombre_propio, nuevoPrecio }: ActualizarServicioInput) => {
-      // 1. Actualizar nombre/nombre_propio si cambiaron
-      if (nombre !== undefined || nombre_propio !== undefined) {
-        const updates: Record<string, unknown> = { fecha_actualizacion: new Date().toISOString() }
-        if (nombre !== undefined) updates.nombre = nombre
-        if (nombre_propio !== undefined) updates.nombre_propio = nombre_propio || null
+    mutationFn: async ({ id, nombre, nuevoPrecio }: ActualizarServicioInput) => {
+      // 1. Actualizar nombre si cambió
+      if (nombre !== undefined) {
         const { error } = await supabase
           .from('servicios')
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .update(updates as any)
+          .update({ nombre, fecha_actualizacion: new Date().toISOString() })
           .eq('id', id)
         if (error) throw error
       }

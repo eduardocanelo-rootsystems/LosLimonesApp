@@ -6,6 +6,7 @@ import {
   useActualizarServicio,
   useCrearServicio,
 } from './useServicios'
+import { toNombrePropio } from '@/lib/utils'
 import type { ServicioConPrecio } from '@/types/database'
 
 interface ServicioFormModalProps {
@@ -21,7 +22,6 @@ export function ServicioFormModal({
 }: ServicioFormModalProps) {
   const editando = !!servicio
   const [nombre, setNombre] = useState('')
-  const [nombrePropio, setNombrePropio] = useState('')
   const [precio, setPrecio] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -33,7 +33,6 @@ export function ServicioFormModal({
   useEffect(() => {
     if (open) {
       setNombre(servicio?.nombre ?? '')
-      setNombrePropio(servicio?.nombre_propio ?? '')
       setPrecio(servicio?.precio_m2_actual?.toString() ?? '')
       setError(null)
     }
@@ -43,11 +42,10 @@ export function ServicioFormModal({
     e.preventDefault()
     setError(null)
 
-    const nombreLimpio = nombre.trim()
-    const nombrePropioLimpio = nombrePropio.trim() || null
+    const nombreFormateado = toNombrePropio(nombre)
     const precioNum = parseFloat(precio)
 
-    if (!nombreLimpio) {
+    if (!nombreFormateado) {
       setError('El nombre es obligatorio.')
       return
     }
@@ -61,13 +59,13 @@ export function ServicioFormModal({
         const cambioPrecio = precioNum !== servicio.precio_m2_actual
         await actualizar.mutateAsync({
           id: servicio.id,
-          nombre: nombreLimpio !== servicio.nombre ? nombreLimpio : undefined,
-          nombre_propio: nombrePropioLimpio !== (servicio.nombre_propio ?? null) ? nombrePropioLimpio : undefined,
+          nombre:
+            nombreFormateado !== servicio.nombre ? nombreFormateado : undefined,
           nuevoPrecio: cambioPrecio ? precioNum : undefined,
         })
         toast.success('Servicio actualizado.')
       } else {
-        await crear.mutateAsync({ nombre: nombreLimpio, nombre_propio: nombrePropioLimpio, precio_m2: precioNum })
+        await crear.mutateAsync({ nombre: nombreFormateado, precio_m2: precioNum })
         toast.success('Servicio creado.')
       }
       onClose()
@@ -89,7 +87,7 @@ export function ServicioFormModal({
             htmlFor="nombre"
             className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400"
           >
-            Nombre interno
+            Nombre
           </label>
           <input
             id="nombre"
@@ -99,27 +97,11 @@ export function ServicioFormModal({
             required
             autoFocus
             className="input-base"
-            placeholder="Ej: limpieza_fachada"
+            placeholder="Ej: Limpieza de fachada"
           />
-          <p className="mt-1 text-xs text-ink-500">Identificador interno del servicio.</p>
-        </div>
-
-        <div>
-          <label
-            htmlFor="nombre_propio"
-            className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400"
-          >
-            Nombre en presupuesto
-          </label>
-          <input
-            id="nombre_propio"
-            type="text"
-            value={nombrePropio}
-            onChange={(e) => setNombrePropio(e.target.value)}
-            className="input-base"
-            placeholder="Ej: Limpieza y recuperación de fachada"
-          />
-          <p className="mt-1 text-xs text-ink-500">Nombre formal que aparece en el PDF. Si se deja vacío, se usa el nombre interno.</p>
+          <p className="mt-1 text-xs text-ink-500">
+            Se formateará automáticamente como nombre propio al guardar.
+          </p>
         </div>
 
         <div>
