@@ -56,6 +56,18 @@ export function contratoToFormValues(
 }
 
 export function calcTotalPresupuesto(p: PresupuestoCompleto): number {
+  // Nueva fórmula: importe_total es la fuente de verdad pero ya incluye el recargo de
+  // financiamiento guardado con el presupuesto — lo dividimos para obtener la base
+  // pre-financiamiento que calcFinanciamiento vuelve a aplicar según el plan del contrato.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rentPct = (p as any).rentabilidad_pct
+  if (rentPct !== null && rentPct !== undefined && p.importe_total) {
+    const storedPlan = (p.plan_pago ?? '') as PlanPago
+    const storedRecargo = storedPlan === '60dias' ? 0.10 : storedPlan === '90dias' ? 0.20 : 0
+    return p.importe_total / (1 + storedRecargo / 2)
+  }
+
+  // Fórmula vieja: recalcular desde los componentes
   const ss = p.servicios.reduce((a, s) => a + Number(s.subtotal), 0)
   const sm = p.materiales.reduce((a, m) => a + Number(m.subtotal), 0)
   const bruto = ss + sm
