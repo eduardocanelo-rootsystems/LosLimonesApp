@@ -9,9 +9,9 @@ interface SeccionFinanciamientoProps {
 }
 
 const PLANES = [
-  { value: 'contado' as const, label: 'Contado (50/50)', recargo: 0 },
-  { value: '60dias' as const, label: 'Financiado a 60 días', recargo: 0.10 },
-  { value: '90dias' as const, label: 'Financiado a 90 días', recargo: 0.20 },
+  { value: 'contado' as const, label: 'Contado (50/50)',                 recargo: 0,    cuotas: 0 },
+  { value: '60dias' as const, label: 'Financiado a 60 días (2 cuotas)', recargo: 0.10, cuotas: 2 },
+  { value: '90dias' as const, label: 'Financiado a 90 días (3 cuotas)', recargo: 0.20, cuotas: 3 },
 ]
 
 export function SeccionFinanciamiento({ total, planSeleccionado, onChange }: SeccionFinanciamientoProps) {
@@ -53,12 +53,12 @@ export function SeccionFinanciamiento({ total, planSeleccionado, onChange }: Sec
             </tr>
           </thead>
           <tbody className="divide-y divide-ink-800">
-            {PLANES.map(({ value, label, recargo }) => {
+            {PLANES.map(({ value, label, recargo, cuotas }) => {
               const saldo = anticipo * (1 + recargo)  // recargo solo sobre el 50% financiado
               const totalFinal = anticipo + saldo
-              const cuotasLabel = recargo === 0
+              const cuotasLabel = cuotas === 0
                 ? formatCurrency(saldo)
-                : `2 × ${formatCurrency(saldo / 2)}`
+                : `${cuotas} × ${formatCurrency(saldo / cuotas)}`
               const isSelected = planSeleccionado === value
 
               return (
