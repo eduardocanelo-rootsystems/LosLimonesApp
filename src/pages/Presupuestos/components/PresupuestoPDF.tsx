@@ -386,9 +386,9 @@ function TablaServicios({
 
 
 const PLANES_FIN = [
-  { value: 'contado', label: 'Contado (50/50)', recargo: 0 },
-  { value: '60dias', label: 'Financiado a 60 días', recargo: 0.10 },
-  { value: '90dias', label: 'Financiado a 90 días', recargo: 0.20 },
+  { value: 'contado', label: 'Contado (50/50)',                 recargo: 0,    cuotas: 0 },
+  { value: '60dias',  label: 'Financiado a 60 días (2 cuotas)', recargo: 0.10, cuotas: 2 },
+  { value: '90dias',  label: 'Financiado a 90 días (3 cuotas)', recargo: 0.20, cuotas: 3 },
 ]
 
 function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planSeleccionado?: string | null }) {
@@ -404,10 +404,10 @@ function TablaFinanciamiento({ total, planSeleccionado }: { total: number; planS
       </View>
       {PLANES_FIN.filter(({ value }) =>
         value === 'contado' || value === planSeleccionado
-      ).map(({ label, recargo, value }) => {
+      ).map(({ label, recargo, cuotas, value }) => {
         const saldo = anticipo * (1 + recargo)   // recargo solo sobre el 50% financiado
         const totalFinal = anticipo + saldo
-        const cuotasLabel = recargo === 0 ? fmt(saldo) : `2 × ${fmt(saldo / 2)}`
+        const cuotasLabel = cuotas === 0 ? fmt(saldo) : `${cuotas} × ${fmt(saldo / cuotas)}`
         const isSelected = planSeleccionado === value
         return (
           <View key={label} style={[
