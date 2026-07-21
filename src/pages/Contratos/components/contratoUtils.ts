@@ -14,6 +14,7 @@ export interface ContratoFormValues {
   monto_cuota: string
   fecha_cuota_1: string
   fecha_cuota_2: string
+  fecha_cuota_3: string
   monto_multa: string
   tasa_interes: string
   direccion_legal: string
@@ -22,9 +23,9 @@ export interface ContratoFormValues {
 }
 
 export const PLANES_PAGO = {
-  contado:  { label: 'Contado (50/50)',        recargo: 0,    cuotasLabel: '' },
-  '60dias': { label: 'Financiado a 60 días',   recargo: 0.10, cuotasLabel: '+10%' },
-  '90dias': { label: 'Financiado a 90 días',   recargo: 0.20, cuotasLabel: '+20%' },
+  contado:  { label: 'Contado (50/50)',                  recargo: 0,    cuotasLabel: '' },
+  '60dias': { label: 'Financiado a 60 días (2 cuotas)',  recargo: 0.10, cuotasLabel: '+10%' },
+  '90dias': { label: 'Financiado a 90 días (3 cuotas)',  recargo: 0.20, cuotasLabel: '+20%' },
 } as const
 
 export function contratoToFormValues(
@@ -46,6 +47,7 @@ export function contratoToFormValues(
     monto_cuota:           contrato?.monto_cuota?.toString() ?? '',
     fecha_cuota_1:         contrato?.fecha_cuota_1         ?? '',
     fecha_cuota_2:         contrato?.fecha_cuota_2         ?? '',
+    fecha_cuota_3:         contrato?.fecha_cuota_3         ?? '',
     monto_multa:           contrato?.monto_multa?.toString() ?? '',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     tasa_interes:          (contrato as any)?.tasa_interes?.toString() ?? '',
@@ -86,7 +88,7 @@ export function calcFinanciamiento(baseTotal: number, plan: PlanPago) {
   const anticipo        = baseTotal * 0.5
   const saldo           = anticipo * (1 + recargo)   // recargo solo sobre el 50% financiado
   const totalFinal      = anticipo + saldo
-  const numInstallments = plan === '60dias' || plan === '90dias' ? 2 : 0
+  const numInstallments = plan === '60dias' ? 2 : plan === '90dias' ? 3 : 0
   const montoCuota      = numInstallments > 0 ? saldo / numInstallments : saldo
   return { totalFinal, anticipo, saldo, numInstallments, montoCuota }
 }

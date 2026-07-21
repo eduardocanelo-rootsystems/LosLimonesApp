@@ -567,6 +567,7 @@ export type Database = {
           plan_pago: 'contado' | '60dias' | '90dias' | null
           fecha_cuota_1: string | null
           fecha_cuota_2: string | null
+          fecha_cuota_3: string | null
           created_at: string
           updated_at: string
         }
@@ -588,6 +589,7 @@ export type Database = {
           plan_pago?: 'contado' | '60dias' | '90dias' | null
           fecha_cuota_1?: string | null
           fecha_cuota_2?: string | null
+          fecha_cuota_3?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -609,6 +611,7 @@ export type Database = {
           plan_pago?: 'contado' | '60dias' | '90dias' | null
           fecha_cuota_1?: string | null
           fecha_cuota_2?: string | null
+          fecha_cuota_3?: string | null
           created_at?: string
           updated_at?: string
         }

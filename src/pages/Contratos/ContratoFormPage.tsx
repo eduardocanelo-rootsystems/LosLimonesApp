@@ -33,11 +33,11 @@ function addDaysToISO(iso: string, days: number): string {
   return d.toISOString().substring(0, 10)
 }
 
-function calcFechasCuota(fechaFirma: string, plan: PlanPago): [string, string] {
-  if (!fechaFirma) return ['', '']
-  if (plan === '60dias') return [addDaysToISO(fechaFirma, 30), addDaysToISO(fechaFirma, 60)]
-  if (plan === '90dias') return [addDaysToISO(fechaFirma, 45), addDaysToISO(fechaFirma, 90)]
-  return ['', '']
+function calcFechasCuota(fechaFirma: string, plan: PlanPago): [string, string, string] {
+  if (!fechaFirma) return ['', '', '']
+  if (plan === '60dias') return [addDaysToISO(fechaFirma, 30), addDaysToISO(fechaFirma, 60), '']
+  if (plan === '90dias') return [addDaysToISO(fechaFirma, 30), addDaysToISO(fechaFirma, 60), addDaysToISO(fechaFirma, 90)]
+  return ['', '', '']
 }
 
 // ─── Componentes de formulario ────────────────────────────────────────────────
@@ -96,6 +96,7 @@ export default function ContratoFormPage() {
   const [montoCuota, setMontoCuota] = useState('')
   const [fechaCuota1, setFechaCuota1] = useState('')
   const [fechaCuota2, setFechaCuota2] = useState('')
+  const [fechaCuota3, setFechaCuota3] = useState('')
   const [montoMulta, setMontoMulta] = useState('')
   const [tasaInteres, setTasaInteres] = useState('')
   const [direccionLegal, setDireccionLegal] = useState('')
@@ -134,6 +135,7 @@ export default function ContratoFormPage() {
       setMontoCuota(contrato.monto_cuota?.toString() ?? '')
       setFechaCuota1(contrato.fecha_cuota_1 ?? '')
       setFechaCuota2(contrato.fecha_cuota_2 ?? '')
+      setFechaCuota3((contrato as { fecha_cuota_3?: string | null }).fecha_cuota_3 ?? '')
       setMontoMulta(contrato.monto_multa?.toString() ?? '')
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setTasaInteres((contrato as any).tasa_interes?.toString() ?? '')
@@ -163,13 +165,14 @@ export default function ContratoFormPage() {
     setMontoCuota(numInstallments > 0 ? cuota.toFixed(2) : '')
 
     if (numInstallments > 0) {
-      const firma = fechaFirma
-      const [d1, d2] = calcFechasCuota(firma, plan)
+      const [d1, d2, d3] = calcFechasCuota(fechaFirma, plan)
       setFechaCuota1(d1)
       setFechaCuota2(d2)
+      setFechaCuota3(d3)
     } else {
       setFechaCuota1('')
       setFechaCuota2('')
+      setFechaCuota3('')
     }
   }
 
@@ -177,9 +180,10 @@ export default function ContratoFormPage() {
   const handleFechaFirmaChange = (value: string) => {
     setFechaFirma(value)
     if (planPago === '60dias' || planPago === '90dias') {
-      const [d1, d2] = calcFechasCuota(value, planPago)
+      const [d1, d2, d3] = calcFechasCuota(value, planPago)
       setFechaCuota1(d1)
       setFechaCuota2(d2)
+      setFechaCuota3(d3)
     }
   }
 
@@ -201,6 +205,7 @@ export default function ContratoFormPage() {
         monto_cuota: montoCuota ? parseFloat(montoCuota) : null,
         fecha_cuota_1: fechaCuota1 || null,
         fecha_cuota_2: fechaCuota2 || null,
+        fecha_cuota_3: fechaCuota3 || null,
         monto_multa: montoMulta ? parseFloat(montoMulta) : null,
         tasa_interes: tasaInteres ? parseFloat(tasaInteres) : null,
         direccion_legal: direccionLegal || null,
@@ -277,6 +282,7 @@ export default function ContratoFormPage() {
     monto_cuota: montoCuota,
     fecha_cuota_1: fechaCuota1,
     fecha_cuota_2: fechaCuota2,
+    fecha_cuota_3: fechaCuota3,
     monto_multa: montoMulta,
     tasa_interes: tasaInteres,
     direccion_legal: direccionLegal,
@@ -601,6 +607,16 @@ export default function ContratoFormPage() {
                   className="input-base font-mono"
                 />
               </Field>
+              {planPago === '90dias' && (
+                <Field label="Fecha vencimiento Cuota 3">
+                  <input
+                    type="date"
+                    value={fechaCuota3}
+                    onChange={(e) => setFechaCuota3(e.target.value)}
+                    className="input-base font-mono"
+                  />
+                </Field>
+              )}
             </>
           )}
         </div>

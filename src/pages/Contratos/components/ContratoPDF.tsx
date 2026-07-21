@@ -355,7 +355,7 @@ export function ContratoPDFPage({
                 {' a la Recepción Provisoria de la obra.'}
               </Text>
             </View>
-          ) : (
+          ) : plan === '60dias' ? (
             <View style={s.listaItem}>
               <Text style={s.listaBullet}>b)</Text>
               <Text style={s.listaTexto}>
@@ -363,6 +363,18 @@ export function ContratoPDFPage({
                 <Text style={b}>{form.monto_cuota ? fmt(parseFloat(form.monto_cuota)) : fmtOrBlank(String(montoCuota), true)}</Text>
                 {form.fecha_cuota_1 ? ` (Cuota 1: ${fmtShort(form.fecha_cuota_1)}` : ''}
                 {form.fecha_cuota_2 ? ` — Cuota 2: ${fmtShort(form.fecha_cuota_2)})` : (form.fecha_cuota_1 ? ')' : '')}
+                {'.'}
+              </Text>
+            </View>
+          ) : (
+            <View style={s.listaItem}>
+              <Text style={s.listaBullet}>b)</Text>
+              <Text style={s.listaTexto}>
+                {'Saldo en tres (3) cuotas mensuales y consecutivas de '}
+                <Text style={b}>{form.monto_cuota ? fmt(parseFloat(form.monto_cuota)) : fmtOrBlank(String(montoCuota), true)}</Text>
+                {form.fecha_cuota_1 ? ` (Cuota 1: ${fmtShort(form.fecha_cuota_1)}` : ''}
+                {form.fecha_cuota_2 ? ` — Cuota 2: ${fmtShort(form.fecha_cuota_2)}` : ''}
+                {form.fecha_cuota_3 ? ` — Cuota 3: ${fmtShort(form.fecha_cuota_3)})` : (form.fecha_cuota_1 ? ')' : '')}
                 {'.'}
               </Text>
             </View>
