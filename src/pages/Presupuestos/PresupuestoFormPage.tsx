@@ -270,7 +270,7 @@ export default function PresupuestoFormPage() {
 
   // ─── Enviar por email ───────────────────────────────────────────────────────
 
-  const FIXED_EMAIL = 'luis.alfonzo@gmail.com'
+  const FIXED_EMAIL = 'limonesropeaccess@gmail.com'
 
   const [emailModal,     setEmailModal]     = useState(false)
   const [emailsExtra,    setEmailsExtra]    = useState<string[]>([])
