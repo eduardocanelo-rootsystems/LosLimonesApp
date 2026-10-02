@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark, CreditCard, Loader2 } from 'lucide-react'
+import { DollarSign, TrendingDown, Clock, CheckCircle, FileText, ShoppingCart, Users, FileDown, AlertTriangle, Landmark, CreditCard, Loader2, ClipboardList, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -8,6 +8,7 @@ import { PeriodoSelector, getRangoFechas, type Periodo } from '@/components/shar
 import { useFacturasEmitidas } from '@/hooks/useVentas'
 import { useComprasRecibidas } from '@/hooks/useCompras'
 import { usePresupuestos } from '@/pages/Presupuestos/usePresupuestos'
+import { useRelevamientos } from '@/pages/Relevamientos/useRelevamientos'
 import { useContratosResumen } from '@/pages/Contratos/useContrato'
 import { diasHastaVencimiento } from '@/lib/utils'
 import { useMovimientos, usePresupuestosRentabilidad, useManoObraStats } from '@/hooks/useMovimientos'
@@ -225,6 +226,7 @@ export default function DashboardPage() {
   const { data: compras        = [] } = useComprasRecibidas({ desde: rango.desde, hasta: rango.hasta })
   const { data: presupuestos       = [] } = usePresupuestos()
   const { data: contratosResumen   = [] } = useContratosResumen()
+  const { data: relevamientos      = [] } = useRelevamientos()
   const { data: movimientos    = [] } = useMovimientos(rango)
   const { data: presupRent     = [] } = usePresupuestosRentabilidad(rango)
   const { data: cobros         = [] } = useCobrosPeriodo(rango)
@@ -262,6 +264,15 @@ export default function DashboardPage() {
   const presupAprobados  = presupPeriodo.filter((p) => p.estado === 'aprobado').length
   const presupFinalizados = presupPeriodo.filter((p) => p.estado === 'finalizado').length
   const sinFactura       = presupPeriodo.filter((p) => !p.factura_asociada_id && p.estado !== 'emitido').length
+
+  // Relevamientos
+  const relevActivos = relevamientos.length
+  const relevPeriodo = relevamientos.filter((r) => {
+    const fecha = r.fecha_creacion.slice(0, 10)
+    return fecha >= rango.desde && fecha <= rango.hasta
+  }).length
+  const hoy = new Date().toISOString().slice(0, 10)
+  const relevHoy = relevamientos.filter((r) => r.fecha_creacion.slice(0, 10) === hoy).length
 
   // Rentabilidad promedio de presupuestos aprobados en el período (nueva fórmula)
   const aprobadosConRent = presupPeriodo.filter(
@@ -457,6 +468,32 @@ export default function DashboardPage() {
           sub="aprobados o finalizados"
           icon={FileText}
           color={sinFactura > 0 ? 'text-amber-400' : 'text-ink-600'}
+        />
+      </div>
+
+      {/* Relevamientos */}
+      <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Relevamientos</p>
+      <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <KpiCard
+          label="En curso"
+          value={String(relevActivos)}
+          sub="pendientes de exportar"
+          icon={ClipboardList}
+          color="text-accent-400"
+        />
+        <KpiCard
+          label="En el período"
+          value={String(relevPeriodo)}
+          sub="creados en el período"
+          icon={ClipboardList}
+          color="text-blue-400"
+        />
+        <KpiCard
+          label="Hoy"
+          value={String(relevHoy)}
+          sub="creados hoy"
+          icon={Star}
+          color={relevHoy > 0 ? 'text-green-400' : 'text-ink-600'}
         />
       </div>
 
