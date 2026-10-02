@@ -605,6 +605,35 @@ export function PresupuestoPDFPage({
         </View>
       )}
 
+      {/* Materiales */}
+      {materialesOrig.length > 0 && (
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Materiales</Text>
+          <View style={s.table}>
+            <View style={s.tableHeader}>
+              <Text style={[s.thText, { flex: 4 }]}>MATERIAL</Text>
+              <Text style={[s.thText, { flex: 1.5 }]}>UNIDAD</Text>
+              <Text style={[s.thText, { flex: 1.5, textAlign: 'right' }]}>CANT.</Text>
+              <Text style={[s.thText, { flex: 2, textAlign: 'right' }]}>PRECIO UNIT.</Text>
+              <Text style={[s.thText, { flex: 2, textAlign: 'right' }]}>SUBTOTAL</Text>
+            </View>
+            {materialesOrig.map((m, i) => (
+              <View key={m.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+                <Text style={[s.tdText, { flex: 4 }]}>{m.nombre_snapshot}</Text>
+                <Text style={[s.tdText, { flex: 1.5, color: C.gray500 }]}>{m.unidad_snapshot}</Text>
+                <Text style={[s.tdMono, { flex: 1.5, textAlign: 'right' }]}>{m.cantidad}</Text>
+                <Text style={[s.tdMono, { flex: 2, textAlign: 'right' }]}>{fmt(m.precio_snapshot)}</Text>
+                <Text style={[s.tdMono, s.tdBold, { flex: 2, textAlign: 'right' }]}>{fmt(Number(m.subtotal))}</Text>
+              </View>
+            ))}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 8, paddingVertical: 5, borderTopWidth: 0.5, borderTopColor: C.gray300 }}>
+              <Text style={[s.tdText, { color: C.gray500, marginRight: 8 }]}>Subtotal materiales:</Text>
+              <Text style={[s.tdMono, s.tdBold]}>{fmt(subtotalMaterialesOrig)}</Text>
+            </View>
+          </View>
+        </View>
+      )}
+
       {/* Materiales del servicio especial */}
       {usaNuevaFormula && (() => {
         const especial = presupuesto.servicios.find((sv) => !!(sv as any).precio_especial || !!(sv as any).descripcion_especifica)
