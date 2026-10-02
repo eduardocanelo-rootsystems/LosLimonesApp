@@ -9,14 +9,17 @@ interface SeccionMaterialesProps {
   esAprobado?: boolean
   clientePagaMateriales?: boolean
   onClientePagaMaterialesChange?: (val: boolean) => void
+  margenMaterialesPct?: number
   onChange: (items: FormMaterialItem[]) => void
 }
 
-export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMateriales, onClientePagaMaterialesChange, onChange }: SeccionMaterialesProps) {
+export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMateriales, onClientePagaMaterialesChange, margenMaterialesPct = 0, onChange }: SeccionMaterialesProps) {
   const [seleccionado, setSeleccionado] = useState('')
   const [cantidad, setCantidad] = useState('1')
 
   const disponibles = catalogo.filter((m) => m.estado === 'activo')
+  const costoNeto = items.reduce((acc, i) => acc + i.precio * i.cantidad, 0)
+  const costoConMargen = costoNeto * (1 + margenMaterialesPct / 100)
 
   const toggleExtra = (key: string) =>
     onChange(items.map((i) => i._key === key ? { ...i, es_adicional: !i.es_adicional } : i))
@@ -155,6 +158,18 @@ export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMate
             </tbody>
           </table>
           </div>
+        </div>
+      )}
+
+      {items.length > 0 && costoNeto > 0 && (
+        <div className="mb-4 flex items-center justify-end gap-6 rounded-lg border border-ink-800 bg-ink-900/40 px-4 py-2.5 text-sm">
+          <span className="text-ink-500">Costo neto: <span className="font-mono text-ink-300">{formatCurrency(costoNeto)}</span></span>
+          {margenMaterialesPct > 0 && (
+            <span className="text-ink-500">
+              Con margen ({margenMaterialesPct}%):
+              <span className="ml-1 font-mono font-semibold text-accent-400">{formatCurrency(costoConMargen)}</span>
+            </span>
+          )}
         </div>
       )}
 

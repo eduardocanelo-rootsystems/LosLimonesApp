@@ -8,7 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { cn } from '@/lib/utils'
 import { useContrato } from '@/pages/Contratos/useContrato'
 import { contratoToFormValues } from '@/pages/Contratos/components/contratoUtils'
-import { useFirmaContratista } from '@/hooks/useConfiguracion'
+import { useFirmaContratista, useMargenMateriales } from '@/hooks/useConfiguracion'
 import { useLogoCliente } from '@/hooks/useLogoCliente'
 import { useServicios } from '@/pages/Servicios/useServicios'
 import { useMateriales } from '@/pages/Materiales/useMateriales'
@@ -58,6 +58,7 @@ export default function PresupuestoFormPage() {
   const { data: contrato, isFetching: fetchingContrato } = useContrato(id)
   const { data: todosLosPresupuestos = [] } = usePresupuestos()
   const { data: firmaContratista } = useFirmaContratista()
+  const { data: margenMatGlobal = 0 } = useMargenMateriales()
   const logoUrl = useLogoCliente()
   const { data: catalogoServicios = [] } = useServicios()
   const { data: catalogoMateriales = [] } = useMateriales()
@@ -129,6 +130,7 @@ export default function PresupuestoFormPage() {
 
   // Rentabilidad (solo nueva fórmula)
   const [rentabilidadPct, setRentabilidadPct] = useState('30')
+  const [margenMaterialesPct, setMargenMaterialesPct] = useState(0)
   const [clientePagaMateriales, setClientePagaMateriales] = useState(false)
 
   // IVA (fórmula vieja)
@@ -190,6 +192,7 @@ export default function PresupuestoFormPage() {
     if (p.rentabilidad_pct !== null && p.rentabilidad_pct !== undefined) {
       setRentabilidadPct(p.rentabilidad_pct.toString())
     }
+    setMargenMaterialesPct(p.margen_materiales_pct ?? 0)
     setClientePagaMateriales(p.cliente_paga_materiales ?? false)
     setFechaInicioObra(p.fecha_inicio_obra ?? '')
     setFechaFinObra(p.fecha_fin_obra ?? '')
@@ -395,6 +398,13 @@ export default function PresupuestoFormPage() {
       }))
   }, [todosLosPresupuestos])
 
+  // Inicializar margen de materiales desde configuración global (solo presupuestos nuevos)
+  useEffect(() => {
+    if (esNuevo && margenMatGlobal > 0) {
+      setMargenMaterialesPct(margenMatGlobal)
+    }
+  }, [esNuevo, margenMatGlobal])
+
   // ─── Cálculos ────────────────────────────────────────────────────────────────
 
   const dias = parseFloat(diasEstimados) || 0
@@ -415,11 +425,11 @@ export default function PresupuestoFormPage() {
     importeServicios,
   } = useMemo(() => {
     if (usaNuevaFormula) {
+      const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
+      const subtotalPreMG = matConMargen + costoManoObra
       const rent = parseFloat(rentabilidadPct) / 100 || 0
-      // Siempre aplicar margen sobre Mat+MO; si el cliente paga materiales, descontar Mat del precio final
-      const costoBaseTotal = subtotalMateriales + costoManoObra
-      const precioConMargen = costoBaseTotal * (1 + rent)
-      const neto = clientePagaMateriales ? precioConMargen - subtotalMateriales : precioConMargen
+      const precioFinal = subtotalPreMG * (1 + rent)
+      const neto = clientePagaMateriales ? precioFinal - matConMargen : precioFinal
 
       const descMonto = tieneDescuento
         ? descuentoTipo === 'fijo'
@@ -466,7 +476,7 @@ export default function PresupuestoFormPage() {
     }
   }, [
     usaNuevaFormula,
-    rentabilidadPct, clientePagaMateriales,
+    rentabilidadPct, margenMaterialesPct, clientePagaMateriales,
     subtotalMateriales, costoManoObra,
     tieneDescuento, descuentoTipo, descuentoValor,
     planPago, edifM2, coefK, servicios, ivaPct,
@@ -552,6 +562,7 @@ export default function PresupuestoFormPage() {
         fecha_fin_obra: fechaFinObra || null,
         zona_trabajo: zonaTrabajo || null,
         trabajo_en_alturas: trabajoEnAlturas,
+        margen_materiales_pct: margenMaterialesPct,
         servicios,
         materiales,
         mano_obra: manoDeObra,
@@ -785,6 +796,7 @@ export default function PresupuestoFormPage() {
         esAprobado={esAprobado}
         clientePagaMateriales={usaNuevaFormula ? clientePagaMateriales : undefined}
         onClientePagaMaterialesChange={usaNuevaFormula ? setClientePagaMateriales : undefined}
+        margenMaterialesPct={usaNuevaFormula ? margenMaterialesPct : undefined}
         onChange={setMateriales}
       />
 
@@ -804,6 +816,7 @@ export default function PresupuestoFormPage() {
         // Nueva fórmula
         subtotalMateriales={subtotalMateriales}
         costoManoObra={costoManoObra}
+        margenMaterialesPct={margenMaterialesPct}
         clientePagaMateriales={clientePagaMateriales}
         rentabilidadPct={parseFloat(rentabilidadPct) || 0}
         onRentabilidadChange={setRentabilidadPct}

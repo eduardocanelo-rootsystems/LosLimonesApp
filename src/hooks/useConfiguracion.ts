@@ -55,3 +55,21 @@ export function useGuardarMontoMinimoObraMenor() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [...QK, 'monto_minimo_obra_menor'] }),
   })
 }
+
+export function useMargenMateriales() {
+  return useQuery({
+    queryKey: [...QK, 'margen_materiales_pct'],
+    queryFn: async () => {
+      const val = await getConfig('margen_materiales_pct')
+      return val ? parseFloat(val) : 0
+    },
+  })
+}
+
+export function useGuardarMargenMateriales() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (pct: number) => setConfig('margen_materiales_pct', String(pct)),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [...QK, 'margen_materiales_pct'] }),
+  })
+}

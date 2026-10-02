@@ -251,6 +251,7 @@ export type Database = {
           tipo: 'obra_mayor' | 'obra_menor'
           zona_trabajo: 'interiores' | 'exteriores' | 'ambos' | null
           trabajo_en_alturas: boolean | null
+          margen_materiales_pct: number
         }
         Insert: {
           id?: string
@@ -295,6 +296,7 @@ export type Database = {
           tipo?: 'obra_mayor' | 'obra_menor'
           zona_trabajo?: 'interiores' | 'exteriores' | 'ambos' | null
           trabajo_en_alturas?: boolean | null
+          margen_materiales_pct?: number
         }
         Update: {
           id?: string
@@ -339,6 +341,7 @@ export type Database = {
           tipo?: 'obra_mayor' | 'obra_menor'
           zona_trabajo?: 'interiores' | 'exteriores' | 'ambos' | null
           trabajo_en_alturas?: boolean | null
+          margen_materiales_pct?: number
         }
         Relationships: []
       }

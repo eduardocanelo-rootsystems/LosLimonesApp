@@ -5,6 +5,7 @@ interface PanelTotalesProps {
   // Nueva fórmula
   subtotalMateriales: number
   costoManoObra: number
+  margenMaterialesPct: number
   clientePagaMateriales: boolean
   rentabilidadPct: number
   onRentabilidadChange: (val: string) => void
@@ -23,6 +24,7 @@ export function PanelTotales({
   usaNuevaFormula,
   subtotalMateriales,
   costoManoObra,
+  margenMaterialesPct,
   clientePagaMateriales,
   rentabilidadPct,
   onRentabilidadChange,
@@ -39,6 +41,7 @@ export function PanelTotales({
     return <PanelNuevoFormula
       subtotalMateriales={subtotalMateriales}
       costoManoObra={costoManoObra}
+      margenMaterialesPct={margenMaterialesPct}
       clientePagaMateriales={clientePagaMateriales}
       rentabilidadPct={rentabilidadPct}
       onRentabilidadChange={onRentabilidadChange}
@@ -137,6 +140,7 @@ export function PanelTotales({
 function PanelNuevoFormula({
   subtotalMateriales,
   costoManoObra,
+  margenMaterialesPct,
   clientePagaMateriales,
   rentabilidadPct,
   onRentabilidadChange,
@@ -144,18 +148,19 @@ function PanelNuevoFormula({
 }: {
   subtotalMateriales: number
   costoManoObra: number
+  margenMaterialesPct: number
   clientePagaMateriales: boolean
   rentabilidadPct: number
   onRentabilidadChange: (val: string) => void
   totalCliente: number
 }) {
-  // Siempre aplicar margen sobre Mat+MO; si el cliente paga, se resta Mat del precio
-  const costoBaseTotal = subtotalMateriales + costoManoObra
-  const gananciaTarget = costoBaseTotal * (rentabilidadPct / 100)
-  const costoRealEmpresa = clientePagaMateriales ? costoManoObra : costoBaseTotal
-  const gananciaReal = totalCliente - costoRealEmpresa
-  const rentabilidadEfectiva = costoRealEmpresa > 0 ? (gananciaReal / costoRealEmpresa) * 100 : 0
-  const colorEfectiva = rentabilidadEfectiva >= 30 ? 'text-success' : rentabilidadEfectiva >= 10 ? 'text-warning' : 'text-danger'
+  const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
+  const subtotalPreMG = matConMargen + costoManoObra
+  const margenGenMonto = subtotalPreMG * (rentabilidadPct / 100)
+  const costoNeto = subtotalMateriales + costoManoObra
+  const margenBruto = totalCliente - costoNeto
+  const margenBrutoPct = totalCliente > 0 ? (margenBruto / totalCliente) * 100 : 0
+  const colorMargen = margenBrutoPct >= 30 ? 'text-success' : margenBrutoPct >= 10 ? 'text-warning' : 'text-danger'
 
   return (
     <section className="card p-6">
@@ -163,82 +168,79 @@ function PanelNuevoFormula({
         Rentabilidad y totales
       </h2>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        {/* Panel precio al cliente */}
-        <div className="space-y-3 rounded-lg border border-ink-800 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
-            Precio al cliente · aparece en el PDF
-          </p>
+      {/* Control de margen general */}
+      <div className="mb-5 flex items-center gap-3">
+        <span className="text-sm text-ink-400">Margen general</span>
+        <input
+          type="number" min="0" max="999" step="1"
+          value={rentabilidadPct}
+          onChange={(e) => onRentabilidadChange(e.target.value)}
+          className="w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1.5 text-center font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
+        />
+        <span className="text-sm text-ink-400">%</span>
+        {margenMaterialesPct > 0 && (
+          <span className="ml-4 text-xs text-ink-500">
+            Margen materiales: <span className="font-mono text-ink-300">{margenMaterialesPct}%</span>
+            <span className="ml-1 text-ink-600">(configurado en /materiales)</span>
+          </span>
+        )}
+      </div>
 
-          <Row label="Costo materiales" value={subtotalMateriales} />
-          <Row label="Costo mano de obra" value={costoManoObra} />
+      <div className="grid gap-4 sm:grid-cols-3">
 
+        {/* Costos */}
+        <div className="space-y-2 rounded-lg border border-ink-800 p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">Costos</p>
+          <Row label="Mano de Obra" value={costoManoObra} />
+          <Row label="Materiales (neto)" value={subtotalMateriales} />
           <div className="border-t border-ink-800 pt-2">
-            <Row label="Costo base (Mat + MO)" value={costoBaseTotal} bold />
+            <Row label="Total" value={costoNeto} bold />
           </div>
+        </div>
 
-          {/* Rentabilidad editable */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-sm text-ink-400">
-              Rentabilidad
-              <input
-                type="number" min="0" max="999" step="1"
-                value={rentabilidadPct}
-                onChange={(e) => onRentabilidadChange(e.target.value)}
-                className="mx-1 w-16 rounded border border-ink-700 bg-ink-900 px-1.5 py-0.5 text-center font-mono text-xs text-ink-100 focus:border-accent-500 focus:outline-none"
-              />
-              %
-            </span>
-            <span className="font-mono text-sm text-ink-300">+ {formatCurrency(gananciaTarget)}</span>
-          </div>
-
+        {/* Precio Final */}
+        <div className="space-y-2 rounded-lg border border-ink-800 p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
+            Precio Final · PDF
+          </p>
+          {margenMaterialesPct > 0 && (
+            <Row label={`Materiales (+${margenMaterialesPct}%)`} value={matConMargen} />
+          )}
+          {margenMaterialesPct === 0 && (
+            <Row label="Materiales" value={subtotalMateriales} />
+          )}
+          <Row label="Mano de Obra" value={costoManoObra} />
+          {rentabilidadPct > 0 && (
+            <Row label={`Margen gral. (+${rentabilidadPct}%)`} value={margenGenMonto} />
+          )}
           {clientePagaMateriales && (
-            <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-3 py-2">
-              <span className="text-xs text-sky-400">Materiales a cargo del cliente</span>
-              <span className="font-mono text-xs text-sky-400">− {formatCurrency(subtotalMateriales)}</span>
+            <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-1.5 mt-1">
+              <span className="text-xs text-sky-400">Cliente provee materiales</span>
+              <span className="font-mono text-xs text-sky-400">− {formatCurrency(matConMargen)}</span>
             </div>
           )}
-
           <div className="border-t border-ink-700 pt-2">
-            <Row label="Total al cliente" value={totalCliente} bold accent />
+            <Row label="TOTAL" value={totalCliente} bold accent />
           </div>
         </div>
 
-        {/* Panel análisis interno */}
-        <div className="space-y-3 rounded-lg border border-ink-700/50 bg-ink-900/40 p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">
-            Análisis interno
+        {/* Margen Bruto */}
+        <div className="space-y-2 rounded-lg border border-ink-700/50 bg-ink-900/40 p-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
+            Margen Bruto
           </p>
-
-          <Row label="Total cobrado al cliente" value={totalCliente} />
-          <Row
-            label={clientePagaMateriales ? 'Costo real empresa (solo MO)' : 'Costo total real'}
-            value={-costoRealEmpresa}
-            className="text-ink-400"
-          />
-
+          <Row label="Precio Final" value={totalCliente} />
+          <Row label="Costos (neto)" value={-costoNeto} className="text-ink-400" />
           <div className="border-t border-ink-800 pt-2">
-            <Row
-              label="Ganancia bruta"
-              value={gananciaReal}
-              bold
-              className={colorEfectiva}
-            />
+            <Row label="Margen" value={margenBruto} bold className={colorMargen} />
           </div>
-
           {totalCliente > 0 && (
-            <div className="text-right">
-              <p className={`font-mono text-lg font-bold ${colorEfectiva}`}>
-                {rentabilidadEfectiva.toFixed(1)}%
-              </p>
-              {clientePagaMateriales && (
-                <p className="mt-0.5 text-xs text-ink-500">
-                  rentabilidad configurada: {rentabilidadPct.toFixed(1)}% sobre costo total
-                </p>
-              )}
-            </div>
+            <p className={`text-right font-mono text-2xl font-bold ${colorMargen}`}>
+              {margenBrutoPct.toFixed(1)}%
+            </p>
           )}
         </div>
+
       </div>
     </section>
   )

@@ -113,6 +113,7 @@ export interface GuardarPresupuestoInput {
   fecha_fin_obra?: string | null
   zona_trabajo?: 'interiores' | 'exteriores' | 'ambos' | null
   trabajo_en_alturas?: boolean | null
+  margen_materiales_pct: number
   // Ítems
   servicios: FormServicioItem[]
   materiales: FormMaterialItem[]
@@ -176,6 +177,7 @@ export function useGuardarPresupuesto() {
         ...(input.fecha_fin_obra !== undefined ? { fecha_fin_obra: input.fecha_fin_obra || null } : {}),
         zona_trabajo: input.zona_trabajo ?? null,
         trabajo_en_alturas: input.trabajo_en_alturas ?? null,
+        margen_materiales_pct: input.margen_materiales_pct,
         fecha_actualizacion: new Date().toISOString(),
       }
 

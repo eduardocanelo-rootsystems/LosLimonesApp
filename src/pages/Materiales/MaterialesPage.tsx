@@ -9,6 +9,7 @@ import {
   Pencil,
   Plus,
   Power,
+  Save,
   Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -16,6 +17,7 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { cn, formatCurrency } from '@/lib/utils'
 import type { MaterialConPrecio } from '@/types/database'
+import { useMargenMateriales, useGuardarMargenMateriales } from '@/hooks/useConfiguracion'
 import { useMateriales, useToggleEstadoMaterial } from './useMateriales'
 import { useUnidades } from './useUnidades'
 import { MaterialFormModal } from './MaterialFormModal'
@@ -29,6 +31,25 @@ export default function MaterialesPage() {
   const { data: materiales = [], isLoading, isError, error } = useMateriales()
   const { data: unidades = [] } = useUnidades()
   const toggleEstado = useToggleEstadoMaterial()
+  const { data: margenGlobal = 0 } = useMargenMateriales()
+  const guardarMargen = useGuardarMargenMateriales()
+  const [margenInput, setMargenInput] = useState('')
+  const [margenEditando, setMargenEditando] = useState(false)
+
+  const handleGuardarMargen = async () => {
+    const val = parseFloat(margenInput)
+    if (isNaN(val) || val < 0 || val > 999) {
+      toast.error('Ingresá un porcentaje válido (0–999).')
+      return
+    }
+    try {
+      await guardarMargen.mutateAsync(val)
+      toast.success('Margen de materiales actualizado.')
+      setMargenEditando(false)
+    } catch {
+      toast.error('Error al guardar el margen.')
+    }
+  }
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>('todos')
@@ -126,6 +147,59 @@ export default function MaterialesPage() {
           </button>
         }
       />
+
+      {/* Margen global de materiales */}
+      <div className="card mb-4 flex items-center justify-between gap-4 p-4">
+        <div>
+          <p className="text-sm font-semibold text-ink-200">Margen de ganancia sobre materiales</p>
+          <p className="text-xs text-ink-500">
+            Se aplica automáticamente al calcular presupuestos nuevos. Actual:
+            <span className="ml-1 font-mono font-semibold text-accent-400">{margenGlobal}%</span>
+          </p>
+        </div>
+        {margenEditando ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              max="999"
+              step="0.5"
+              value={margenInput}
+              onChange={(e) => setMargenInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleGuardarMargen() }}
+              placeholder={String(margenGlobal)}
+              className="w-24 rounded border border-ink-700 bg-ink-900 px-3 py-1.5 text-center font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
+              autoFocus
+            />
+            <span className="text-sm text-ink-400">%</span>
+            <button
+              type="button"
+              onClick={handleGuardarMargen}
+              disabled={guardarMargen.isPending}
+              className="btn-primary py-1.5 text-sm"
+            >
+              {guardarMargen.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              Guardar
+            </button>
+            <button
+              type="button"
+              onClick={() => setMargenEditando(false)}
+              className="btn-secondary py-1.5 text-sm"
+            >
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setMargenInput(String(margenGlobal)); setMargenEditando(true) }}
+            className="btn-secondary"
+          >
+            <Pencil className="h-4 w-4" />
+            Editar
+          </button>
+        )}
+      </div>
 
       {/* Filtros */}
       <div className="card mb-6 flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
