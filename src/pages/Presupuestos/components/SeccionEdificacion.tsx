@@ -113,7 +113,7 @@ export function SeccionEdificacion({
       </h2>
 
       {/* Tipo de obra / Zona / Alturas */}
-      <div className="mb-5 grid gap-4 sm:grid-cols-3">
+      <div className="mb-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {/* Tipo de Obra */}
         <div>
           <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-ink-400">
