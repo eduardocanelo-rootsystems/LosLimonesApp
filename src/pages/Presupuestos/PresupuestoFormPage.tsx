@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ClipboardCheck, FileDown, Loader2, Mail, Save, ScrollText } from 'lucide-react'
+import { ArrowLeft, ClipboardCheck, FileDown, Loader2, Lock, Mail, Plus, Save, ScrollText, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { supabase } from '@/lib/supabase'
@@ -273,16 +273,35 @@ export default function PresupuestoFormPage() {
 
   // ─── Enviar por email ───────────────────────────────────────────────────────
 
+  const FIXED_EMAIL = 'luis.alfonzo@gmail.com'
+
   const [emailModal,     setEmailModal]     = useState(false)
-  const [emailDest,      setEmailDest]      = useState('')
+  const [emailsExtra,    setEmailsExtra]    = useState<string[]>([])
+  const [emailInputVal,  setEmailInputVal]  = useState('')
   const [enviando,       setEnviando]       = useState(false)
   const [descargandoPDF, setDescargandoPDF] = useState(false)
   const emailInputRef = useRef<HTMLInputElement>(null)
 
   const abrirEmailModal = () => {
-    setEmailDest(clienteEmail)
+    const extras: string[] = []
+    if (clienteEmail && clienteEmail.trim() && clienteEmail.trim() !== FIXED_EMAIL) {
+      extras.push(clienteEmail.trim())
+    }
+    setEmailsExtra(extras)
+    setEmailInputVal('')
     setEmailModal(true)
     setTimeout(() => emailInputRef.current?.focus(), 50)
+  }
+
+  const agregarEmailExtra = () => {
+    const val = emailInputVal.trim().toLowerCase()
+    if (!val || !val.includes('@')) return
+    if (val === FIXED_EMAIL || emailsExtra.map(e => e.toLowerCase()).includes(val)) {
+      setEmailInputVal('')
+      return
+    }
+    setEmailsExtra([...emailsExtra, val])
+    setEmailInputVal('')
   }
 
   const handleDescargarPDF = async () => {
@@ -331,7 +350,8 @@ export default function PresupuestoFormPage() {
   }
 
   const enviarPorEmail = async () => {
-    if (!presupuesto || !emailDest.trim()) return
+    const todos = [FIXED_EMAIL, ...emailsExtra.filter((e) => e.trim())]
+    if (!presupuesto) return
     setEnviando(true)
     try {
       const { pdf } = await import('@react-pdf/renderer')
@@ -364,7 +384,7 @@ export default function PresupuestoFormPage() {
 
       const { data: fnData, error: fnError } = await supabase.functions.invoke('enviar-presupuesto', {
         body: {
-          email:         emailDest.trim(),
+          emails:        todos,
           pdfBase64,
           numero:        presupuesto.numero ?? 'S/N',
           nombreCliente: presupuesto.cliente_razon_social ?? '',
@@ -372,7 +392,7 @@ export default function PresupuestoFormPage() {
       })
       if (fnError) throw new Error(fnError.message ?? JSON.stringify(fnError))
       if (fnData?.ok === false) throw new Error(fnData.error ?? 'Error desconocido de Resend')
-      toast.success(`Presupuesto enviado a ${emailDest.trim()}`)
+      toast.success(`Presupuesto enviado a ${todos.join(', ')}`)
       setEmailModal(false)
     } catch (err) {
       if (!reloadOnStaleChunk(err)) {
@@ -1033,20 +1053,59 @@ export default function PresupuestoFormPage() {
       >
         <div className="flex flex-col gap-4">
           <div>
-            <label className="mb-1.5 block text-sm text-ink-300">Destinatario</label>
-            <input
-              ref={emailInputRef}
-              type="email"
-              value={emailDest}
-              onChange={(e) => setEmailDest(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') enviarPorEmail() }}
-              placeholder="email@cliente.com"
-              className="input-base w-full"
-              disabled={enviando}
-            />
+            <label className="mb-2 block text-sm text-ink-300">Destinatarios</label>
+            <div className="flex flex-wrap gap-2">
+              {/* Destinatario fijo */}
+              <span className="flex items-center gap-1.5 rounded-full border border-accent-500/40 bg-accent-500/10 px-3 py-1 text-xs font-medium text-accent-400">
+                <Lock className="h-3 w-3" />
+                {FIXED_EMAIL}
+              </span>
+              {/* Destinatarios adicionales */}
+              {emailsExtra.map((e) => (
+                <span key={e} className="flex items-center gap-1.5 rounded-full border border-ink-700 bg-ink-800 px-3 py-1 text-xs text-ink-200">
+                  {e}
+                  <button
+                    type="button"
+                    onClick={() => setEmailsExtra(emailsExtra.filter((x) => x !== e))}
+                    disabled={enviando}
+                    className="ml-0.5 text-ink-500 hover:text-danger transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
           </div>
+
+          {/* Agregar destinatario */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-500">
+              Agregar destinatario
+            </label>
+            <div className="flex gap-2">
+              <input
+                ref={emailInputRef}
+                type="email"
+                value={emailInputVal}
+                onChange={(e) => setEmailInputVal(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); agregarEmailExtra() } }}
+                placeholder="otro@email.com"
+                className="input-base flex-1 text-sm"
+                disabled={enviando}
+              />
+              <button
+                type="button"
+                onClick={agregarEmailExtra}
+                disabled={enviando || !emailInputVal.trim().includes('@')}
+                className="btn-secondary disabled:opacity-40"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
           <p className="text-xs text-ink-500">
-            Se enviará el PDF del presupuesto{esAprobado ? ' + contrato' : ''} adjunto.
+            Se enviará el PDF del presupuesto{esAprobado ? ' + contrato' : ''} adjunto a todos los destinatarios.
           </p>
           <div className="flex justify-end gap-2">
             <button
@@ -1060,7 +1119,7 @@ export default function PresupuestoFormPage() {
             <button
               type="button"
               onClick={enviarPorEmail}
-              disabled={enviando || !emailDest.trim()}
+              disabled={enviando}
               className="btn-primary"
             >
               {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}

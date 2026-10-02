@@ -14,11 +14,15 @@ serve(async (req) => {
   }
 
   try {
-    const { email, pdfBase64, numero, nombreCliente } = await req.json()
+    const { email, emails, pdfBase64, numero, nombreCliente } = await req.json()
 
-    if (!email || !pdfBase64 || !numero) {
+    const recipients: string[] = Array.isArray(emails) && emails.length > 0
+      ? emails
+      : email ? [email] : []
+
+    if (recipients.length === 0 || !pdfBase64 || !numero) {
       return new Response(
-        JSON.stringify({ error: 'Faltan campos requeridos: email, pdfBase64, numero' }),
+        JSON.stringify({ error: 'Faltan campos requeridos: email(s), pdfBase64, numero' }),
         { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } }
       )
     }
@@ -31,7 +35,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: FROM_EMAIL,
-        to: [email],
+        to: recipients,
         subject: `Presupuesto ${numero} — Los Limones Creativos`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #111;">
