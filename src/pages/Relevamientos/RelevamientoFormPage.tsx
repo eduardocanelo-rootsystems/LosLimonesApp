@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader2, Save, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { SeccionCliente } from '@/pages/Presupuestos/components/SeccionCliente'
+import type { HistorialCliente } from '@/pages/Presupuestos/components/SeccionCliente'
 import { SeccionEdificacion } from '@/pages/Presupuestos/components/SeccionEdificacion'
 import { SeccionServicios } from '@/pages/Presupuestos/components/SeccionServicios'
 import { SeccionFotos } from '@/pages/Presupuestos/components/SeccionFotos'
-import { useGuardarRelevamiento, useRelevamiento } from './useRelevamientos'
+import { useGuardarRelevamiento, useRelevamiento, useRelevamientos } from './useRelevamientos'
+import { usePresupuestos } from '@/pages/Presupuestos/usePresupuestos'
 import { useServicios } from '@/pages/Servicios/useServicios'
 import { useMateriales } from '@/pages/Materiales/useMateriales'
 import type { FormServicioItem, MatRefItem } from '@/types/database'
@@ -20,6 +22,30 @@ export default function RelevamientoFormPage() {
   const { data: relevamiento, isLoading } = useRelevamiento(id)
   const { data: catalogoServicios = [] }  = useServicios()
   const { data: catalogoMateriales = [] } = useMateriales()
+  const { data: presupuestos = [] }       = usePresupuestos()
+  const { data: todosRelevamientos = [] } = useRelevamientos()
+
+  const historialClientes = useMemo((): HistorialCliente[] => {
+    const todos = [...presupuestos, ...todosRelevamientos]
+    const seen = new Set<string>()
+    return todos
+      .filter((p) => {
+        if (!p.cliente_razon_social) return false
+        const key = p.cliente_razon_social.toLowerCase()
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .map((p) => ({
+        razon_social:       p.cliente_razon_social!,
+        cuit:               p.cliente_cuit              ?? '',
+        telefono:           p.cliente_telefono          ?? '',
+        direccion:          p.cliente_direccion         ?? '',
+        administrador:      p.cliente_administrador     ?? '',
+        administrador_cuit: p.cliente_administrador_cuit ?? '',
+        email:              p.cliente_email             ?? '',
+      }))
+  }, [presupuestos, todosRelevamientos])
 
   // ─── Estado ────────────────────────────────────────────────────────────────
 
@@ -222,7 +248,7 @@ export default function RelevamientoFormPage() {
           administrador={clienteAdministrador}
           administradorCuit={clienteAdministradorCuit}
           email={clienteEmail}
-          historial={[]}
+          historial={historialClientes}
           onChange={handleField}
         />
 
