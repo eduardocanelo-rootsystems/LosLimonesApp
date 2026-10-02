@@ -122,7 +122,6 @@ export default function PresupuestoFormPage() {
 
   // Descuento
   const [tieneDescuento, setTieneDescuento] = useState(false)
-  const [descuentoTipo, setDescuentoTipo] = useState<'fijo' | 'porcentaje'>('porcentaje')
   const [descuentoValor, setDescuentoValor] = useState('')
 
   // MO
@@ -175,7 +174,6 @@ export default function PresupuestoFormPage() {
     setObservaciones(presupuesto.observaciones ?? '')
     setTieneGarantia(presupuesto.tiene_garantia ?? null)
     setGarantiaVencimiento(presupuesto.garantia_vencimiento ?? '')
-    setDescuentoTipo((presupuesto.descuento_tipo ?? 'porcentaje') as 'fijo' | 'porcentaje')
     setDescuentoValor(presupuesto.descuento_valor?.toString() ?? '')
     setTieneDescuento(!!presupuesto.descuento_tipo)
     setIvaPct(presupuesto.iva_pct?.toString() ?? '0')
@@ -266,7 +264,6 @@ export default function PresupuestoFormPage() {
       case 'edif_proteccion': setEdifProteccion(value as string); break
       case 'coef_k': setCoefK(value as string); break
       case 'tiene_descuento': setTieneDescuento(value as boolean); break
-      case 'descuento_tipo': setDescuentoTipo(value as 'fijo' | 'porcentaje'); break
       case 'descuento_valor': setDescuentoValor(value as string); break
     }
   }
@@ -463,6 +460,9 @@ export default function PresupuestoFormPage() {
     totalCliente,
     importeTotal,
     importeServicios,
+    precioFinalSinDesc,
+    costoNeto,
+    descuentoMonto,
   } = useMemo(() => {
     if (usaNuevaFormula) {
       const rent = parseFloat(rentabilidadPct) / 100 || 0
@@ -480,11 +480,12 @@ export default function PresupuestoFormPage() {
         if (clientePagaMateriales) precioFinal -= matConMargen
       }
 
-      const descMonto = tieneDescuento
-        ? descuentoTipo === 'fijo'
-          ? parseFloat(descuentoValor) || 0
-          : (precioFinal * (parseFloat(descuentoValor) || 0)) / 100
-        : 0
+      const precioFinalSinDesc = precioFinal
+      const costoNeto = servicioEspecialItem
+        ? totalMatRef + costoManoObra
+        : subtotalMateriales + costoManoObra
+
+      const descMonto = tieneDescuento ? parseFloat(descuentoValor) || 0 : 0
 
       const netoConDesc = precioFinal - descMonto
       const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
@@ -495,6 +496,9 @@ export default function PresupuestoFormPage() {
         totalCliente: total,
         importeTotal: total,
         importeServicios: null,
+        precioFinalSinDesc,
+        costoNeto,
+        descuentoMonto: descMonto,
       }
     }
 
@@ -503,11 +507,7 @@ export default function PresupuestoFormPage() {
     const k = parseFloat(coefK) || 1
     const ss = servicios.reduce((acc, s) => acc + s.precio_m2 * m2 * k, 0)
     const bruto = ss + subtotalMateriales
-    const descMonto = tieneDescuento
-      ? descuentoTipo === 'fijo'
-        ? parseFloat(descuentoValor) || 0
-        : (bruto * (parseFloat(descuentoValor) || 0)) / 100
-      : 0
+    const descMonto = tieneDescuento ? parseFloat(descuentoValor) || 0 : 0
     const neto = bruto - descMonto
     const iva = parseFloat(ivaPct) || 0
     const totalSinMO = neto + (neto * iva) / 100
@@ -522,13 +522,16 @@ export default function PresupuestoFormPage() {
       totalCliente: total,
       importeTotal: importeTotalViejo,
       importeServicios: totalSinMO * ratio,
+      precioFinalSinDesc: bruto,
+      costoNeto: costoManoObra,
+      descuentoMonto: descMonto,
     }
   }, [
     usaNuevaFormula,
     rentabilidadPct, margenMaterialesPct, clientePagaMateriales,
     subtotalMateriales, costoManoObra,
     servicioEspecialItem, precioEspecial, totalMatRef, clienteProveeMatEspecial,
-    tieneDescuento, descuentoTipo, descuentoValor,
+    tieneDescuento, descuentoValor,
     planPago, edifM2, coefK, servicios, ivaPct,
   ])
 
@@ -597,7 +600,7 @@ export default function PresupuestoFormPage() {
         tiene_garantia: tieneGarantia,
         garantia_vencimiento: tieneGarantia && garantiaVencimiento ? garantiaVencimiento : null,
         observaciones,
-        descuento_tipo: tieneDescuento ? descuentoTipo : null,
+        descuento_tipo: tieneDescuento ? 'fijo' : null,
         descuento_valor: tieneDescuento && descuentoValor ? parseFloat(descuentoValor) : null,
         iva_pct: parseFloat(ivaPct) || 0,
         dias_estimados_obra: diasEstimados ? parseInt(diasEstimados) : null,
@@ -888,8 +891,10 @@ export default function PresupuestoFormPage() {
           )
         }, [servicios, materiales, edifM2, coefK])}
         tieneDescuento={tieneDescuento}
-        descuentoTipo={descuentoTipo}
+        descuentoTipo="fijo"
         descuentoValor={parseFloat(descuentoValor) || 0}
+        descuentoMonto={descuentoMonto}
+        precioSinDescuento={precioFinalSinDesc}
         ivaPct={parseFloat(ivaPct) || 0}
         onIvaChange={setIvaPct}
         totalCliente={totalCliente}
@@ -898,9 +903,10 @@ export default function PresupuestoFormPage() {
       {/* 8. Descuento */}
       <SeccionDescuento
         tieneDescuento={tieneDescuento}
-        tipo={descuentoTipo}
         valor={descuentoValor}
         onChange={handleField}
+        precioSinDescuento={usaNuevaFormula ? precioFinalSinDesc : undefined}
+        costoNeto={usaNuevaFormula ? costoNeto : undefined}
       />
 
       {/* 9. Financiamiento */}

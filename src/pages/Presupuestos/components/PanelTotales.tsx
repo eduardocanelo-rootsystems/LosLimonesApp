@@ -17,6 +17,8 @@ interface PanelTotalesProps {
   onRentabilidadChange: (val: string) => void
   totalCliente: number
   servicioEspecial?: ServicioEspecialTotales
+  descuentoMonto?: number
+  precioSinDescuento?: number
   // Fórmula vieja
   subtotalServicios: number
   extrasMonto: number
@@ -37,6 +39,8 @@ export function PanelTotales({
   onRentabilidadChange,
   totalCliente,
   servicioEspecial,
+  descuentoMonto,
+  precioSinDescuento,
   subtotalServicios,
   extrasMonto,
   tieneDescuento,
@@ -55,6 +59,8 @@ export function PanelTotales({
       onRentabilidadChange={onRentabilidadChange}
       totalCliente={totalCliente}
       servicioEspecial={servicioEspecial}
+      descuentoMonto={descuentoMonto ?? 0}
+      precioSinDescuento={precioSinDescuento ?? totalCliente}
     />
   }
 
@@ -62,13 +68,13 @@ export function PanelTotales({
   const subtotalBruto = subtotalServicios + subtotalMateriales
   const tieneExtras = extrasMonto > 0
 
-  const descuentoMonto = tieneDescuento
+  const descuentoMontoViejo = tieneDescuento
     ? descuentoTipo === 'fijo'
       ? descuentoValor
       : (subtotalBruto * descuentoValor) / 100
     : 0
 
-  const neto = subtotalBruto - descuentoMonto
+  const neto = subtotalBruto - descuentoMontoViejo
   const ivaMonto = (neto * ivaPct) / 100
   const totalSinMO = neto + ivaMonto
 
@@ -94,8 +100,8 @@ export function PanelTotales({
           {tieneExtras && (
             <Row label="↳ Adicionales incluidos" value={extrasMonto} className="text-warning text-xs" />
           )}
-          {tieneDescuento && descuentoMonto > 0 && (
-            <Row label="Descuento" value={-descuentoMonto} className="text-warning" />
+          {tieneDescuento && descuentoMontoViejo > 0 && (
+            <Row label="Descuento" value={-descuentoMontoViejo} className="text-warning" />
           )}
           <div className="border-t border-ink-800 pt-2">
             <Row label="Neto" value={neto} bold />
@@ -155,6 +161,8 @@ function PanelNuevoFormula({
   onRentabilidadChange,
   totalCliente,
   servicioEspecial,
+  descuentoMonto,
+  precioSinDescuento,
 }: {
   subtotalMateriales: number
   costoManoObra: number
@@ -164,6 +172,8 @@ function PanelNuevoFormula({
   onRentabilidadChange: (val: string) => void
   totalCliente: number
   servicioEspecial?: ServicioEspecialTotales
+  descuentoMonto: number
+  precioSinDescuento: number
 }) {
   const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
   const subtotalPreMG = matConMargen + costoManoObra
@@ -177,6 +187,12 @@ function PanelNuevoFormula({
   const margenBruto = totalCliente - costoNeto
   const margenBrutoPct = totalCliente > 0 ? (margenBruto / totalCliente) * 100 : 0
   const colorMargen = margenBrutoPct >= 30 ? 'text-success' : margenBrutoPct >= 10 ? 'text-warning' : 'text-danger'
+
+  // Margen sin descuento (para mostrar impacto)
+  const margenSinDescPct = descuentoMonto > 0 && precioSinDescuento > 0
+    ? ((precioSinDescuento - costoNeto) / precioSinDescuento) * 100
+    : null
+  const diffPp = margenSinDescPct !== null ? margenBrutoPct - margenSinDescPct : null
 
   // Monto de margen general en modo especial
   const baseEspecial = servicioEspecial ? servicioEspecial.precioEspecial + costoManoObra : 0
@@ -264,6 +280,9 @@ function PanelNuevoFormula({
               )}
             </>
           )}
+          {descuentoMonto > 0 && (
+            <Row label="Descuento aplicado" value={-descuentoMonto} className="text-amber-400" />
+          )}
           <div className="border-t border-ink-700 pt-2">
             <Row label="TOTAL" value={totalCliente} bold accent />
           </div>
@@ -283,6 +302,18 @@ function PanelNuevoFormula({
             <p className={`text-right font-mono text-2xl font-bold ${colorMargen}`}>
               {margenBrutoPct.toFixed(1)}%
             </p>
+          )}
+          {margenSinDescPct !== null && diffPp !== null && (
+            <div className="mt-1 rounded border border-ink-700 bg-ink-900 px-3 py-2 text-xs">
+              <div className="flex items-center justify-between text-ink-500">
+                <span>Sin descuento</span>
+                <span className="font-mono">{margenSinDescPct.toFixed(1)}%</span>
+              </div>
+              <div className={`flex items-center justify-between font-semibold ${diffPp < -10 ? 'text-red-400' : diffPp < -3 ? 'text-amber-400' : 'text-ink-400'}`}>
+                <span>Impacto descuento</span>
+                <span className="font-mono">{diffPp > 0 ? '+' : ''}{diffPp.toFixed(1)} pp</span>
+              </div>
+            </div>
           )}
         </div>
 
