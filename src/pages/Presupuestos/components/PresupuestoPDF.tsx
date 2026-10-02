@@ -486,6 +486,12 @@ export function PresupuestoPDFPage({
   const fechaInicioObra: string | null = p.fecha_inicio_obra ?? null
   const fechaFinObra: string | null = p.fecha_fin_obra ?? null
   const tieneFechasObra = !!(fechaInicioObra || fechaFinObra)
+
+  // Nuevos campos
+  const tipoObraLabel = presupuesto.tipo === 'obra_menor' ? 'Menor' : 'Mayor'
+  const zonaTrabajo: string | null = p.zona_trabajo ?? null
+  const zonaLabel = zonaTrabajo === 'interiores' ? 'Interiores' : zonaTrabajo === 'exteriores' ? 'Exteriores' : zonaTrabajo === 'ambos' ? 'Interiores y exteriores' : null
+  const trabajoEnAlturasLabel = p.trabajo_en_alturas === true ? 'Sí' : p.trabajo_en_alturas === false ? 'No' : null
   const tieneDiagnostico = !!presupuesto.diagnostico_tecnico
   const tieneAlcance = !!presupuesto.alcance_obra
   const tieneExenciones = !!presupuesto.exenciones
@@ -553,7 +559,7 @@ export function PresupuestoPDFPage({
         </View>
       </View>
 
-      {(presupuesto.edif_m2 || presupuesto.edif_anios || presupuesto.edif_tipologia) && (
+      {(presupuesto.edif_m2 || presupuesto.edif_anios || presupuesto.edif_tipologia || zonaLabel || trabajoEnAlturasLabel) && (
         <View style={s.section}>
           <Text style={s.sectionTitle}>Características del edificio</Text>
           <View style={s.twoCol}>
@@ -570,6 +576,9 @@ export function PresupuestoPDFPage({
               {edifAcabado && <Campo label="Acabados" value={edifAcabado} />}
             </View>
             <View style={s.col}>
+              <Campo label="Tipo de obra" value={tipoObraLabel} />
+              {zonaLabel && <Campo label="Zona de trabajo" value={zonaLabel} />}
+              {trabajoEnAlturasLabel && <Campo label="Trabajo en alturas" value={trabajoEnAlturasLabel} />}
               <Campo label="Tipología" value={presupuesto.edif_tipologia} />
               <Campo label="Clase incendio" value={presupuesto.edif_clase_incendio?.toUpperCase()} />
               <Campo label="Condición estr." value={presupuesto.edif_condicion_estructural} />
