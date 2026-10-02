@@ -260,10 +260,26 @@ export default function DashboardPage() {
     const fecha = p.fecha_creacion.slice(0, 10)
     return fecha >= rango.desde && fecha <= rango.hasta
   })
-  const presupEmitidos   = presupPeriodo.filter((p) => p.estado === 'emitido').length
-  const presupAprobados  = presupPeriodo.filter((p) => p.estado === 'aprobado').length
+  const presupEmitidos    = presupPeriodo.filter((p) => p.estado === 'emitido').length
+  const presupAprobados   = presupPeriodo.filter((p) => p.estado === 'aprobado').length
   const presupFinalizados = presupPeriodo.filter((p) => p.estado === 'finalizado').length
-  const sinFactura       = presupPeriodo.filter((p) => !p.factura_asociada_id && p.estado !== 'emitido').length
+  const presupRechazados  = presupPeriodo.filter((p) => p.estado === 'rechazado').length
+
+  const totalParaConversion = presupEmitidos + presupAprobados + presupFinalizados + presupRechazados
+  const tasaConversion = totalParaConversion > 0
+    ? ((presupAprobados + presupFinalizados) / totalParaConversion) * 100
+    : null
+
+  const montoAprobadoPeriodo = presupPeriodo
+    .filter((p) => p.estado === 'aprobado')
+    .reduce((s, p) => s + ((p as any).importe_total ?? 0), 0)
+
+  // Sin facturar — global (no filtrado por período)
+  const sinFacturaItems = presupuestos.filter(
+    (p) => !p.factura_asociada_id && (p.estado === 'aprobado' || p.estado === 'finalizado')
+  )
+  const sinFacturaCount = sinFacturaItems.length
+  const sinFacturaMonto = sinFacturaItems.reduce((s, p) => s + ((p as any).importe_total ?? 0), 0)
 
   // Relevamientos
   const relevActivos = relevamientos.length
@@ -374,6 +390,10 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Alertas — solo aparecen cuando hay algo que atender */}
+      <ContratosPendientesFirma contratos={contratosResumen} presupuestos={presupuestos} />
+      <PresupuestosPorVencer presupuestos={presupuestos} />
+
       {/* Ventas */}
       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-500">Ventas</p>
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -440,34 +460,50 @@ export default function DashboardPage() {
 
       {/* Presupuestos */}
       <p className="mb-3 text-xs font-medium uppercase tracking-wider text-ink-500">Presupuestos</p>
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <KpiCard
           label="Emitidos"
           value={String(presupEmitidos)}
-          sub="en revisión"
+          sub="pendientes de respuesta"
           icon={FileText}
           color="text-amber-400"
         />
         <KpiCard
           label="Aprobados"
           value={String(presupAprobados)}
-          sub="en ejecución"
+          sub={montoAprobadoPeriodo > 0 ? `$${fmtImporte(montoAprobadoPeriodo)}` : 'en ejecución'}
           icon={FileText}
           color="text-accent-400"
         />
         <KpiCard
           label="Finalizados"
           value={String(presupFinalizados)}
-          sub="cerrados"
+          sub="cerrados en el período"
           icon={FileText}
           color="text-green-400"
         />
         <KpiCard
-          label="Sin facturar"
-          value={String(sinFactura)}
-          sub="aprobados o finalizados"
+          label="Rechazados"
+          value={String(presupRechazados)}
+          sub="en el período"
           icon={FileText}
-          color={sinFactura > 0 ? 'text-amber-400' : 'text-ink-600'}
+          color={presupRechazados > 0 ? 'text-red-400' : 'text-ink-600'}
+        />
+      </div>
+      <div className="mb-6 grid grid-cols-2 gap-4">
+        <KpiCard
+          label="Tasa de conversión"
+          value={tasaConversion !== null ? `${tasaConversion.toFixed(0)}%` : '—'}
+          sub={totalParaConversion > 0 ? `${presupAprobados + presupFinalizados} de ${totalParaConversion} presupuestos` : 'sin datos en el período'}
+          icon={CheckCircle}
+          color={tasaConversion !== null && tasaConversion >= 50 ? 'text-green-400' : tasaConversion !== null && tasaConversion >= 25 ? 'text-amber-400' : 'text-ink-500'}
+        />
+        <KpiCard
+          label="Sin facturar (global)"
+          value={String(sinFacturaCount)}
+          sub={sinFacturaMonto > 0 ? `$${fmtImporte(sinFacturaMonto)} pendiente` : 'aprobados o finalizados'}
+          icon={FileText}
+          color={sinFacturaCount > 0 ? 'text-amber-400' : 'text-ink-600'}
         />
       </div>
 
@@ -497,10 +533,10 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Rentabilidad de presupuestos aprobados */}
+      {/* Margen comprometido — lo prometido al presupuestar */}
       {rentabilidadPromedio !== null && (
         <>
-          <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Rentabilidad — presupuestos aprobados/finalizados</p>
+          <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Margen comprometido — presupuestos aprobados/finalizados</p>
           <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
             <KpiCard
               label="Rentabilidad promedio"
@@ -527,14 +563,8 @@ export default function DashboardPage() {
         </>
       )}
 
-      {/* Contratos pendientes de firma */}
-      <ContratosPendientesFirma contratos={contratosResumen} presupuestos={presupuestos} />
-
-      {/* Presupuestos por vencer */}
-      <PresupuestosPorVencer presupuestos={presupuestos} />
-
-      {/* Rentabilidad */}
-      <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Rentabilidad (presupuestos cobrados)</p>
+      {/* Pool cobrado — cobros reales vs. movimientos */}
+      <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wider text-ink-500">Pool cobrado — ingresos reales del período</p>
       <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
         <KpiCard
           label="Presupuestado en servicios"
