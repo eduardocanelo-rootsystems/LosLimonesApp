@@ -932,12 +932,12 @@ export default function PresupuestoFormPage() {
           <textarea
             value={diagnosticoTecnico}
             onChange={(e) => setDiagnosticoTecnico(e.target.value)}
-            maxLength={3000}
+            maxLength={10000}
             rows={6}
             className="input-base resize-y"
             placeholder="Descripción técnica del estado del edificio, patologías detectadas, intervenciones necesarias…"
           />
-          <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/3000</p>
+          <p className="mt-1 text-right text-xs text-ink-500">{diagnosticoTecnico.length}/10000</p>
         </div>
 
         <div className="p-6">
@@ -947,12 +947,12 @@ export default function PresupuestoFormPage() {
           <textarea
             value={alcanceObra}
             onChange={(e) => setAlcanceObra(e.target.value)}
-            maxLength={3000}
+            maxLength={10000}
             rows={6}
             className="input-base resize-y"
             placeholder="Descripción de los trabajos incluidos en el alcance de la obra…"
           />
-          <p className="mt-1 text-right text-xs text-ink-500">{alcanceObra.length}/3000</p>
+          <p className="mt-1 text-right text-xs text-ink-500">{alcanceObra.length}/10000</p>
         </div>
 
         <div className="p-6">
@@ -962,12 +962,12 @@ export default function PresupuestoFormPage() {
           <textarea
             value={exenciones}
             onChange={(e) => setExenciones(e.target.value)}
-            maxLength={3000}
+            maxLength={10000}
             rows={6}
             className="input-base resize-y"
             placeholder="Trabajos o situaciones no incluidos en el presupuesto…"
           />
-          <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/3000</p>
+          <p className="mt-1 text-right text-xs text-ink-500">{exenciones.length}/10000</p>
         </div>
 
         <div className="p-6">
