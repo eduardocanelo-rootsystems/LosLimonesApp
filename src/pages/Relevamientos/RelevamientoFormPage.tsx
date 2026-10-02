@@ -4,8 +4,12 @@ import { ArrowLeft, Loader2, Save, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { SeccionCliente } from '@/pages/Presupuestos/components/SeccionCliente'
 import { SeccionEdificacion } from '@/pages/Presupuestos/components/SeccionEdificacion'
+import { SeccionServicios } from '@/pages/Presupuestos/components/SeccionServicios'
 import { SeccionFotos } from '@/pages/Presupuestos/components/SeccionFotos'
 import { useGuardarRelevamiento, useRelevamiento } from './useRelevamientos'
+import { useServicios } from '@/pages/Servicios/useServicios'
+import { useMateriales } from '@/pages/Materiales/useMateriales'
+import type { FormServicioItem, MatRefItem } from '@/types/database'
 
 export default function RelevamientoFormPage() {
   const { id }     = useParams<{ id: string }>()
@@ -14,54 +18,88 @@ export default function RelevamientoFormPage() {
   const guardar    = useGuardarRelevamiento()
 
   const { data: relevamiento, isLoading } = useRelevamiento(id)
+  const { data: catalogoServicios = [] }  = useServicios()
+  const { data: catalogoMateriales = [] } = useMateriales()
 
   // ─── Estado ────────────────────────────────────────────────────────────────
 
-  const [clienteRazonSocial,      setClienteRazonSocial]      = useState('')
-  const [clienteCuit,             setClienteCuit]             = useState('')
-  const [clienteTelefono,         setClienteTelefono]         = useState('')
-  const [clienteDireccion,        setClienteDireccion]        = useState('')
-  const [clienteAdministrador,    setClienteAdministrador]    = useState('')
-  const [clienteAdministradorCuit,setClienteAdministradorCuit]= useState('')
-  const [clienteEmail,            setClienteEmail]            = useState('')
+  const [clienteRazonSocial,       setClienteRazonSocial]       = useState('')
+  const [clienteCuit,              setClienteCuit]              = useState('')
+  const [clienteTelefono,          setClienteTelefono]          = useState('')
+  const [clienteDireccion,         setClienteDireccion]         = useState('')
+  const [clienteAdministrador,     setClienteAdministrador]     = useState('')
+  const [clienteAdministradorCuit, setClienteAdministradorCuit] = useState('')
+  const [clienteEmail,             setClienteEmail]             = useState('')
 
-  const [edifAnios,     setEdifAnios]     = useState('')
-  const [edifAltura,    setEdifAltura]    = useState('')
-  const [edifColor,     setEdifColor]     = useState('')
-  const [edifAcabado,   setEdifAcabado]   = useState<string[]>([])
-  const [edifM2,        setEdifM2]        = useState('')
-  const [edifCondicion, setEdifCondicion] = useState('')
-  const [edifTipologia, setEdifTipologia] = useState('')
-  const [edifPatrimonial, setEdifPatrimonial] = useState(false)
-  const [edifProteccion,  setEdifProteccion]  = useState('')
-  const [coefK,         setCoefK]         = useState('')
-  const [observaciones, setObservaciones] = useState('')
+  const [tipoObra,          setTipoObra]          = useState<'obra_mayor' | 'obra_menor'>('obra_mayor')
+  const [zonaTrabajo,       setZonaTrabajo]        = useState<'' | 'interiores' | 'exteriores' | 'ambos'>('')
+  const [trabajoEnAlturas,  setTrabajoEnAlturas]   = useState<boolean | null>(null)
+  const [edifAnios,         setEdifAnios]          = useState('')
+  const [edifAltura,        setEdifAltura]         = useState('')
+  const [edifColor,         setEdifColor]          = useState('')
+  const [edifAcabado,       setEdifAcabado]        = useState<string[]>([])
+  const [edifM2,            setEdifM2]             = useState('')
+  const [edifCondicion,     setEdifCondicion]      = useState('')
+  const [edifTipologia,     setEdifTipologia]      = useState('')
+  const [edifPatrimonial,   setEdifPatrimonial]    = useState(false)
+  const [edifProteccion,    setEdifProteccion]     = useState('')
+  const [edifClaseIncendio, setEdifClaseIncendio]  = useState('')
+  const [coefK,             setCoefK]              = useState('')
 
-  const [guardado, setGuardado] = useState(false)
+  const [servicios,          setServicios]          = useState<FormServicioItem[]>([])
+  const [diagnosticoTecnico, setDiagnosticoTecnico] = useState('')
+  const [alcanceObra,        setAlcanceObra]         = useState('')
+  const [observaciones,      setObservaciones]       = useState('')
+
+  const [guardado,      setGuardado]      = useState(false)
   const [presupuestoId, setPresupuestoId] = useState<string | undefined>(id)
 
   // ─── Cargar al editar ───────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!relevamiento) return
-    setClienteRazonSocial(relevamiento.cliente_razon_social ?? '')
-    setClienteCuit(relevamiento.cliente_cuit ?? '')
-    setClienteTelefono(relevamiento.cliente_telefono ?? '')
-    setClienteDireccion(relevamiento.cliente_direccion ?? '')
-    setClienteAdministrador(relevamiento.cliente_administrador ?? '')
-    setClienteAdministradorCuit(relevamiento.cliente_administrador_cuit ?? '')
-    setClienteEmail(relevamiento.cliente_email ?? '')
-    setEdifAnios(relevamiento.edif_anios?.toString() ?? '')
-    setEdifAltura(relevamiento.edif_altura?.toString() ?? '')
-    setEdifColor(relevamiento.edif_color ?? '')
-    setEdifAcabado((relevamiento.edif_acabado as string[]) ?? [])
-    setEdifM2(relevamiento.edif_m2?.toString() ?? '')
-    setEdifCondicion(relevamiento.edif_condicion_estructural ?? '')
-    setEdifTipologia(relevamiento.edif_tipologia ?? '')
-    setEdifPatrimonial(relevamiento.edif_valor_patrimonial ?? false)
-    setEdifProteccion(relevamiento.edif_proteccion ?? '')
-    setCoefK(relevamiento.coef_k?.toString() ?? '')
-    setObservaciones(relevamiento.observaciones ?? '')
+    const r = relevamiento as any
+    setClienteRazonSocial(r.cliente_razon_social ?? '')
+    setClienteCuit(r.cliente_cuit ?? '')
+    setClienteTelefono(r.cliente_telefono ?? '')
+    setClienteDireccion(r.cliente_direccion ?? '')
+    setClienteAdministrador(r.cliente_administrador ?? '')
+    setClienteAdministradorCuit(r.cliente_administrador_cuit ?? '')
+    setClienteEmail(r.cliente_email ?? '')
+    setTipoObra(r.tipo ?? 'obra_mayor')
+    setZonaTrabajo(r.zona_trabajo ?? '')
+    setTrabajoEnAlturas(r.trabajo_en_alturas ?? null)
+    setEdifAnios(r.edif_anios?.toString() ?? '')
+    setEdifAltura(r.edif_altura?.toString() ?? '')
+    setEdifColor(r.edif_color ?? '')
+    setEdifAcabado((r.edif_acabado as string[]) ?? [])
+    setEdifM2(r.edif_m2?.toString() ?? '')
+    setEdifCondicion(r.edif_condicion_estructural ?? '')
+    setEdifTipologia(r.edif_tipologia ?? '')
+    setEdifPatrimonial(r.edif_valor_patrimonial ?? false)
+    setEdifProteccion(r.edif_proteccion ?? '')
+    setEdifClaseIncendio(r.edif_clase_incendio ?? '')
+    setCoefK(r.coef_k?.toString() ?? '')
+    setDiagnosticoTecnico(r.diagnostico_tecnico ?? '')
+    setAlcanceObra(r.alcance_obra ?? '')
+    setObservaciones(r.observaciones ?? '')
+
+    // Mapear servicios guardados
+    const serviciosGuardados: FormServicioItem[] = (r.servicios ?? []).map((se: any) => ({
+      _key: crypto.randomUUID(),
+      servicio_id: se.servicio_id,
+      nombre: se.nombre_snapshot,
+      precio_m2: se.precio_m2_snapshot ?? 0,
+      es_adicional: se.es_adicional ?? false,
+      es_especial: se.es_especial ?? false,
+      descripcion_especifica: se.descripcion_especifica ?? '',
+      precio_especial: se.precio_especial ?? null,
+      materiales_ref: se.materiales_ref
+        ? (se.materiales_ref as any[]).map((r: any) => ({ ...r, _key: r._key ?? crypto.randomUUID() } as MatRefItem))
+        : [],
+      cliente_provee_materiales: se.cliente_provee_materiales ?? false,
+    }))
+    setServicios(serviciosGuardados)
   }, [relevamiento])
 
   // ─── Handlers ───────────────────────────────────────────────────────────────
@@ -75,6 +113,9 @@ export default function RelevamientoFormPage() {
       case 'cliente_administrador':      setClienteAdministrador(value as string); break
       case 'cliente_administrador_cuit': setClienteAdministradorCuit(value as string); break
       case 'cliente_email':              setClienteEmail(value as string); break
+      case 'tipo_obra':                  setTipoObra(value as 'obra_mayor' | 'obra_menor'); break
+      case 'zona_trabajo':               setZonaTrabajo(value as '' | 'interiores' | 'exteriores' | 'ambos'); break
+      case 'trabajo_en_alturas':         setTrabajoEnAlturas(value as boolean | null); break
       case 'edif_anios':                 setEdifAnios(value as string); break
       case 'edif_altura':                setEdifAltura(value as string); break
       case 'edif_color':                 setEdifColor(value as string); break
@@ -84,6 +125,7 @@ export default function RelevamientoFormPage() {
       case 'edif_tipologia':             setEdifTipologia(value as string); break
       case 'edif_valor_patrimonial':     setEdifPatrimonial(value as boolean); break
       case 'edif_proteccion':            setEdifProteccion(value as string); break
+      case 'edif_clase_incendio':        setEdifClaseIncendio(value as string); break
       case 'coef_k':                     setCoefK(value as string); break
     }
   }
@@ -94,6 +136,7 @@ export default function RelevamientoFormPage() {
     try {
       const resultado = await guardar.mutateAsync({
         id: presupuestoId,
+        // Cliente
         cliente_razon_social:       clienteRazonSocial,
         cliente_cuit:               clienteCuit,
         cliente_telefono:           clienteTelefono,
@@ -101,6 +144,10 @@ export default function RelevamientoFormPage() {
         cliente_administrador:      clienteAdministrador,
         cliente_administrador_cuit: clienteAdministradorCuit,
         cliente_email:              clienteEmail,
+        // Edificación
+        tipo:                       tipoObra,
+        zona_trabajo:               zonaTrabajo,
+        trabajo_en_alturas:         trabajoEnAlturas,
         edif_anios:                 edifAnios ? parseInt(edifAnios) : null,
         edif_altura:                edifAltura ? parseFloat(edifAltura) : null,
         edif_color:                 edifColor,
@@ -110,9 +157,14 @@ export default function RelevamientoFormPage() {
         edif_tipologia:             edifTipologia,
         edif_valor_patrimonial:     edifPatrimonial,
         edif_proteccion:            edifProteccion,
-        edif_clase_incendio:        '',
+        edif_clase_incendio:        edifClaseIncendio,
         coef_k:                     coefK ? parseFloat(coefK) : null,
+        // Textos
         observaciones:              observaciones,
+        diagnostico_tecnico:        diagnosticoTecnico,
+        alcance_obra:               alcanceObra,
+        // Servicios
+        servicios,
       })
       setPresupuestoId(resultado.id)
       setGuardado(true)
@@ -161,6 +213,7 @@ export default function RelevamientoFormPage() {
       {/* Secciones */}
       <div className="flex flex-col gap-6">
 
+        {/* 1. Cliente */}
         <SeccionCliente
           razonSocial={clienteRazonSocial}
           cuit={clienteCuit}
@@ -173,10 +226,11 @@ export default function RelevamientoFormPage() {
           onChange={handleField}
         />
 
+        {/* 2. Edificación */}
         <SeccionEdificacion
-          tipoObra="obra_mayor"
-          zonaTrabajo=""
-          trabajoEnAlturas={null}
+          tipoObra={tipoObra}
+          zonaTrabajo={zonaTrabajo}
+          trabajoEnAlturas={trabajoEnAlturas}
           anios={edifAnios}
           altura={edifAltura}
           color={edifColor}
@@ -190,7 +244,52 @@ export default function RelevamientoFormPage() {
           onChange={handleField}
         />
 
-        {/* Observaciones */}
+        {/* 3. Servicios a realizar */}
+        <SeccionServicios
+          items={servicios}
+          catalogo={catalogoServicios}
+          catalogoMateriales={catalogoMateriales}
+          m2={parseFloat(edifM2) || 0}
+          coefK={parseFloat(coefK) || 1}
+          soloDescriptivo
+          onChange={setServicios}
+        />
+
+        {/* 4. Diagnóstico técnico */}
+        <div className="card p-4">
+          <h3 className="mb-1 text-sm font-medium uppercase tracking-wider text-ink-400">
+            Diagnóstico técnico
+          </h3>
+          <p className="mb-3 text-xs text-ink-500">
+            Estado del edificio, patologías detectadas, intervenciones necesarias
+          </p>
+          <textarea
+            value={diagnosticoTecnico}
+            onChange={(e) => setDiagnosticoTecnico(e.target.value)}
+            placeholder="Describí el estado técnico de la edificación observado en campo…"
+            rows={5}
+            className="input-base w-full resize-none text-sm leading-relaxed"
+          />
+        </div>
+
+        {/* 5. Alcance de la obra */}
+        <div className="card p-4">
+          <h3 className="mb-1 text-sm font-medium uppercase tracking-wider text-ink-400">
+            Alcance de la obra
+          </h3>
+          <p className="mb-3 text-xs text-ink-500">
+            Descripción de los trabajos que se estima incluir
+          </p>
+          <textarea
+            value={alcanceObra}
+            onChange={(e) => setAlcanceObra(e.target.value)}
+            placeholder="Trabajos previstos según lo relevado…"
+            rows={4}
+            className="input-base w-full resize-none text-sm leading-relaxed"
+          />
+        </div>
+
+        {/* 6. Observaciones */}
         <div className="card p-4">
           <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-ink-400">
             Observaciones
@@ -198,13 +297,13 @@ export default function RelevamientoFormPage() {
           <textarea
             value={observaciones}
             onChange={(e) => setObservaciones(e.target.value)}
-            placeholder="Estado de la fachada, accesos, condiciones especiales, notas para el presupuestador…"
-            rows={5}
+            placeholder="Accesos, condiciones especiales, notas para el presupuestador…"
+            rows={4}
             className="input-base w-full resize-none text-sm leading-relaxed"
           />
         </div>
 
-        {/* Fotos */}
+        {/* 7. Fotos */}
         {presupuestoId && (
           <SeccionFotos
             presupuestoId={presupuestoId}
