@@ -316,6 +316,25 @@ function PanelNuevoFormula({
               {margenBrutoPct.toFixed(1)}%
             </p>
           )}
+          {/* Composición del margen: solo cuando hay margen de materiales separado */}
+          {margenMaterialesPct > 0 && !servicioEspecial && totalCliente > 0 && (() => {
+            const matProfit = subtotalMateriales * (margenMaterialesPct / 100)
+            const matPp     = (matProfit / totalCliente) * 100
+            const rentPp    = margenBrutoPct - matPp
+            return (
+              <div className="mt-1 rounded border border-ink-700/50 bg-ink-950/60 px-3 py-2 text-xs">
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-600">Composición del margen</p>
+                <div className="flex items-center justify-between text-ink-500">
+                  <span>Rentabilidad ({rentabilidadPct}%)</span>
+                  <span className="font-mono">{rentPp.toFixed(1)}%</span>
+                </div>
+                <div className="flex items-center justify-between text-ink-400">
+                  <span>Mk. materiales (+{margenMaterialesPct}%)</span>
+                  <span className="font-mono text-accent-400">+{matPp.toFixed(1)} pp</span>
+                </div>
+              </div>
+            )
+          })()}
           {margenSinDescPct !== null && diffPp !== null && (
             <div className="mt-1 rounded border border-ink-700 bg-ink-900 px-3 py-2 text-xs">
               <div className="flex items-center justify-between text-ink-500">
