@@ -3,6 +3,7 @@ import { RouterProvider } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AuthProvider } from '@/hooks/useAuth'
 import { router } from '@/routes/router'
+import { AppErrorBoundary } from '@/components/layout/AppErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,21 +18,23 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <RouterProvider router={router} />
-        <Toaster
-          position="bottom-right"
-          theme="dark"
-          toastOptions={{
-            style: {
-              background: '#1a1d21',
-              color: '#e8eaee',
-              border: '1px solid #262931',
-            },
-          }}
-        />
-      </AuthProvider>
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+          <Toaster
+            position="bottom-right"
+            theme="dark"
+            toastOptions={{
+              style: {
+                background: '#1a1d21',
+                color: '#e8eaee',
+                border: '1px solid #262931',
+              },
+            }}
+          />
+        </AuthProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
   )
 }

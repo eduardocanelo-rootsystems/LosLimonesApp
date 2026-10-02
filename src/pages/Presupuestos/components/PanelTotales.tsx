@@ -175,14 +175,30 @@ function PanelNuevoFormula({
   descuentoMonto: number
   precioSinDescuento: number
 }) {
+  const rent = Math.min(rentabilidadPct / 100, 0.9999)
   const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
-  const subtotalPreMG = matConMargen + costoManoObra
-  const margenGenMonto = subtotalPreMG * (rentabilidadPct / 100)
 
   // Con servicio especial, el costo de referencia usa totalMatRef
   const costoNeto = servicioEspecial
     ? servicioEspecial.totalMatRef + costoManoObra
     : subtotalMateriales + costoManoObra
+
+  // Precio base (sin descuento): costoBase / (1 − rent)
+  const costoBase = servicioEspecial
+    ? servicioEspecial.totalMatRef + costoManoObra
+    : (clientePagaMateriales ? costoManoObra : costoNeto)
+  const precioBase = rent > 0 ? costoBase / (1 - rent) : costoBase
+
+  // Línea de margen que se muestra en el desglose
+  // = precioBase − lo que ya se muestra como ítems antes del margen
+  const margenGenMonto = servicioEspecial
+    ? 0
+    : clientePagaMateriales
+      ? precioBase - costoManoObra
+      : precioBase - matConMargen - costoManoObra
+  const margenGenEspecial = servicioEspecial
+    ? precioBase - servicioEspecial.precioEspecial - costoManoObra
+    : 0
 
   const margenBruto = totalCliente - costoNeto
   const margenBrutoPct = totalCliente > 0 ? (margenBruto / totalCliente) * 100 : 0
@@ -194,26 +210,22 @@ function PanelNuevoFormula({
     : null
   const diffPp = margenSinDescPct !== null ? margenBrutoPct - margenSinDescPct : null
 
-  // Monto de margen general en modo especial
-  const baseEspecial = servicioEspecial ? servicioEspecial.precioEspecial + costoManoObra : 0
-  const margenGenEspecial = baseEspecial * (rentabilidadPct / 100)
-
   return (
     <section className="card p-6">
       <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-ink-400">
         Rentabilidad y totales
       </h2>
 
-      {/* Control de margen general */}
+      {/* Control de rentabilidad */}
       <div className="mb-5 flex items-center gap-3">
-        <span className="text-sm text-ink-400">Margen general</span>
+        <span className="text-sm text-ink-400">Rentabilidad</span>
         <input
-          type="number" min="0" max="999" step="1"
+          type="number" min="0" max="99" step="0.5"
           value={rentabilidadPct}
           onChange={(e) => onRentabilidadChange(e.target.value)}
           className="w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1.5 text-center font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
         />
-        <span className="text-sm text-ink-400">%</span>
+        <span className="text-sm text-ink-400">% sobre precio final</span>
         {!servicioEspecial && margenMaterialesPct > 0 && (
           <span className="ml-4 text-xs text-ink-500">
             Margen materiales: <span className="font-mono text-ink-300">{margenMaterialesPct}%</span>
@@ -251,7 +263,7 @@ function PanelNuevoFormula({
               <Row label="Serv. especial" value={servicioEspecial.precioEspecial} />
               <Row label="Mano de Obra" value={costoManoObra} />
               {rentabilidadPct > 0 && (
-                <Row label={`Margen gral. (+${rentabilidadPct}%)`} value={margenGenEspecial} />
+                <Row label={`Margen (${rentabilidadPct}%)`} value={margenGenEspecial} />
               )}
               {servicioEspecial.clienteProvee && servicioEspecial.totalMatRef > 0 && (
                 <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-1.5 mt-1">
@@ -270,7 +282,7 @@ function PanelNuevoFormula({
               )}
               <Row label="Mano de Obra" value={costoManoObra} />
               {rentabilidadPct > 0 && (
-                <Row label={`Margen gral. (+${rentabilidadPct}%)`} value={margenGenMonto} />
+                <Row label={`Margen (${rentabilidadPct}%)`} value={margenGenMonto} />
               )}
               {clientePagaMateriales && (
                 <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-1.5 mt-1">

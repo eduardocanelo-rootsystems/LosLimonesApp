@@ -455,7 +455,8 @@ export default function PresupuestoFormPage() {
     ? { precioEspecial, totalMatRef, clienteProvee: clienteProveeMatEspecial }
     : undefined
 
-  // ── Fórmula nueva: (Mat + MO) × (1 + rent%) ──────────────────────────────
+  // ── Fórmula nueva: precio = costoBase / (1 − rent%) ─────────────────────
+  // rent% es el margen sobre el precio final (no markup sobre costo)
   const {
     totalCliente,
     importeTotal,
@@ -465,19 +466,20 @@ export default function PresupuestoFormPage() {
     descuentoMonto,
   } = useMemo(() => {
     if (usaNuevaFormula) {
-      const rent = parseFloat(rentabilidadPct) / 100 || 0
+      const rent = Math.min(parseFloat(rentabilidadPct) / 100 || 0, 0.9999)
 
       let precioFinal: number
       if (servicioEspecialItem) {
-        // Fórmula especial: (precioEspecial + MO) × (1 + rent%)
-        const base = precioEspecial + costoManoObra
-        precioFinal = base * (1 + rent)
+        // Costo del servicio especial: materiales ref + MO
+        const costoNetoEsp = totalMatRef + costoManoObra
+        precioFinal = costoNetoEsp / (1 - rent)
         if (clienteProveeMatEspecial) precioFinal -= totalMatRef
       } else {
-        const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
-        const subtotalPreMG = matConMargen + costoManoObra
-        precioFinal = subtotalPreMG * (1 + rent)
-        if (clientePagaMateriales) precioFinal -= matConMargen
+        // Si el cliente provee materiales, el costo base es solo la MO
+        const costoBase = clientePagaMateriales
+          ? costoManoObra
+          : subtotalMateriales + costoManoObra
+        precioFinal = costoBase / (1 - rent)
       }
 
       const precioFinalSinDesc = precioFinal
