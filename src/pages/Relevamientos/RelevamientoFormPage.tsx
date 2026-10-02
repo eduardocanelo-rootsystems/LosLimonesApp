@@ -174,6 +174,9 @@ export default function RelevamientoFormPage() {
         />
 
         <SeccionEdificacion
+          tipoObra="obra_mayor"
+          zonaTrabajo=""
+          trabajoEnAlturas={null}
           anios={edifAnios}
           altura={edifAltura}
           color={edifColor}

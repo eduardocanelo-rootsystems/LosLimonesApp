@@ -82,6 +82,11 @@ export default function PresupuestoFormPage() {
   const [clienteAdministradorCuit, setClienteAdministradorCuit] = useState('')
   const [clienteEmail, setClienteEmail] = useState('')
 
+  // Tipo de obra / características
+  const [tipoObra, setTipoObra] = useState<'obra_mayor' | 'obra_menor'>('obra_mayor')
+  const [zonaTrabajo, setZonaTrabajo] = useState<'interiores' | 'exteriores' | 'ambos' | ''>('')
+  const [trabajoEnAlturas, setTrabajoEnAlturas] = useState<boolean | null>(null)
+
   // Edificación
   const [edifAnios, setEdifAnios] = useState('')
   const [edifAltura, setEdifAltura] = useState('')
@@ -141,6 +146,9 @@ export default function PresupuestoFormPage() {
     if (!presupuesto) return
 
     setEstado(presupuesto.estado)
+    setTipoObra(presupuesto.tipo ?? 'obra_mayor')
+    setZonaTrabajo((presupuesto as any).zona_trabajo ?? '')
+    setTrabajoEnAlturas((presupuesto as any).trabajo_en_alturas ?? null)
     setClienteRazonSocial(presupuesto.cliente_razon_social ?? '')
     setClienteCuit(presupuesto.cliente_cuit ?? '')
     setClienteTelefono(presupuesto.cliente_telefono ?? '')
@@ -230,6 +238,9 @@ export default function PresupuestoFormPage() {
       case 'cliente_administrador': setClienteAdministrador(value as string); break
       case 'cliente_administrador_cuit': setClienteAdministradorCuit(value as string); break
       case 'cliente_email': setClienteEmail(value as string); break
+      case 'tipo_obra': setTipoObra(value as 'obra_mayor' | 'obra_menor'); break
+      case 'zona_trabajo': setZonaTrabajo(value as 'interiores' | 'exteriores' | 'ambos'); break
+      case 'trabajo_en_alturas': setTrabajoEnAlturas(value as boolean); break
       case 'edif_anios': setEdifAnios(value as string); break
       case 'edif_altura': setEdifAltura(value as string); break
       case 'edif_color': setEdifColor(value as string); break
@@ -500,7 +511,7 @@ export default function PresupuestoFormPage() {
     try {
       const result = await guardar.mutateAsync({
         id,
-        tipo: 'obra_mayor',
+        tipo: tipoObra,
         estado,
         cliente_razon_social: clienteRazonSocial,
         cliente_cuit: clienteCuit,
@@ -539,6 +550,8 @@ export default function PresupuestoFormPage() {
         cliente_paga_materiales: usaNuevaFormula ? clientePagaMateriales : undefined,
         fecha_inicio_obra: fechaInicioObra || null,
         fecha_fin_obra: fechaFinObra || null,
+        zona_trabajo: zonaTrabajo || null,
+        trabajo_en_alturas: trabajoEnAlturas,
         servicios,
         materiales,
         mano_obra: manoDeObra,
@@ -704,6 +717,9 @@ export default function PresupuestoFormPage() {
 
       {/* 2. Edificación */}
       <SeccionEdificacion
+        tipoObra={tipoObra}
+        zonaTrabajo={zonaTrabajo}
+        trabajoEnAlturas={trabajoEnAlturas}
         anios={edifAnios}
         altura={edifAltura}
         color={edifColor}

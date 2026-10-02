@@ -37,6 +37,9 @@ export const COEF_K = [
 ]
 
 interface SeccionEdificacionProps {
+  tipoObra: 'obra_mayor' | 'obra_menor'
+  zonaTrabajo: 'interiores' | 'exteriores' | 'ambos' | ''
+  trabajoEnAlturas: boolean | null
   anios: string
   altura: string
   color: string
@@ -60,6 +63,7 @@ function claseDeAltura(alturaStr: string): string {
 }
 
 export function SeccionEdificacion({
+  tipoObra, zonaTrabajo, trabajoEnAlturas,
   anios, altura, color, acabado, m2,
   condicionEstructural, tipologia,
   valorPatrimonial, proteccion, coefK,
@@ -107,6 +111,99 @@ export function SeccionEdificacion({
       <h2 className="mb-5 text-sm font-semibold uppercase tracking-wider text-ink-400">
         Características de la edificación
       </h2>
+
+      {/* Tipo de obra / Zona / Alturas */}
+      <div className="mb-5 grid gap-4 sm:grid-cols-3">
+        {/* Tipo de Obra */}
+        <div>
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-ink-400">
+            Tipo de obra
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onChange('tipo_obra', 'obra_mayor')}
+              className={cn(
+                'flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                tipoObra === 'obra_mayor'
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                  : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+              )}
+            >
+              Mayor
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange('tipo_obra', 'obra_menor')}
+              className={cn(
+                'flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                tipoObra === 'obra_menor'
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                  : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+              )}
+            >
+              Menor
+            </button>
+          </div>
+        </div>
+
+        {/* Zona de trabajo */}
+        <div>
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-ink-400">
+            Zona de trabajo
+          </label>
+          <div className="flex gap-2">
+            {(['exteriores', 'interiores', 'ambos'] as const).map((z) => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => onChange('zona_trabajo', z)}
+                className={cn(
+                  'flex-1 rounded-lg border px-2 py-2 text-xs font-medium capitalize transition-colors',
+                  zonaTrabajo === z
+                    ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                    : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+                )}
+              >
+                {z.charAt(0).toUpperCase() + z.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Trabajo en alturas */}
+        <div>
+          <label className="mb-2 block text-xs font-medium uppercase tracking-wider text-ink-400">
+            Trabajo en alturas
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => onChange('trabajo_en_alturas', true)}
+              className={cn(
+                'flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                trabajoEnAlturas === true
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                  : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+              )}
+            >
+              Sí
+            </button>
+            <button
+              type="button"
+              onClick={() => onChange('trabajo_en_alturas', false)}
+              className={cn(
+                'flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                trabajoEnAlturas === false
+                  ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                  : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+              )}
+            >
+              No
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Métricas principales */}
       <div className="grid gap-4 sm:grid-cols-3">

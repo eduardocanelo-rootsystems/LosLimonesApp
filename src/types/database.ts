@@ -249,6 +249,8 @@ export type Database = {
           importe_servicios: number | null
           importe_total: number | null
           tipo: 'obra_mayor' | 'obra_menor'
+          zona_trabajo: 'interiores' | 'exteriores' | 'ambos' | null
+          trabajo_en_alturas: boolean | null
         }
         Insert: {
           id?: string
@@ -291,6 +293,8 @@ export type Database = {
           importe_servicios?: number | null
           importe_total?: number | null
           tipo?: 'obra_mayor' | 'obra_menor'
+          zona_trabajo?: 'interiores' | 'exteriores' | 'ambos' | null
+          trabajo_en_alturas?: boolean | null
         }
         Update: {
           id?: string
@@ -333,6 +337,8 @@ export type Database = {
           importe_servicios?: number | null
           importe_total?: number | null
           tipo?: 'obra_mayor' | 'obra_menor'
+          zona_trabajo?: 'interiores' | 'exteriores' | 'ambos' | null
+          trabajo_en_alturas?: boolean | null
         }
         Relationships: []
       }
