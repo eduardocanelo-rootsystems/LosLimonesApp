@@ -1,6 +1,7 @@
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
-const ACABADOS = ['Mampostería', 'Vidrio', 'Ladrillo', 'Concreto', 'Texturizado']
+const ACABADOS_FIJOS = ['Mampostería', 'Vidrio', 'Ladrillo', 'Concreto', 'Texturizado']
 
 const CONDICIONES_ESTRUCTURALES = [
   { value: 'sin_riesgo',       label: 'Sin Riesgo',        desc: 'Estado bueno/muy bueno. Sin fisuras, revoques firmes.' },
@@ -68,6 +69,11 @@ export function SeccionEdificacion({
 
   const claseAuto = claseDeAltura(altura)
 
+  const otroValor = acabado.find((a) => !ACABADOS_FIJOS.includes(a)) ?? ''
+  const [mostrarOtro, setMostrarOtro] = useState(() =>
+    acabado.some((a) => !ACABADOS_FIJOS.includes(a))
+  )
+
   const handleAltura = (val: string) => {
     onChange('edif_altura', val)
     onChange('edif_clase_incendio', claseDeAltura(val))
@@ -78,6 +84,20 @@ export function SeccionEdificacion({
       ? acabado.filter((a) => a !== item)
       : [...acabado, item]
     onChange('edif_acabado', next)
+  }
+
+  const toggleOtro = () => {
+    if (mostrarOtro) {
+      onChange('edif_acabado', acabado.filter((a) => ACABADOS_FIJOS.includes(a)))
+      setMostrarOtro(false)
+    } else {
+      setMostrarOtro(true)
+    }
+  }
+
+  const handleOtroChange = (val: string) => {
+    const sinOtro = acabado.filter((a) => ACABADOS_FIJOS.includes(a))
+    onChange('edif_acabado', val ? [...sinOtro, val] : sinOtro)
   }
 
   const claseInfo = CLASES_INCENDIO.find((c) => c.value === claseAuto)
@@ -146,7 +166,7 @@ export function SeccionEdificacion({
           Acabado
         </label>
         <div className="flex flex-wrap gap-2">
-          {ACABADOS.map((a) => (
+          {ACABADOS_FIJOS.map((a) => (
             <button
               key={a}
               type="button"
@@ -160,7 +180,28 @@ export function SeccionEdificacion({
               {a}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={toggleOtro}
+            className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+              mostrarOtro
+                ? 'border-accent-500 bg-accent-500/10 text-accent-400'
+                : 'border-ink-700 text-ink-400 hover:border-ink-500 hover:text-ink-200'
+            }`}
+          >
+            Otro
+          </button>
         </div>
+        {mostrarOtro && (
+          <input
+            type="text"
+            value={otroValor}
+            onChange={(e) => handleOtroChange(e.target.value)}
+            className="input-base mt-2"
+            placeholder="Especificar acabado…"
+            autoFocus
+          />
+        )}
       </div>
 
       {/* Condición + Tipología */}
