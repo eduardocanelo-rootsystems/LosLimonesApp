@@ -205,6 +205,14 @@ function PanelNuevoFormula({
   const margenBrutoPct = totalCliente > 0 ? (margenBruto / totalCliente) * 100 : 0
   const colorMargen = margenBrutoPct >= 30 ? 'text-success' : margenBrutoPct >= 10 ? 'text-warning' : 'text-danger'
 
+  // Recargo por financiamiento: diferencia entre totalCliente y el precio post-descuento sin financiamiento
+  const precioPostDescuento = precioSinDescuento - descuentoMonto
+  const financiamientoMonto = totalCliente - precioPostDescuento
+  const hayFinanciamiento = financiamientoMonto > 0.01
+  const financiamientoFactorPct = hayFinanciamiento && precioPostDescuento > 0
+    ? (financiamientoMonto / precioPostDescuento) * 100
+    : 0
+
   // Margen sin descuento (para mostrar impacto)
   const margenSinDescPct = descuentoMonto > 0 && precioSinDescuento > 0
     ? ((precioSinDescuento - costoNeto) / precioSinDescuento) * 100
@@ -296,6 +304,13 @@ function PanelNuevoFormula({
           {descuentoMonto > 0 && (
             <Row label="Descuento aplicado" value={-descuentoMonto} className="text-amber-400" />
           )}
+          {hayFinanciamiento && (
+            <Row
+              label={`Financiamiento (+${financiamientoFactorPct.toFixed(0)}%)`}
+              value={financiamientoMonto}
+              className="text-sky-400"
+            />
+          )}
           <div className="border-t border-ink-700 pt-2">
             <Row label="TOTAL" value={totalCliente} bold accent />
           </div>
@@ -316,11 +331,12 @@ function PanelNuevoFormula({
               {margenBrutoPct.toFixed(1)}%
             </p>
           )}
-          {/* Composición del margen: solo cuando hay margen de materiales separado */}
-          {margenMaterialesPct > 0 && !servicioEspecial && totalCliente > 0 && (() => {
+          {/* Composición del margen: cuando hay margen de materiales o financiamiento */}
+          {(margenMaterialesPct > 0 || hayFinanciamiento) && !servicioEspecial && totalCliente > 0 && (() => {
             const matProfit = subtotalMateriales * (margenMaterialesPct / 100)
             const matPp     = (matProfit / totalCliente) * 100
-            const rentPp    = margenBrutoPct - matPp
+            const finPp     = hayFinanciamiento ? (financiamientoMonto / totalCliente) * 100 : 0
+            const rentPp    = margenBrutoPct - matPp - finPp
             return (
               <div className="mt-1 rounded border border-ink-700/50 bg-ink-950/60 px-3 py-2 text-xs">
                 <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-600">Composición del margen</p>
@@ -328,10 +344,18 @@ function PanelNuevoFormula({
                   <span>Rentabilidad ({rentabilidadPct}%)</span>
                   <span className="font-mono">{rentPp.toFixed(1)}%</span>
                 </div>
-                <div className="flex items-center justify-between text-ink-400">
-                  <span>Mk. materiales (+{margenMaterialesPct}%)</span>
-                  <span className="font-mono text-accent-400">+{matPp.toFixed(1)} pp</span>
-                </div>
+                {margenMaterialesPct > 0 && (
+                  <div className="flex items-center justify-between text-ink-400">
+                    <span>Mk. materiales (+{margenMaterialesPct}%)</span>
+                    <span className="font-mono text-accent-400">+{matPp.toFixed(1)} pp</span>
+                  </div>
+                )}
+                {hayFinanciamiento && (
+                  <div className="flex items-center justify-between text-ink-400">
+                    <span>Financiamiento (+{financiamientoFactorPct.toFixed(0)}%)</span>
+                    <span className="font-mono text-sky-400">+{finPp.toFixed(1)} pp</span>
+                  </div>
+                )}
               </div>
             )
           })()}
