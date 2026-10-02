@@ -206,7 +206,7 @@ export function SeccionEdificacion({
       </div>
 
       {/* Métricas principales */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
             Años de la edificación
@@ -243,7 +243,7 @@ export function SeccionEdificacion({
             placeholder="Ej: 850"
           />
         </div>
-        <div className="sm:col-span-2">
+        <div>
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
             Color al momento del levantamiento
           </label>
