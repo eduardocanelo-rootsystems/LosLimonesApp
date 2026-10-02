@@ -464,6 +464,7 @@ export default function PresupuestoFormPage() {
     precioFinalSinDesc,
     costoNeto,
     descuentoMonto,
+    baseContado,
   } = useMemo(() => {
     if (usaNuevaFormula) {
       const rent = Math.min(parseFloat(rentabilidadPct) / 100 || 0, 0.9999)
@@ -502,6 +503,7 @@ export default function PresupuestoFormPage() {
         precioFinalSinDesc,
         costoNeto,
         descuentoMonto: descMonto,
+        baseContado: netoConDesc,  // precio antes del financiamiento (para tabla de planes)
       }
     }
 
@@ -528,6 +530,7 @@ export default function PresupuestoFormPage() {
       precioFinalSinDesc: bruto,
       costoNeto: costoManoObra,
       descuentoMonto: descMonto,
+      baseContado: total,  // vieja fórmula: totalCliente ya es sin financiamiento
     }
   }, [
     usaNuevaFormula,
@@ -914,7 +917,7 @@ export default function PresupuestoFormPage() {
 
       {/* 9. Financiamiento */}
       <SeccionFinanciamiento
-        total={totalCliente}
+        total={baseContado}
         planSeleccionado={planPago}
         onChange={setPlanPago}
       />
