@@ -213,6 +213,11 @@ function PanelNuevoFormula({
     ? (financiamientoMonto / precioPostDescuento) * 100
     : 0
 
+  // Margen bruto sin financiamiento: base para calcular el aporte real del plan de pago en pp
+  const margenSinFinPct = hayFinanciamiento && precioPostDescuento > 0
+    ? ((precioPostDescuento - costoNeto) / precioPostDescuento) * 100
+    : margenBrutoPct
+
   // Margen sin descuento (para mostrar impacto)
   const margenSinDescPct = descuentoMonto > 0 && precioSinDescuento > 0
     ? ((precioSinDescuento - costoNeto) / precioSinDescuento) * 100
@@ -333,10 +338,13 @@ function PanelNuevoFormula({
           )}
           {/* Composición del margen: cuando hay margen de materiales o financiamiento */}
           {(margenMaterialesPct > 0 || hayFinanciamiento) && !servicioEspecial && totalCliente > 0 && (() => {
-            const matProfit = subtotalMateriales * (margenMaterialesPct / 100)
-            const matPp     = (matProfit / totalCliente) * 100
-            const finPp     = hayFinanciamiento ? (financiamientoMonto / totalCliente) * 100 : 0
-            const rentPp    = margenBrutoPct - matPp - finPp
+            // Aporte real de cada componente en pp (siempre suman margenBrutoPct)
+            // finPp = diferencia entre margen con y sin financiamiento
+            // matPp = diferencia entre margen sin financiamiento y la rentabilidad pura
+            // rentPp = lo que el usuario configuró directamente
+            const finPp  = margenBrutoPct - margenSinFinPct
+            const matPp  = margenMaterialesPct > 0 ? margenSinFinPct - rentabilidadPct : 0
+            const rentPp = rentabilidadPct
             return (
               <div className="mt-1 rounded border border-ink-700/50 bg-ink-950/60 px-3 py-2 text-xs">
                 <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-600">Composición del margen</p>
