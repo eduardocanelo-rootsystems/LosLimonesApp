@@ -223,7 +223,7 @@ export default function MaterialesPage() {
             <option value="todos">Todas las unidades</option>
             {unidades.map((u) => (
               <option key={u.id} value={u.nombre}>
-                {u.nombre}
+                {toNombrePropio(u.nombre)}
               </option>
             ))}
           </select>
@@ -315,7 +315,7 @@ export default function MaterialesPage() {
                 {materialesFiltrados.map((m) => (
                   <tr key={m.id} className="transition-colors hover:bg-ink-900/30">
                     <td className="px-4 py-3 font-medium text-ink-100">{toNombrePropio(m.nombre)}</td>
-                    <td className="px-4 py-3 text-ink-300">{m.unidad}</td>
+                    <td className="px-4 py-3 text-ink-300">{toNombrePropio(m.unidad)}</td>
                     <td className="px-4 py-3 text-right font-mono tabular text-ink-100">
                       {m.precio_actual !== null ? formatCurrency(m.precio_actual) : '—'}
                     </td>

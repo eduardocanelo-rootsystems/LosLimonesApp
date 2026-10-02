@@ -56,12 +56,13 @@ export function MaterialFormModal({ open, onClose, material }: MaterialFormModal
   }, [agregandoUnidad])
 
   const handleGuardarUnidad = async () => {
-    const nombre = nuevaUnidad.trim()
+    const nombre = toNombrePropio(nuevaUnidad.trim())
     if (!nombre) return
 
     const yaExiste = unidades.some((u) => u.nombre.toLowerCase() === nombre.toLowerCase())
     if (yaExiste) {
-      setUnidad(nombre)
+      const existente = unidades.find((u) => u.nombre.toLowerCase() === nombre.toLowerCase())
+      setUnidad(existente?.nombre ?? nombre)
       setAgregandoUnidad(false)
       setNuevaUnidad('')
       return
@@ -160,7 +161,7 @@ export function MaterialFormModal({ open, onClose, material }: MaterialFormModal
               >
                 {unidades.map((u) => (
                   <option key={u.id} value={u.nombre}>
-                    {u.nombre}
+                    {toNombrePropio(u.nombre)}
                   </option>
                 ))}
               </select>

@@ -127,7 +127,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMate
                       )}
                     </div>
                   </td>
-                  <td className="px-4 py-2.5 text-ink-400">{item.unidad}</td>
+                  <td className="px-4 py-2.5 text-ink-400">{toNombrePropio(item.unidad)}</td>
                   <td className="px-4 py-2.5 text-right font-mono text-ink-300">
                     {formatCurrency(item.precio)}
                   </td>
@@ -184,7 +184,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMate
             <option value="">Seleccionar material…</option>
             {disponibles.map((m) => (
               <option key={m.id} value={m.id}>
-                {toNombrePropio(m.nombre)} ({m.unidad}) — {m.precio_actual !== null ? formatCurrency(m.precio_actual) : 'sin precio'}
+                {toNombrePropio(m.nombre)} ({toNombrePropio(m.unidad)}) — {m.precio_actual !== null ? formatCurrency(m.precio_actual) : 'sin precio'}
               </option>
             ))}
           </select>
