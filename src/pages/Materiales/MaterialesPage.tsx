@@ -15,7 +15,7 @@ import {
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCurrency, toNombrePropio } from '@/lib/utils'
 import type { MaterialConPrecio } from '@/types/database'
 import { useMargenMateriales, useGuardarMargenMateriales } from '@/hooks/useConfiguracion'
 import { useMateriales, useToggleEstadoMaterial } from './useMateriales'
@@ -314,7 +314,7 @@ export default function MaterialesPage() {
               <tbody className="divide-y divide-ink-800">
                 {materialesFiltrados.map((m) => (
                   <tr key={m.id} className="transition-colors hover:bg-ink-900/30">
-                    <td className="px-4 py-3 font-medium text-ink-100">{m.nombre}</td>
+                    <td className="px-4 py-3 font-medium text-ink-100">{toNombrePropio(m.nombre)}</td>
                     <td className="px-4 py-3 text-ink-300">{m.unidad}</td>
                     <td className="px-4 py-3 text-right font-mono tabular text-ink-100">
                       {m.precio_actual !== null ? formatCurrency(m.precio_actual) : '—'}

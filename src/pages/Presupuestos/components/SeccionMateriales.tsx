@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, toNombrePropio } from '@/lib/utils'
 import type { FormMaterialItem, MaterialConPrecio } from '@/types/database'
 
 interface SeccionMaterialesProps {
@@ -105,7 +105,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMate
                 <tr key={item._key} className="hover:bg-ink-900/30">
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-ink-100">{item.nombre}</span>
+                      <span className="font-medium text-ink-100">{toNombrePropio(item.nombre)}</span>
                       {item.es_adicional ? (
                         <button
                           type="button"
@@ -184,7 +184,7 @@ export function SeccionMateriales({ items, catalogo, esAprobado, clientePagaMate
             <option value="">Seleccionar material…</option>
             {disponibles.map((m) => (
               <option key={m.id} value={m.id}>
-                {m.nombre} ({m.unidad}) — {m.precio_actual !== null ? formatCurrency(m.precio_actual) : 'sin precio'}
+                {toNombrePropio(m.nombre)} ({m.unidad}) — {m.precio_actual !== null ? formatCurrency(m.precio_actual) : 'sin precio'}
               </option>
             ))}
           </select>

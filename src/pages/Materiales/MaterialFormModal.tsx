@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal'
 import type { MaterialConPrecio } from '@/types/database'
 import { useActualizarMaterial, useCrearMaterial } from './useMateriales'
 import { useCrearUnidad, useUnidades } from './useUnidades'
+import { toNombrePropio } from '@/lib/utils'
 
 interface MaterialFormModalProps {
   open: boolean
@@ -81,7 +82,7 @@ export function MaterialFormModal({ open, onClose, material }: MaterialFormModal
     e.preventDefault()
     setError(null)
 
-    const nombreLimpio = nombre.trim()
+    const nombreLimpio = toNombrePropio(nombre.trim())
     const precioNum = parseFloat(precio)
 
     if (!nombreLimpio) {

@@ -1,5 +1,6 @@
 import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/renderer'
 import type { PresupuestoCompleto } from '@/types/database'
+import { toNombrePropio } from '@/lib/utils'
 
 function fmt(value: number): string {
   return new Intl.NumberFormat('es-AR', {
@@ -351,7 +352,7 @@ export function ObraMenorPDFPage({
             </View>
             {presupuesto.materiales.filter((m) => !m.es_adicional).map((m, i) => (
               <View key={m.id} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
-                <Text style={[s.tdText, { flex: 4 }]}>{m.nombre_snapshot}</Text>
+                <Text style={[s.tdText, { flex: 4 }]}>{toNombrePropio(m.nombre_snapshot)}</Text>
                 <Text style={[s.tdText, { flex: 1.5, color: '#6B7280' }]}>{m.unidad_snapshot}</Text>
                 <Text style={[s.tdMono, { flex: 1.5 }, s.tdRight]}>{m.cantidad}</Text>
                 <Text style={[s.tdMono, { flex: 2 }, s.tdRight]}>{fmt(m.precio_snapshot)}</Text>
