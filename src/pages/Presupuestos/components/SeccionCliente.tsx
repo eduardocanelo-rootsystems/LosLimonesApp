@@ -59,7 +59,9 @@ export function SeccionCliente({
   onChange,
 }: SeccionClienteProps) {
   const [abierto, setAbierto] = useState(false)
+  const [adminAbierto, setAdminAbierto] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const adminRef = useRef<HTMLDivElement>(null)
 
   const filtrados = razonSocial.length >= 2
     ? historial
@@ -70,10 +72,29 @@ export function SeccionCliente({
         .slice(0, 6)
     : []
 
+  const adminsFiltrados = administrador.length >= 2
+    ? historial
+        .filter((c) =>
+          c.administrador &&
+          c.administrador.toLowerCase().includes(administrador.toLowerCase()) &&
+          c.administrador.toLowerCase() !== administrador.toLowerCase()
+        )
+        .reduce<HistorialCliente[]>((acc, c) => {
+          if (!acc.some((x) => x.administrador.toLowerCase() === c.administrador.toLowerCase())) {
+            acc.push(c)
+          }
+          return acc
+        }, [])
+        .slice(0, 6)
+    : []
+
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setAbierto(false)
+      }
+      if (adminRef.current && !adminRef.current.contains(e.target as Node)) {
+        setAdminAbierto(false)
       }
     }
     document.addEventListener('mousedown', handler)
@@ -89,6 +110,12 @@ export function SeccionCliente({
     onChange('cliente_administrador_cuit',  c.administrador_cuit)
     onChange('cliente_email',               c.email)
     setAbierto(false)
+  }
+
+  const seleccionarAdmin = (c: HistorialCliente) => {
+    onChange('cliente_administrador',       c.administrador)
+    onChange('cliente_administrador_cuit',  c.administrador_cuit)
+    setAdminAbierto(false)
   }
 
   return (
@@ -184,17 +211,38 @@ export function SeccionCliente({
           />
         </div>
 
-        <div>
+        <div ref={adminRef} className="relative">
           <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400">
             Nombre Administrador
           </label>
           <input
             type="text"
             value={administrador}
-            onChange={(e) => onChange('cliente_administrador', e.target.value)}
+            onChange={(e) => { onChange('cliente_administrador', e.target.value); setAdminAbierto(true) }}
+            onFocus={() => setAdminAbierto(true)}
             className="input-base"
             placeholder="Nombre y apellido"
+            autoComplete="off"
           />
+          {adminAbierto && adminsFiltrados.length > 0 && (
+            <ul className="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-ink-700 bg-ink-900 shadow-xl">
+              {adminsFiltrados.map((c) => (
+                <li key={c.administrador}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); seleccionarAdmin(c) }}
+                    className="flex w-full items-start gap-3 px-3 py-2.5 text-left hover:bg-ink-800 transition-colors"
+                  >
+                    <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-500" />
+                    <div>
+                      <div className="text-sm font-medium text-ink-100">{c.administrador}</div>
+                      {c.razon_social && <div className="text-xs text-ink-500">{c.razon_social}</div>}
+                    </div>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div>
