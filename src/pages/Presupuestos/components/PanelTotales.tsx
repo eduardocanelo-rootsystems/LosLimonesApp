@@ -183,10 +183,11 @@ function PanelNuevoFormula({
     ? servicioEspecial.totalMatRef + costoManoObra
     : subtotalMateriales + costoManoObra
 
-  // Precio base (sin descuento): costoBase / (1 − rent)
+  // Precio base (sin descuento): base / (1 − rent)
+  // Para el caso normal, la base incluye el margen de materiales (matConMargen + MO)
   const costoBase = servicioEspecial
     ? servicioEspecial.totalMatRef + costoManoObra
-    : (clientePagaMateriales ? costoManoObra : costoNeto)
+    : (clientePagaMateriales ? costoManoObra : matConMargen + costoManoObra)
   const precioBase = rent > 0 ? costoBase / (1 - rent) : costoBase
 
   // Línea de margen que se muestra en el desglose

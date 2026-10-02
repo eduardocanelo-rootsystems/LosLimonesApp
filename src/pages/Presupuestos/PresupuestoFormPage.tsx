@@ -475,10 +475,11 @@ export default function PresupuestoFormPage() {
         precioFinal = costoNetoEsp / (1 - rent)
         if (clienteProveeMatEspecial) precioFinal -= totalMatRef
       } else {
-        // Si el cliente provee materiales, el costo base es solo la MO
+        // Aplicar margen de materiales antes de la rentabilidad
+        const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
         const costoBase = clientePagaMateriales
           ? costoManoObra
-          : subtotalMateriales + costoManoObra
+          : matConMargen + costoManoObra
         precioFinal = costoBase / (1 - rent)
       }
 
