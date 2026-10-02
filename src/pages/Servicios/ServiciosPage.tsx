@@ -3,7 +3,6 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
-  History,
   Loader2,
   Pencil,
   Plus,
@@ -14,16 +13,15 @@ import {
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { cn, formatCurrency, toNombrePropio } from '@/lib/utils'
+import { cn, toNombrePropio } from '@/lib/utils'
 import {
   useServicios,
   useToggleEstadoServicio,
 } from './useServicios'
 import { ServicioFormModal } from './ServicioFormModal'
-import { HistorialPreciosModal } from './HistorialPreciosModal'
 import type { ServicioConPrecio } from '@/types/database'
 
-type SortField = 'nombre' | 'precio_m2_actual' | 'fecha_actualizacion'
+type SortField = 'nombre' | 'fecha_actualizacion'
 type SortDir = 'asc' | 'desc'
 type FiltroEstado = 'todos' | 'activo' | 'inactivo'
 
@@ -38,9 +36,6 @@ export default function ServiciosPage() {
 
   const [formOpen, setFormOpen] = useState(false)
   const [editando, setEditando] = useState<ServicioConPrecio | null>(null)
-  const [historialOpen, setHistorialOpen] = useState(false)
-  const [historialServicio, setHistorialServicio] =
-    useState<ServicioConPrecio | null>(null)
 
   // Filtrado + ordenamiento en cliente (cantidades pequeñas)
   const serviciosFiltrados = useMemo(() => {
@@ -60,11 +55,6 @@ export default function ServiciosPage() {
 
       if (sortField === 'nombre') {
         return a.nombre.localeCompare(b.nombre, 'es') * dir
-      }
-      if (sortField === 'precio_m2_actual') {
-        const va = a.precio_m2_actual ?? -1
-        const vb = b.precio_m2_actual ?? -1
-        return (va - vb) * dir
       }
       // fecha_actualizacion
       return (
@@ -109,16 +99,11 @@ export default function ServiciosPage() {
     setFormOpen(true)
   }
 
-  const handleVerHistorial = (s: ServicioConPrecio) => {
-    setHistorialServicio(s)
-    setHistorialOpen(true)
-  }
-
   return (
     <>
       <PageHeader
         title="Servicios"
-        subtitle="Catálogo de servicios con precio por m² e historial de cambios"
+        subtitle="Catálogo de servicios disponibles para presupuestos"
         actions={
           <button onClick={handleNuevo} className="btn-primary">
             <Plus className="h-4 w-4" />
@@ -200,14 +185,6 @@ export default function ServiciosPage() {
                     dir={sortDir}
                     onClick={handleSort}
                   />
-                  <SortHeader
-                    label="Precio por m²"
-                    field="precio_m2_actual"
-                    current={sortField}
-                    dir={sortDir}
-                    onClick={handleSort}
-                    align="right"
-                  />
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-ink-400">
                     Estado
                   </th>
@@ -232,11 +209,6 @@ export default function ServiciosPage() {
                     <td className="px-4 py-3 font-medium text-ink-100">
                       {toNombrePropio(s.nombre)}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular text-ink-100">
-                      {s.precio_m2_actual !== null
-                        ? formatCurrency(s.precio_m2_actual)
-                        : '—'}
-                    </td>
                     <td className="px-4 py-3">
                       {s.estado === 'activo' ? (
                         <span className="badge badge-success">Activo</span>
@@ -251,13 +223,6 @@ export default function ServiciosPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleVerHistorial(s)}
-                          className="rounded-md p-1.5 text-ink-400 transition-colors hover:bg-ink-800 hover:text-ink-100"
-                          title="Ver historial de precios"
-                        >
-                          <History className="h-4 w-4" />
-                        </button>
                         <button
                           onClick={() => handleEditar(s)}
                           className="rounded-md p-1.5 text-ink-400 transition-colors hover:bg-ink-800 hover:text-ink-100"
@@ -295,11 +260,6 @@ export default function ServiciosPage() {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         servicio={editando}
-      />
-      <HistorialPreciosModal
-        open={historialOpen}
-        onClose={() => setHistorialOpen(false)}
-        servicio={historialServicio}
       />
     </>
   )

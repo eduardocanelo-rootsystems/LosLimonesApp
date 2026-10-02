@@ -605,6 +605,76 @@ export function PresupuestoPDFPage({
         </View>
       )}
 
+      {/* Materiales del servicio especial */}
+      {usaNuevaFormula && (() => {
+        const especial = presupuesto.servicios.find((sv) => !!(sv as any).precio_especial || !!(sv as any).descripcion_especifica)
+        if (!especial) return null
+        const se = especial as any
+        const refs: Array<{ nombre: string; unidad: string; precio: number; cantidad: number }> = se.materiales_ref ?? []
+        if (refs.length === 0 && !se.descripcion_especifica) return null
+        const totalRef = refs.reduce((acc: number, r) => acc + r.precio * r.cantidad, 0)
+        const clienteProvee: boolean = se.cliente_provee_materiales ?? false
+        const precioEsp: number = se.precio_especial ?? 0
+        return (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>Materiales especificados para este servicio</Text>
+            {se.descripcion_especifica && (
+              <View style={[s.obsBox, { marginBottom: 8 }]}>
+                <Text style={s.obsText}>{se.descripcion_especifica}</Text>
+              </View>
+            )}
+            {refs.length > 0 && (
+              <View style={s.table}>
+                <View style={s.tableHeader}>
+                  <Text style={[s.thText, { flex: 4 }]}>MATERIAL</Text>
+                  <Text style={[s.thText, { flex: 2, textAlign: 'right' }]}>PRECIO UNIT.</Text>
+                  <Text style={[s.thText, { flex: 1.5, textAlign: 'right' }]}>CANT.</Text>
+                  <Text style={[s.thText, { flex: 2, textAlign: 'right' }]}>SUBTOTAL</Text>
+                </View>
+                {refs.map((r, i) => (
+                  <View key={i} style={[s.tableRow, i % 2 === 1 ? s.tableRowAlt : {}]}>
+                    <Text style={[s.tdText, { flex: 4 }]}>{r.nombre} <Text style={{ color: C.gray500 }}>({r.unidad})</Text></Text>
+                    <Text style={[s.tdMono, { flex: 2, textAlign: 'right' }]}>{fmt(r.precio)}</Text>
+                    <Text style={[s.tdMono, { flex: 1.5, textAlign: 'right' }]}>{r.cantidad}</Text>
+                    <Text style={[s.tdMono, s.tdBold, { flex: 2, textAlign: 'right' }]}>{fmt(r.precio * r.cantidad)}</Text>
+                  </View>
+                ))}
+                <View style={{ flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 8, paddingVertical: 5, borderTopWidth: 0.5, borderTopColor: C.gray300 }}>
+                  <Text style={[s.tdText, { color: C.gray500, marginRight: 8 }]}>Total materiales:</Text>
+                  <Text style={[s.tdMono, s.tdBold]}>{fmt(totalRef)}</Text>
+                </View>
+                <View style={{ paddingHorizontal: 8, paddingBottom: 4 }}>
+                  <Text style={{ fontSize: 7, color: C.gray500 }}>* Precios de referencia a la fecha de emisión de este presupuesto.</Text>
+                </View>
+              </View>
+            )}
+            {clienteProvee && totalRef > 0 && (
+              <View style={[s.totalesBox, { marginTop: 6, width: 'auto', marginLeft: 0 }]}>
+                <View style={s.totalRow}>
+                  <Text style={s.totalLabel}>Precio del servicio</Text>
+                  <Text style={s.totalValue}>{fmt(precioEsp)}</Text>
+                </View>
+                <View style={s.totalRow}>
+                  <Text style={[s.totalLabel, { color: C.gray500 }]}>− Materiales provistos por el comitente</Text>
+                  <Text style={[s.totalValue, { color: C.warning }]}>− {fmt(totalRef)}</Text>
+                </View>
+                <View style={s.totalRowFinal}>
+                  <Text style={s.totalLabelFinal}>Total a pagar a la empresa</Text>
+                  <Text style={s.totalValueFinal}>{fmt(precioEsp - totalRef)}</Text>
+                </View>
+              </View>
+            )}
+            {/* Cláusula de provisión de materiales */}
+            <View style={[s.obsBox, { marginTop: 8, borderColor: C.gray300 }]}>
+              <Text style={[s.obsText, { fontFamily: 'Helvetica-Bold', marginBottom: 3 }]}>Provisión de materiales</Text>
+              <Text style={s.obsText}>
+                {'Los materiales indicados en esta propuesta han sido seleccionados conforme a los estándares técnicos requeridos para garantizar la calidad de los acabados y los plazos de ejecución comprometidos. El comitente podrá optar por proveer los materiales por cuenta propia, quedando sujeto a la utilización de los materiales especificados en este documento. Cualquier variación en las especificaciones técnicas podrá afectar la garantía del trabajo ejecutado, la calidad de los acabados finales y los plazos de ejecución pactados.'}
+              </Text>
+            </View>
+          </View>
+        )
+      })()}
+
       {tieneExtras && (
         <View style={s.section}>
           <Text style={s.sectionTitleExtra}>Trabajos adicionales</Text>

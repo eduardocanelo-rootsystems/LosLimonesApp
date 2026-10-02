@@ -10,6 +10,7 @@ export type Database = {
           estado: 'activo' | 'inactivo'
           fecha_creacion: string
           fecha_actualizacion: string
+          es_especial: boolean
         }
         Insert: {
           id?: string
@@ -17,6 +18,7 @@ export type Database = {
           estado?: 'activo' | 'inactivo'
           fecha_creacion?: string
           fecha_actualizacion?: string
+          es_especial?: boolean
         }
         Update: {
           id?: string
@@ -24,6 +26,7 @@ export type Database = {
           estado?: 'activo' | 'inactivo'
           fecha_creacion?: string
           fecha_actualizacion?: string
+          es_especial?: boolean
         }
         Relationships: []
       }
@@ -396,6 +399,11 @@ export type Database = {
           subtotal: number
           es_adicional: boolean
           created_at: string
+          es_especial: boolean
+          descripcion_especifica: string | null
+          precio_especial: number | null
+          materiales_ref: unknown | null
+          cliente_provee_materiales: boolean
         }
         Insert: {
           id?: string
@@ -408,6 +416,11 @@ export type Database = {
           subtotal: number
           es_adicional?: boolean
           created_at?: string
+          es_especial?: boolean
+          descripcion_especifica?: string | null
+          precio_especial?: number | null
+          materiales_ref?: unknown | null
+          cliente_provee_materiales?: boolean
         }
         Update: {
           id?: string
@@ -420,6 +433,11 @@ export type Database = {
           subtotal?: number
           es_adicional?: boolean
           created_at?: string
+          es_especial?: boolean
+          descripcion_especifica?: string | null
+          precio_especial?: number | null
+          materiales_ref?: unknown | null
+          cliente_provee_materiales?: boolean
         }
         Relationships: [
           {
@@ -645,6 +663,7 @@ export type Database = {
           precio_m2_actual: number | null
           fecha_creacion: string
           fecha_actualizacion: string
+          es_especial: boolean
         }
         Relationships: []
       }
@@ -705,12 +724,27 @@ export interface PresupuestoCompleto extends Presupuesto {
 
 // ─── Tipos de formulario (frontend only) ─────────────────────────────────────
 
+export interface MatRefItem {
+  _key: string
+  material_id: string
+  nombre: string
+  unidad: string
+  precio: number
+  cantidad: number
+}
+
 export interface FormServicioItem {
   _key: string
   servicio_id: string
   nombre: string
   precio_m2: number
   es_adicional?: boolean
+  // Campos del servicio especial
+  es_especial?: boolean
+  descripcion_especifica?: string
+  precio_especial?: number | null
+  materiales_ref?: MatRefItem[]
+  cliente_provee_materiales?: boolean
 }
 
 export interface FormMaterialItem {

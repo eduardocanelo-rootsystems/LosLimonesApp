@@ -220,8 +220,13 @@ export function useGuardarPresupuesto() {
             precio_m2_snapshot: s.precio_m2,
             m2_snapshot: m2,
             k_snapshot: k,
-            subtotal: s.precio_m2 * m2 * k,
+            subtotal: s.es_especial ? (s.precio_especial ?? 0) : s.precio_m2 * m2 * k,
             es_adicional: s.es_adicional ?? false,
+            es_especial: s.es_especial ?? false,
+            descripcion_especifica: s.descripcion_especifica ?? null,
+            precio_especial: s.precio_especial ?? null,
+            materiales_ref: s.materiales_ref ? JSON.parse(JSON.stringify(s.materiales_ref)) : null,
+            cliente_provee_materiales: s.cliente_provee_materiales ?? false,
           }))
         )
         if (error) throw error

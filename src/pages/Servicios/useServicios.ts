@@ -18,6 +18,7 @@ export function useServicios() {
           estado,
           fecha_creacion,
           fecha_actualizacion,
+          es_especial,
           servicios_precios (
             precio_m2,
             fecha_desde,
@@ -45,6 +46,7 @@ export function useServicios() {
           precio_m2_actual: vigente?.precio_m2 ?? null,
           fecha_creacion: s.fecha_creacion,
           fecha_actualizacion: s.fecha_actualizacion,
+          es_especial: (s as any).es_especial ?? false,
         }
       })
     },

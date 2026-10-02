@@ -198,13 +198,23 @@ export default function PresupuestoFormPage() {
     setFechaFinObra(p.fecha_fin_obra ?? '')
 
     setServicios(
-      presupuesto.servicios.map((s) => ({
-        _key: s.id,
-        servicio_id: s.servicio_id ?? '',
-        nombre: s.nombre_snapshot,
-        precio_m2: s.precio_m2_snapshot,
-        es_adicional: s.es_adicional,
-      }))
+      presupuesto.servicios.map((s) => {
+        const se = s as any
+        return {
+          _key: s.id,
+          servicio_id: s.servicio_id ?? '',
+          nombre: s.nombre_snapshot,
+          precio_m2: s.precio_m2_snapshot,
+          es_adicional: s.es_adicional,
+          es_especial: se.es_especial ?? false,
+          descripcion_especifica: se.descripcion_especifica ?? '',
+          precio_especial: se.precio_especial ?? null,
+          materiales_ref: se.materiales_ref
+            ? (se.materiales_ref as any[]).map((r: any) => ({ ...r, _key: r._key ?? crypto.randomUUID() }))
+            : [],
+          cliente_provee_materiales: se.cliente_provee_materiales ?? false,
+        }
+      })
     )
     setMateriales(
       presupuesto.materiales.map((m) => ({
@@ -418,6 +428,16 @@ export default function PresupuestoFormPage() {
     return { subtotalMateriales: sm, costoManoObra: cmo }
   }, [materiales, manoDeObra, dias])
 
+  // Detectar servicio especial activo
+  const servicioEspecialItem = usaNuevaFormula ? servicios.find((s) => s.es_especial) : undefined
+  const precioEspecial = servicioEspecialItem?.precio_especial ?? 0
+  const totalMatRef = (servicioEspecialItem?.materiales_ref ?? []).reduce((acc, r) => acc + r.precio * r.cantidad, 0)
+  const clienteProveeMatEspecial = servicioEspecialItem?.cliente_provee_materiales ?? false
+
+  const servicioEspecialTotales = servicioEspecialItem
+    ? { precioEspecial, totalMatRef, clienteProvee: clienteProveeMatEspecial }
+    : undefined
+
   // ── Fórmula nueva: (Mat + MO) × (1 + rent%) ──────────────────────────────
   const {
     totalCliente,
@@ -425,19 +445,28 @@ export default function PresupuestoFormPage() {
     importeServicios,
   } = useMemo(() => {
     if (usaNuevaFormula) {
-      const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
-      const subtotalPreMG = matConMargen + costoManoObra
       const rent = parseFloat(rentabilidadPct) / 100 || 0
-      const precioFinal = subtotalPreMG * (1 + rent)
-      const neto = clientePagaMateriales ? precioFinal - matConMargen : precioFinal
+
+      let precioFinal: number
+      if (servicioEspecialItem) {
+        // Fórmula especial: (precioEspecial + MO) × (1 + rent%)
+        const base = precioEspecial + costoManoObra
+        precioFinal = base * (1 + rent)
+        if (clienteProveeMatEspecial) precioFinal -= totalMatRef
+      } else {
+        const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
+        const subtotalPreMG = matConMargen + costoManoObra
+        precioFinal = subtotalPreMG * (1 + rent)
+        if (clientePagaMateriales) precioFinal -= matConMargen
+      }
 
       const descMonto = tieneDescuento
         ? descuentoTipo === 'fijo'
           ? parseFloat(descuentoValor) || 0
-          : (neto * (parseFloat(descuentoValor) || 0)) / 100
+          : (precioFinal * (parseFloat(descuentoValor) || 0)) / 100
         : 0
 
-      const netoConDesc = neto - descMonto
+      const netoConDesc = precioFinal - descMonto
       const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
       const factorFin = 1 + recargo / 2
       const total = netoConDesc * factorFin
@@ -478,6 +507,7 @@ export default function PresupuestoFormPage() {
     usaNuevaFormula,
     rentabilidadPct, margenMaterialesPct, clientePagaMateriales,
     subtotalMateriales, costoManoObra,
+    servicioEspecialItem, precioEspecial, totalMatRef, clienteProveeMatEspecial,
     tieneDescuento, descuentoTipo, descuentoValor,
     planPago, edifM2, coefK, servicios, ivaPct,
   ])
@@ -749,10 +779,10 @@ export default function PresupuestoFormPage() {
       <SeccionServicios
         items={servicios}
         catalogo={catalogoServicios}
+        catalogoMateriales={catalogoMateriales}
         esAprobado={esAprobado}
         soloDescriptivo={usaNuevaFormula}
         onChange={setServicios}
-        // props legacy (no usados en nueva fórmula pero requeridos por el tipo)
         m2={parseFloat(edifM2) || 0}
         coefK={parseFloat(coefK) || 1}
       />
@@ -789,16 +819,18 @@ export default function PresupuestoFormPage() {
         </div>
       </section>
 
-      {/* 5. Materiales */}
-      <SeccionMateriales
-        items={materiales}
-        catalogo={catalogoMateriales}
-        esAprobado={esAprobado}
-        clientePagaMateriales={usaNuevaFormula ? clientePagaMateriales : undefined}
-        onClientePagaMaterialesChange={usaNuevaFormula ? setClientePagaMateriales : undefined}
-        margenMaterialesPct={usaNuevaFormula ? margenMaterialesPct : undefined}
-        onChange={setMateriales}
-      />
+      {/* 5. Materiales (oculto cuando hay servicio especial activo) */}
+      {!servicioEspecialItem && (
+        <SeccionMateriales
+          items={materiales}
+          catalogo={catalogoMateriales}
+          esAprobado={esAprobado}
+          clientePagaMateriales={usaNuevaFormula ? clientePagaMateriales : undefined}
+          onClientePagaMaterialesChange={usaNuevaFormula ? setClientePagaMateriales : undefined}
+          margenMaterialesPct={usaNuevaFormula ? margenMaterialesPct : undefined}
+          onChange={setMateriales}
+        />
+      )}
 
       {/* 6. Mano de Obra */}
       <SeccionManoDeObra
@@ -820,6 +852,7 @@ export default function PresupuestoFormPage() {
         clientePagaMateriales={clientePagaMateriales}
         rentabilidadPct={parseFloat(rentabilidadPct) || 0}
         onRentabilidadChange={setRentabilidadPct}
+        servicioEspecial={servicioEspecialTotales}
         // Fórmula vieja
         subtotalServicios={useMemo(() => {
           const m2 = parseFloat(edifM2) || 0

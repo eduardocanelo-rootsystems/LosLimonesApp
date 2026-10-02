@@ -22,7 +22,6 @@ export function ServicioFormModal({
 }: ServicioFormModalProps) {
   const editando = !!servicio
   const [nombre, setNombre] = useState('')
-  const [precio, setPrecio] = useState('')
   const [error, setError] = useState<string | null>(null)
 
   const crear = useCrearServicio()
@@ -33,7 +32,6 @@ export function ServicioFormModal({
   useEffect(() => {
     if (open) {
       setNombre(servicio?.nombre ?? '')
-      setPrecio(servicio?.precio_m2_actual?.toString() ?? '')
       setError(null)
     }
   }, [open, servicio])
@@ -43,29 +41,22 @@ export function ServicioFormModal({
     setError(null)
 
     const nombreFormateado = toNombrePropio(nombre)
-    const precioNum = parseFloat(precio)
 
     if (!nombreFormateado) {
       setError('El nombre es obligatorio.')
       return
     }
-    if (isNaN(precioNum) || precioNum < 0) {
-      setError('El precio debe ser un número mayor o igual a 0.')
-      return
-    }
 
     try {
       if (editando) {
-        const cambioPrecio = precioNum !== servicio.precio_m2_actual
         await actualizar.mutateAsync({
           id: servicio.id,
           nombre:
             nombreFormateado !== servicio.nombre ? nombreFormateado : undefined,
-          nuevoPrecio: cambioPrecio ? precioNum : undefined,
         })
         toast.success('Servicio actualizado.')
       } else {
-        await crear.mutateAsync({ nombre: nombreFormateado, precio_m2: precioNum })
+        await crear.mutateAsync({ nombre: nombreFormateado, precio_m2: 0 })
         toast.success('Servicio creado.')
       }
       onClose()
@@ -102,34 +93,6 @@ export function ServicioFormModal({
           <p className="mt-1 text-xs text-ink-500">
             Se formateará automáticamente como nombre propio al guardar.
           </p>
-        </div>
-
-        <div>
-          <label
-            htmlFor="precio"
-            className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-ink-400"
-          >
-            Precio por m² ($)
-          </label>
-          <input
-            id="precio"
-            type="number"
-            step="0.01"
-            min="0"
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            required
-            className="input-base font-mono"
-            placeholder="0.00"
-          />
-          {editando &&
-            servicio?.precio_m2_actual !== null &&
-            parseFloat(precio) !== servicio?.precio_m2_actual && (
-              <p className="mt-1.5 text-xs text-warning">
-                ⚠ Al guardar, este cambio quedará registrado en el historial.
-                Los presupuestos existentes mantendrán el precio anterior.
-              </p>
-            )}
         </div>
 
         {error && (

@@ -1,5 +1,11 @@
 import { formatCurrency } from '@/lib/utils'
 
+export interface ServicioEspecialTotales {
+  precioEspecial: number
+  totalMatRef: number
+  clienteProvee: boolean
+}
+
 interface PanelTotalesProps {
   usaNuevaFormula: boolean
   // Nueva fórmula
@@ -10,6 +16,7 @@ interface PanelTotalesProps {
   rentabilidadPct: number
   onRentabilidadChange: (val: string) => void
   totalCliente: number
+  servicioEspecial?: ServicioEspecialTotales
   // Fórmula vieja
   subtotalServicios: number
   extrasMonto: number
@@ -29,6 +36,7 @@ export function PanelTotales({
   rentabilidadPct,
   onRentabilidadChange,
   totalCliente,
+  servicioEspecial,
   subtotalServicios,
   extrasMonto,
   tieneDescuento,
@@ -46,6 +54,7 @@ export function PanelTotales({
       rentabilidadPct={rentabilidadPct}
       onRentabilidadChange={onRentabilidadChange}
       totalCliente={totalCliente}
+      servicioEspecial={servicioEspecial}
     />
   }
 
@@ -145,6 +154,7 @@ function PanelNuevoFormula({
   rentabilidadPct,
   onRentabilidadChange,
   totalCliente,
+  servicioEspecial,
 }: {
   subtotalMateriales: number
   costoManoObra: number
@@ -153,14 +163,24 @@ function PanelNuevoFormula({
   rentabilidadPct: number
   onRentabilidadChange: (val: string) => void
   totalCliente: number
+  servicioEspecial?: ServicioEspecialTotales
 }) {
   const matConMargen = subtotalMateriales * (1 + margenMaterialesPct / 100)
   const subtotalPreMG = matConMargen + costoManoObra
   const margenGenMonto = subtotalPreMG * (rentabilidadPct / 100)
-  const costoNeto = subtotalMateriales + costoManoObra
+
+  // Con servicio especial, el costo de referencia usa totalMatRef
+  const costoNeto = servicioEspecial
+    ? servicioEspecial.totalMatRef + costoManoObra
+    : subtotalMateriales + costoManoObra
+
   const margenBruto = totalCliente - costoNeto
   const margenBrutoPct = totalCliente > 0 ? (margenBruto / totalCliente) * 100 : 0
   const colorMargen = margenBrutoPct >= 30 ? 'text-success' : margenBrutoPct >= 10 ? 'text-warning' : 'text-danger'
+
+  // Monto de margen general en modo especial
+  const baseEspecial = servicioEspecial ? servicioEspecial.precioEspecial + costoManoObra : 0
+  const margenGenEspecial = baseEspecial * (rentabilidadPct / 100)
 
   return (
     <section className="card p-6">
@@ -178,7 +198,7 @@ function PanelNuevoFormula({
           className="w-20 rounded border border-ink-700 bg-ink-900 px-2 py-1.5 text-center font-mono text-sm text-ink-100 focus:border-accent-500 focus:outline-none"
         />
         <span className="text-sm text-ink-400">%</span>
-        {margenMaterialesPct > 0 && (
+        {!servicioEspecial && margenMaterialesPct > 0 && (
           <span className="ml-4 text-xs text-ink-500">
             Margen materiales: <span className="font-mono text-ink-300">{margenMaterialesPct}%</span>
             <span className="ml-1 text-ink-600">(configurado en /materiales)</span>
@@ -192,9 +212,16 @@ function PanelNuevoFormula({
         <div className="space-y-2 rounded-lg border border-ink-800 p-4">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">Costos</p>
           <Row label="Mano de Obra" value={costoManoObra} />
-          <Row label="Materiales (neto)" value={subtotalMateriales} />
+          {servicioEspecial ? (
+            <div>
+              <Row label="Mat. ref. ℹ" value={servicioEspecial.totalMatRef} className="text-ink-500" />
+              <p className="mt-0.5 text-right text-[10px] text-ink-600">solo referencia</p>
+            </div>
+          ) : (
+            <Row label="Materiales (neto)" value={subtotalMateriales} />
+          )}
           <div className="border-t border-ink-800 pt-2">
-            <Row label="Total" value={costoNeto} bold />
+            <Row label="Total ref." value={costoNeto} bold />
           </div>
         </div>
 
@@ -203,21 +230,39 @@ function PanelNuevoFormula({
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-500">
             Precio Final · PDF
           </p>
-          {margenMaterialesPct > 0 && (
-            <Row label={`Materiales (+${margenMaterialesPct}%)`} value={matConMargen} />
-          )}
-          {margenMaterialesPct === 0 && (
-            <Row label="Materiales" value={subtotalMateriales} />
-          )}
-          <Row label="Mano de Obra" value={costoManoObra} />
-          {rentabilidadPct > 0 && (
-            <Row label={`Margen gral. (+${rentabilidadPct}%)`} value={margenGenMonto} />
-          )}
-          {clientePagaMateriales && (
-            <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-1.5 mt-1">
-              <span className="text-xs text-sky-400">Cliente provee materiales</span>
-              <span className="font-mono text-xs text-sky-400">− {formatCurrency(matConMargen)}</span>
-            </div>
+          {servicioEspecial ? (
+            <>
+              <Row label="Serv. especial" value={servicioEspecial.precioEspecial} />
+              <Row label="Mano de Obra" value={costoManoObra} />
+              {rentabilidadPct > 0 && (
+                <Row label={`Margen gral. (+${rentabilidadPct}%)`} value={margenGenEspecial} />
+              )}
+              {servicioEspecial.clienteProvee && servicioEspecial.totalMatRef > 0 && (
+                <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-1.5 mt-1">
+                  <span className="text-xs text-sky-400">Cliente provee materiales</span>
+                  <span className="font-mono text-xs text-sky-400">− {formatCurrency(servicioEspecial.totalMatRef)}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {margenMaterialesPct > 0 && (
+                <Row label={`Materiales (+${margenMaterialesPct}%)`} value={matConMargen} />
+              )}
+              {margenMaterialesPct === 0 && (
+                <Row label="Materiales" value={subtotalMateriales} />
+              )}
+              <Row label="Mano de Obra" value={costoManoObra} />
+              {rentabilidadPct > 0 && (
+                <Row label={`Margen gral. (+${rentabilidadPct}%)`} value={margenGenMonto} />
+              )}
+              {clientePagaMateriales && (
+                <div className="flex items-center justify-between gap-2 rounded-md bg-sky-500/10 border border-sky-500/20 px-2 py-1.5 mt-1">
+                  <span className="text-xs text-sky-400">Cliente provee materiales</span>
+                  <span className="font-mono text-xs text-sky-400">− {formatCurrency(matConMargen)}</span>
+                </div>
+              )}
+            </>
           )}
           <div className="border-t border-ink-700 pt-2">
             <Row label="TOTAL" value={totalCliente} bold accent />
@@ -230,7 +275,7 @@ function PanelNuevoFormula({
             Margen Bruto
           </p>
           <Row label="Precio Final" value={totalCliente} />
-          <Row label="Costos (neto)" value={-costoNeto} className="text-ink-400" />
+          <Row label="Costos (ref.)" value={-costoNeto} className="text-ink-400" />
           <div className="border-t border-ink-800 pt-2">
             <Row label="Margen" value={margenBruto} bold className={colorMargen} />
           </div>
