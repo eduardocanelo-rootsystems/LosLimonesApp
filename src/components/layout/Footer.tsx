@@ -12,8 +12,14 @@ export function Footer() {
           <span className="text-ink-500">·</span>
           <span className="text-ink-200">Eduardo Canelo</span>
         </div>
-        <div className="text-xs text-ink-500">
-          © {year} /root · Eduardo Canelo. Todos los derechos reservados.
+        <div className="flex items-center gap-3 text-xs text-ink-500">
+          <span>© {year} /root · Eduardo Canelo.</span>
+          <span
+            className="font-mono text-ink-600"
+            title={`Commit ${__GIT_HASH__}`}
+          >
+            v{__GIT_COUNT__} · {__GIT_HASH__}
+          </span>
         </div>
       </div>
     </footer>

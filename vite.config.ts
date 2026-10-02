@@ -1,9 +1,20 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
+import { execSync } from 'node:child_process'
+
+function gitValue(cmd: string, fallback: string) {
+  try { return execSync(cmd, { encoding: 'utf8' }).trim() } catch { return fallback }
+}
+const GIT_HASH  = gitValue('git rev-parse --short HEAD', 'dev')
+const GIT_COUNT = gitValue('git rev-list --count HEAD', '0')
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __GIT_HASH__:  JSON.stringify(GIT_HASH),
+    __GIT_COUNT__: JSON.stringify(GIT_COUNT),
+  },
   plugins: [react()],
   esbuild: {
     legalComments: 'none',
