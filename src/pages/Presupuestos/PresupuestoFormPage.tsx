@@ -493,7 +493,7 @@ export default function PresupuestoFormPage() {
 
       const netoConDesc = precioFinal - descMonto
       const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
-      const factorFin = 1 + recargo / 2
+      const factorFin = 1 + recargo
       const total = netoConDesc * factorFin
 
       return {
@@ -520,7 +520,7 @@ export default function PresupuestoFormPage() {
     const costoMOAjustado = costoManoObra * factor
     const total = totalSinMO + costoMOAjustado
     const recargo = planPago === '60dias' ? 0.10 : planPago === '90dias' ? 0.20 : 0
-    const factorFin = 1 + recargo / 2
+    const factorFin = 1 + recargo
     const importeTotalViejo = total * factorFin
     const ratio = bruto > 0 ? ss / bruto : 1
     return {

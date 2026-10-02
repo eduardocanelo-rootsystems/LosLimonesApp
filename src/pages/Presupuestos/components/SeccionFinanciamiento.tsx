@@ -17,8 +17,6 @@ const PLANES = [
 export function SeccionFinanciamiento({ total, planSeleccionado, onChange }: SeccionFinanciamientoProps) {
   if (total <= 0) return null
 
-  const anticipo = total * 0.5
-
   const handleClick = (value: PlanFinanciamiento) => {
     onChange(planSeleccionado === value ? null : value)
   }
@@ -54,8 +52,9 @@ export function SeccionFinanciamiento({ total, planSeleccionado, onChange }: Sec
           </thead>
           <tbody className="divide-y divide-ink-800">
             {PLANES.map(({ value, label, recargo, cuotas }) => {
-              const saldo = anticipo * (1 + recargo)  // recargo solo sobre el 50% financiado
-              const totalFinal = anticipo + saldo
+              const totalFinal = total * (1 + recargo)   // 10%/20% sobre el precio total
+              const anticipo   = totalFinal * 0.5
+              const saldo      = totalFinal * 0.5
               const cuotasLabel = cuotas === 0
                 ? formatCurrency(saldo)
                 : `${cuotas} × ${formatCurrency(saldo / cuotas)}`
@@ -101,7 +100,7 @@ export function SeccionFinanciamiento({ total, planSeleccionado, onChange }: Sec
       </div>
 
       <p className="mt-2.5 text-xs text-ink-500">
-        El anticipo es el 50% del valor de contado en todos los planes. El recargo aplica solo sobre el 50% financiado.
+        El recargo aplica sobre el precio total. El anticipo es el 50% del total resultante y el saldo se divide en cuotas iguales.
         {planSeleccionado && (
           <span className="ml-1 font-medium text-accent-400">
             · Plan seleccionado aparecerá en el PDF.
