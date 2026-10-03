@@ -102,6 +102,7 @@ export default function ContratoFormPage() {
   const [direccionLegal, setDireccionLegal] = useState('')
   const [fechaInicioObra, setFechaInicioObra] = useState('')
   const [fechaFirma, setFechaFirma] = useState('')
+  const [aniosGarantia, setAniosGarantia] = useState('2')
 
   // Fecha fin calculada: inicio + días hábiles del presupuesto (no se guarda en DB)
   const fechaFinObra = useMemo(() => {
@@ -142,6 +143,8 @@ export default function ContratoFormPage() {
       setDireccionLegal(contrato.direccion_legal ?? presupuesto.cliente_direccion ?? '')
       setFechaInicioObra(contrato.fecha_inicio_obra ?? '')
       setFechaFirma(contrato.fecha_firma ?? fechaFirmaDefault)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setAniosGarantia((contrato as any).anios_garantia?.toString() ?? '2')
     } else {
       // Nuevo contrato: pre-llenar todo lo disponible desde el presupuesto
       setNombreComitente(presupuesto.cliente_razon_social ?? '')
@@ -212,6 +215,8 @@ export default function ContratoFormPage() {
         fecha_inicio_obra: fechaInicioObra || null,
         fecha_firma: fechaFirma || null,
         firma_contratista_base64: firmaGuardada ?? null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ...(aniosGarantia ? { anios_garantia: parseInt(aniosGarantia) } : {}) as any,
       })
       toast.success('Contrato guardado.')
     } catch (err) {
@@ -288,6 +293,7 @@ export default function ContratoFormPage() {
     direccion_legal: direccionLegal,
     fecha_inicio_obra: fechaInicioObra,
     fecha_firma: fechaFirma,
+    anios_garantia: aniosGarantia,
   }
 
   // ─── Render ───────────────────────────────────────────────────────────────
@@ -420,19 +426,19 @@ export default function ContratoFormPage() {
               placeholder="Nombre y apellido"
             />
           </Field>
-          <Field label="DNI del administrador">
+          <Field label="CUIT del administrador">
             <input
               type="text"
               value={administradorDni}
               onChange={(e) => setAdministradorDni(e.target.value)}
               className="input-base font-mono"
-              placeholder="12.345.678"
+              placeholder="20-12345678-9"
             />
           </Field>
           <Field
             label="Domicilio legal del comitente"
             span2
-            hint="Para la Cláusula Novena · puede diferir de la dirección de la obra"
+            hint="Uso interno · el contrato usa la dirección de la obra como domicilio del comitente"
           >
             <input
               type="text"
@@ -672,6 +678,17 @@ export default function ContratoFormPage() {
               onChange={(e) => setTasaInteres(e.target.value)}
               className="input-base font-mono"
               placeholder="0.00"
+            />
+          </Field>
+          <Field label="Años de garantía" hint="Cláusula Novena · Por defecto 2 años">
+            <input
+              type="number"
+              min="0"
+              step="1"
+              value={aniosGarantia}
+              onChange={(e) => setAniosGarantia(e.target.value)}
+              className="input-base font-mono"
+              placeholder="2"
             />
           </Field>
         </div>

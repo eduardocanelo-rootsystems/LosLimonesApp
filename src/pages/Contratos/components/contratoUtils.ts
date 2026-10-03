@@ -20,6 +20,7 @@ export interface ContratoFormValues {
   direccion_legal: string
   fecha_inicio_obra: string
   fecha_firma: string
+  anios_garantia: string
 }
 
 export const PLANES_PAGO = {
@@ -54,6 +55,8 @@ export function contratoToFormValues(
     direccion_legal:       contrato?.direccion_legal       ?? presupuesto.cliente_direccion ?? '',
     fecha_inicio_obra:     contrato?.fecha_inicio_obra     ?? '',
     fecha_firma:           contrato?.fecha_firma           ?? fechaFirmaDefault,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    anios_garantia:        (contrato as any)?.anios_garantia?.toString() ?? '2',
   }
 }
 
@@ -66,7 +69,7 @@ export function calcTotalPresupuesto(p: PresupuestoCompleto): number {
   if (rentPct !== null && rentPct !== undefined && p.importe_total) {
     const storedPlan = (p.plan_pago ?? '') as PlanPago
     const storedRecargo = storedPlan === '60dias' ? 0.10 : storedPlan === '90dias' ? 0.20 : 0
-    return p.importe_total / (1 + storedRecargo / 2)
+    return p.importe_total / (1 + storedRecargo)
   }
 
   // Fórmula vieja: recalcular desde los componentes
@@ -85,9 +88,9 @@ export function calcTotalPresupuesto(p: PresupuestoCompleto): number {
 
 export function calcFinanciamiento(baseTotal: number, plan: PlanPago) {
   const recargo         = plan === '60dias' ? 0.10 : plan === '90dias' ? 0.20 : 0
-  const anticipo        = baseTotal * 0.5
-  const saldo           = anticipo * (1 + recargo)   // recargo solo sobre el 50% financiado
-  const totalFinal      = anticipo + saldo
+  const totalFinal      = baseTotal * (1 + recargo)
+  const anticipo        = totalFinal * 0.5
+  const saldo           = totalFinal * 0.5
   const numInstallments = plan === '60dias' ? 2 : plan === '90dias' ? 3 : 0
   const montoCuota      = numInstallments > 0 ? saldo / numInstallments : saldo
   return { totalFinal, anticipo, saldo, numInstallments, montoCuota }
