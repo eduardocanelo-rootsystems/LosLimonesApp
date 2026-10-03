@@ -165,7 +165,9 @@ function TableRow({
     <View style={isAlt ? [s.trow, s.trowAlt] : s.trow}>
       <Text style={[s.tcell, COL.num, { color: C.gray500, fontSize: 8 }]}>{index + 1}</Text>
       <Text style={[s.tcell, COL.nombre]}>{nombre}</Text>
-      <Text style={[s.tcell, COL.unidad, { color: C.gray700 }]}>{unidad}</Text>
+      <Text style={[s.tcell, COL.unidad, { color: C.gray700 }]}>
+        {unidad.charAt(0).toUpperCase() + unidad.slice(1).toLowerCase()}
+      </Text>
       <Text style={[s.tcell, COL.cantidad, s.tcellRight]}>{cantidad % 1 === 0 ? cantidad.toFixed(0) : cantidad.toFixed(2)}</Text>
     </View>
   )
