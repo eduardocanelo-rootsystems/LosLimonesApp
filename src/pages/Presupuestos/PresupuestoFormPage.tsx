@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, ClipboardCheck, FileDown, Loader2, Lock, Mail, Plus, Save, ScrollText, X } from 'lucide-react'
+import { ArrowLeft, ClipboardCheck, FileDown, Loader2, Lock, Mail, Plus, Save, ScrollText, ShoppingCart, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { reloadOnStaleChunk } from '@/lib/chunkReload'
 import { supabase } from '@/lib/supabase'
@@ -276,7 +276,8 @@ export default function PresupuestoFormPage() {
   const [emailsExtra,    setEmailsExtra]    = useState<string[]>([])
   const [emailInputVal,  setEmailInputVal]  = useState('')
   const [enviando,       setEnviando]       = useState(false)
-  const [descargandoPDF, setDescargandoPDF] = useState(false)
+  const [descargandoPDF,        setDescargandoPDF]        = useState(false)
+  const [descargandoMateriales, setDescargandoMateriales] = useState(false)
   const emailInputRef = useRef<HTMLInputElement>(null)
 
   const abrirEmailModal = () => {
@@ -343,6 +344,30 @@ export default function PresupuestoFormPage() {
       }
     } finally {
       setDescargandoPDF(false)
+    }
+  }
+
+  const handleDescargarMateriales = async () => {
+    if (!presupuesto) return
+    setDescargandoMateriales(true)
+    try {
+      const { pdf } = await import('@react-pdf/renderer')
+      const { MaterialesPDFDocument } = await import('./components/MaterialesPDF')
+      const blob = await pdf(
+        <MaterialesPDFDocument presupuesto={presupuesto} logoUrl={logoUrl} />
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `materiales-${presupuesto.numero ?? id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      if (!reloadOnStaleChunk(err)) toast.error('Error al generar el PDF de materiales.')
+    } finally {
+      setDescargandoMateriales(false)
     }
   }
 
@@ -726,6 +751,24 @@ export default function PresupuestoFormPage() {
                   Acta
                 </button>
               </>
+            )}
+            {!esNuevo && presupuesto && presupuesto.materiales.length > 0 && (
+              <button
+                type="button"
+                onClick={handleDescargarMateriales}
+                disabled={descargandoMateriales}
+                className="btn-secondary"
+                title="Descargar lista de materiales en PDF"
+              >
+                {descargandoMateriales ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <ShoppingCart className="h-4 w-4" />
+                    Materiales
+                  </>
+                )}
+              </button>
             )}
             {!esNuevo && presupuesto && (
               <button
