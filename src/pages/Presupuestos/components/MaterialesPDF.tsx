@@ -9,14 +9,6 @@ function fmtShort(iso: string | null | undefined): string {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
 }
 
-function fmt(v: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    minimumFractionDigits: 2,
-  }).format(v)
-}
-
 // ─── Paleta ───────────────────────────────────────────────────────────────────
 
 const C = {
@@ -120,17 +112,6 @@ const s = StyleSheet.create({
   },
   tcellRight: { textAlign: 'right', fontFamily: 'Helvetica' },
 
-  totalRow: {
-    flexDirection:   'row',
-    backgroundColor: C.black,
-    marginTop:       2,
-    borderRadius:    3,
-    paddingVertical:   6,
-    paddingHorizontal: 7,
-  },
-  totalLabel: { flex: 1, fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.white, textTransform: 'uppercase', letterSpacing: 0.5 },
-  totalValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: C.accent },
-
   footer: {
     position:         'absolute',
     bottom:           20,
@@ -151,12 +132,10 @@ const s = StyleSheet.create({
 // ─── Columnas ─────────────────────────────────────────────────────────────────
 
 const COL = {
-  num:      { width: 24  },
-  nombre:   { flex: 1    },
-  unidad:   { width: 44  },
-  cantidad: { width: 52  },
-  precio:   { width: 80  },
-  subtotal: { width: 88  },
+  num:      { width: 28 },
+  nombre:   { flex: 1   },
+  unidad:   { width: 64 },
+  cantidad: { width: 72 },
 }
 
 function TableHeader() {
@@ -165,9 +144,7 @@ function TableHeader() {
       <Text style={[s.theadCell, COL.num]}>#</Text>
       <Text style={[s.theadCell, COL.nombre]}>Material</Text>
       <Text style={[s.theadCell, COL.unidad]}>Unidad</Text>
-      <Text style={[s.theadCell, COL.cantidad, { textAlign: 'right' }]}>Cant.</Text>
-      <Text style={[s.theadCell, COL.precio, { textAlign: 'right' }]}>P. unitario</Text>
-      <Text style={[s.theadCell, COL.subtotal, { textAlign: 'right' }]}>Subtotal</Text>
+      <Text style={[s.theadCell, COL.cantidad, { textAlign: 'right' }]}>Cantidad</Text>
     </View>
   )
 }
@@ -177,15 +154,11 @@ function TableRow({
   nombre,
   unidad,
   cantidad,
-  precio,
-  subtotal,
 }: {
   index: number
   nombre: string
   unidad: string
   cantidad: number
-  precio: number
-  subtotal: number
 }) {
   const isAlt = index % 2 === 1
   return (
@@ -194,8 +167,6 @@ function TableRow({
       <Text style={[s.tcell, COL.nombre]}>{nombre}</Text>
       <Text style={[s.tcell, COL.unidad, { color: C.gray700 }]}>{unidad}</Text>
       <Text style={[s.tcell, COL.cantidad, s.tcellRight]}>{cantidad % 1 === 0 ? cantidad.toFixed(0) : cantidad.toFixed(2)}</Text>
-      <Text style={[s.tcell, COL.precio, s.tcellRight]}>{fmt(precio)}</Text>
-      <Text style={[s.tcell, COL.subtotal, s.tcellRight, s.b]}>{fmt(subtotal)}</Text>
     </View>
   )
 }
@@ -209,12 +180,8 @@ export function MaterialesPDFPage({
   presupuesto: PresupuestoCompleto
   logoUrl?: string | null
 }) {
-  const normales   = presupuesto.materiales.filter((m) => !m.es_adicional)
-  const adicionales = presupuesto.materiales.filter((m) => m.es_adicional)
-
-  const totalNormales    = normales.reduce((s, m) => s + Number(m.subtotal), 0)
-  const totalAdicionales = adicionales.reduce((s, m) => s + Number(m.subtotal), 0)
-  const totalGeneral     = totalNormales + totalAdicionales
+  const normales    = presupuesto.materiales.filter((m) => !m.es_adicional)
+  const adicionales = presupuesto.materiales.filter((m) =>  m.es_adicional)
 
   return (
     <Page size="A4" style={s.page}>
@@ -231,7 +198,7 @@ export function MaterialesPDFPage({
       {/* Título */}
       <Text style={s.title}>Lista de Materiales</Text>
       <Text style={s.subtitle}>
-        Detalle de materiales incluidos en el Presupuesto N.º {presupuesto.numero ?? '—'}
+        Presupuesto N.º {presupuesto.numero ?? '—'}
       </Text>
 
       {/* Info del presupuesto */}
@@ -249,8 +216,8 @@ export function MaterialesPDFPage({
           <Text style={s.infoValue}>{fmtShort(presupuesto.fecha_creacion)}</Text>
         </View>
         <View>
-          <Text style={s.infoLabel}>Total materiales</Text>
-          <Text style={[s.infoValue, { color: '#1a1a1a' }]}>{fmt(totalGeneral)}</Text>
+          <Text style={s.infoLabel}>Ítems</Text>
+          <Text style={s.infoValue}>{presupuesto.materiales.length}</Text>
         </View>
       </View>
 
@@ -269,17 +236,9 @@ export function MaterialesPDFPage({
                 nombre={m.nombre_snapshot}
                 unidad={m.unidad_snapshot}
                 cantidad={Number(m.cantidad)}
-                precio={Number(m.precio_snapshot)}
-                subtotal={Number(m.subtotal)}
               />
             ))}
           </View>
-          {adicionales.length === 0 && (
-            <View style={s.totalRow}>
-              <Text style={s.totalLabel}>Total materiales</Text>
-              <Text style={s.totalValue}>{fmt(totalNormales)}</Text>
-            </View>
-          )}
         </>
       )}
 
@@ -296,29 +255,8 @@ export function MaterialesPDFPage({
                 nombre={m.nombre_snapshot}
                 unidad={m.unidad_snapshot}
                 cantidad={Number(m.cantidad)}
-                precio={Number(m.precio_snapshot)}
-                subtotal={Number(m.subtotal)}
               />
             ))}
-          </View>
-
-          {/* Subtotales cuando hay ambos */}
-          {normales.length > 0 && (
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 24, marginTop: 6, paddingHorizontal: 7 }}>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 8, color: C.gray500 }}>Materiales</Text>
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{fmt(totalNormales)}</Text>
-              </View>
-              <View style={{ alignItems: 'flex-end' }}>
-                <Text style={{ fontSize: 8, color: C.gray500 }}>Adicionales</Text>
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{fmt(totalAdicionales)}</Text>
-              </View>
-            </View>
-          )}
-
-          <View style={s.totalRow}>
-            <Text style={s.totalLabel}>Total materiales</Text>
-            <Text style={s.totalValue}>{fmt(totalGeneral)}</Text>
           </View>
         </>
       )}
